@@ -1,6 +1,6 @@
 #include <iostream>
-#include "conv2d.hpp"
-#include "tensor.hpp"
+#include "layers/conv2d.hpp"
+#include "basics/tensor.hpp"
 #include <assert.h>
 
 void test_conv_layer() {

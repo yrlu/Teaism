@@ -1,7 +1,7 @@
 #ifndef CONST_INITIALIZER_CUH_
 #define CONST_INITIALIZER_CUH_
 
-#include "initializer.hpp"
+#include "basics/initializer.hpp"
 
 // Initialize the parameters with a constant value
 template<class Dtype>

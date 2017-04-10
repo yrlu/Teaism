@@ -3,10 +3,10 @@
 
 #include <vector>
 #include <assert.h>
-#include "layer.hpp"
-#include "tensor.hpp"
-#include "initializer.hpp"
-#include "const_initializer.hpp"
+#include "basics/layer.hpp"
+#include "basics/tensor.hpp"
+#include "basics/initializer.hpp"
+#include "initializers/const_initializer.hpp"
 
 
 // TODO: implement CUDA kernel for forward()
