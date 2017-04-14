@@ -23,8 +23,8 @@ public:
       stride(stride), initializer_(initializer), 
       W_(Tensor<Dtype>({kernel_height, kernel_width, in_channels})),
       b_(Tensor<Dtype>({out_channels})) {
-        InitParams();
-      }
+    InitParams();
+  }
 
   // directly pass in W & b
   Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
