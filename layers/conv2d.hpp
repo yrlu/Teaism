@@ -21,19 +21,28 @@ public:
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
       stride(stride), initializer_(initializer), 
-      W_(Tensor<Dtype>({kernel_height, kernel_width, in_channels})),
-      b_(Tensor<Dtype>({out_channels})) {
+      W_(new Tensor<Dtype>({kernel_height, kernel_width, in_channels})),
+      b_(new Tensor<Dtype>({out_channels})) {
     InitParams();
   }
 
   // directly pass in W & b
   Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
-    size_t out_channels, size_t stride, Tensor<Dtype>& W, Tensor<Dtype>& b):
+    size_t out_channels, size_t stride, Tensor<Dtype>* W, Tensor<Dtype>* b):
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
       stride(stride), W_(W), b_(b) {}
 
-  ~Conv2D() {}
+  ~Conv2D() {
+    if(W_ != NULL) {
+      delete W_;
+      W_ = NULL;
+    }
+    if(b_ != NULL) {
+      delete b_;
+      b_ = NULL;
+    }
+  }
 
   void Forward(Tensor<Dtype> & bottom, Tensor<Dtype> & top) {
     // Assert dimensions (n, hei, wid, channel)
@@ -51,8 +60,8 @@ public:
   const size_t stride;
 
 private:
-  Tensor<Dtype> W_;
-  Tensor<Dtype> b_;
+  Tensor<Dtype>* W_;
+  Tensor<Dtype>* b_;
   const Initializer<Dtype>* initializer_;
   void InitParams() {
     if (initializer_!=NULL) {

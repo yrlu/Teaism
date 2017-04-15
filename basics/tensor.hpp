@@ -5,18 +5,23 @@
 #include <cstdlib>
 #include <numeric>
 #include <functional>
+#include "basics/session.hpp"
 
 template<class Dtype>
 class Tensor {
 public:
-  Tensor(std::vector<size_t> dims):dims_(dims) {
+  Tensor(std::vector<size_t> dims):dims_(dims), gpu(Session::GetSession()->gpu) {
     len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
     AllocateMemory();
   }
+
   ~Tensor() {
-    // cpu
-    free(data_array_);
-    // TODO: free GPU memory 
+    if (gpu) {
+      // TODO: free GPU memory 
+    } else {
+      // cpu
+      free(data_array_);
+    }
   }
 
   unsigned GetIdx(const std::vector<unsigned> idx) {
@@ -42,14 +47,18 @@ public:
     return dims_;
   }
 
+  const bool gpu;
 private:
   std::vector<size_t> dims_;
   size_t len_;
   Dtype* data_array_;
   void AllocateMemory() {
-    // CPU
-    data_array_ = (Dtype*)std::malloc(len_*sizeof(Dtype));
-    // TODO: implement GPU memory allocation
+    if (gpu) {
+      // TODO: implement GPU memory allocation
+    } else {
+      // CPU
+      data_array_ = (Dtype*)std::malloc(len_*sizeof(Dtype));  
+    }
   }
 };
 

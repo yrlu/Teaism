@@ -8,10 +8,10 @@ template<class Dtype>
 class ConstInitializer: public Initializer<Dtype> {
 public:
   ConstInitializer(Dtype val): val_(val) {}
-  void Initialize(Tensor<Dtype>& tensor) const {
-    Dtype* data_array = tensor.GetDataPtr();
+  void Initialize(Tensor<Dtype>* tensor) const {
+    Dtype* data_array = tensor->GetDataPtr();
     // cpu
-    for (int i = 0; i < tensor.size(); i++) {
+    for (int i = 0; i < tensor->size(); i++) {
       data_array[i] = val_;
     }
     // TODO: GPU initializer

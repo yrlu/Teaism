@@ -6,7 +6,7 @@
 template<class Dtype>
 class Initializer {
 public:
-  virtual void Initialize(Tensor<Dtype>& tensor) const = 0;
+  virtual void Initialize(Tensor<Dtype>* tensor) const = 0;
 };
 
 #endif // INITIALIZER_CUH_
