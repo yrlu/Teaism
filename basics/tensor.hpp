@@ -31,7 +31,7 @@ public:
     return out_idx;
   }
 
-  Dtype at(const std::vector<unsigned> idx) {
+  Dtype& at(const std::vector<unsigned> idx) {
     return data_array_[GetIdx(idx)];
   }
 

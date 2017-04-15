@@ -6,7 +6,7 @@
 #include "basics/layer.hpp"
 #include "basics/tensor.hpp"
 #include "basics/initializer.hpp"
-#include "initializers/const_initializer.hpp"
+#include "initializers/gaussian_kernel_initializer.hpp"
 
 
 // TODO: implement CUDA kernel for forward()
@@ -67,7 +67,8 @@ private:
     if (initializer_!=NULL) {
       initializer_->Initialize(W_, b_);
     } else {
-      ConstInitializer<Dtype>((Dtype)0.1, (Dtype)0).Initialize(W_, b_);
+      // ConstInitializer<Dtype>((Dtype)0.1, (Dtype)0).Initialize(W_, b_);
+      GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_);
     }
   }
 };
