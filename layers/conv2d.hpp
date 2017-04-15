@@ -102,7 +102,7 @@ private:
       for(int i = 0; i < kernel_height; i++) {
         for(int j = 0; j < kernel_width; j++) {
           // (n, hei, wid, channel),   // (hei, wid, input, output)
-          sum += bottom->atPadding({idx[0], idx[1]-int(kernel_height/2), idx[2]-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
+          sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
         }
       }
     }

@@ -22,18 +22,17 @@ void test_conv_layer() {
 
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Conv2D<float>* conv_layer = new Conv2D<float>(5, 5, 1, 1, 1);
-  assert(conv_layer->kernel_height==5);
-  assert(conv_layer->kernel_width==5);
-  assert(conv_layer->in_channels==1);
-  assert(conv_layer->out_channels==1);
-  assert(conv_layer->stride==1);
-
-  const char* INPUT_BMP_PATH = "./tmp/test/steel_wool_small.bmp";
-  const char* OUTPUT_REFERENCE_BMP_PATH = "./tmp/test/steel_wool_large_reference_output.bmp";
+  
+  // const char* INPUT_BMP_PATH = "./tmp/test/steel_wool_large.bmp";
+  // const char* OUTPUT_REFERENCE_BMP_PATH = "./tmp/test/steel_wool_large_reference_output.bmp";
   const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
 
-  size_t h = 10;
-  size_t w = 10;
+  // bitmap_image img(INPUT_BMP_PATH);
+  // size_t h = img.height();
+  // size_t w = img.width();
+
+  size_t h = 100;
+  size_t w = 100;
   bitmap_image img(w, h);
   Tensor<float> bottom = Tensor<float>({1, h, w, 1});
 
@@ -41,11 +40,11 @@ void test_conv_layer() {
     for (int j = 0; j < w; j++) {
       // bottom.at({0, i, j, 0}) = (float)img.red_channel(j, i);
       bottom.at({0, i, j, 0}) = (float) (rand() % 255);
-      std::cout<< bottom.at({0, i, j, 0}) << " ";
+      // std::cout<< bottom.at({0, i, j, 0}) << " ";
     }
-    std::cout<<std::endl;
+    // std::cout<<std::endl;
   }
-
+  // std::cout<<"---"<<std::endl;
   // (n, hei, wid, channel)
 
   Tensor<float> top = Tensor<float>({1, h, w, 1});
@@ -54,10 +53,11 @@ void test_conv_layer() {
   for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
       unsigned val = (unsigned) top.at({0, i, j, 0});
-      std::cout<< top.at({0, i, j, 0}) << " ";
+      // unsigned val = (unsigned) bottom.at({0, i, j, 0});
       img.set_pixel(j, i, val, val, val);
+      // std::cout<< top.at({0, i, j, 0}) << " ";
     }
-    std::cout<<std::endl;
+    // std::cout<<std::endl;
   }
   
   img.save_image(OUTPUT_BMP_PATH);
