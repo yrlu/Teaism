@@ -21,7 +21,7 @@ public:
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
       stride(stride), initializer_(initializer), 
-      W_(new Tensor<Dtype>({kernel_height, kernel_width, in_channels})),
+      W_(new Tensor<Dtype>({kernel_height, kernel_width, in_channels, out_channels})),
       b_(new Tensor<Dtype>({out_channels})) {
     InitParams();
   }
@@ -65,11 +65,9 @@ private:
   const Initializer<Dtype>* initializer_;
   void InitParams() {
     if (initializer_!=NULL) {
-      initializer_->Initialize(W_);
-      initializer_->Initialize(b_);
+      initializer_->Initialize(W_, b_);
     } else {
-      ConstInitializer<Dtype>((Dtype)0.1).Initialize(W_);
-      ConstInitializer<Dtype>((Dtype)0).Initialize(b_);
+      ConstInitializer<Dtype>((Dtype)0.1, (Dtype)0).Initialize(W_, b_);
     }
   }
 };
