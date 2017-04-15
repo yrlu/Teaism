@@ -2,9 +2,11 @@
 #define TENSOR_CUH_
 
 #include <vector>
+#include <assert.h>
 #include <cstdlib>
 #include <numeric>
 #include <functional>
+#include <iostream>
 #include "basics/session.hpp"
 
 template<class Dtype>
@@ -27,27 +29,42 @@ public:
     }
   }
 
-  unsigned GetIdx(const std::vector<unsigned> idx) {
+  unsigned GetIdx(const std::vector<int> idx) const {
     unsigned out_idx = 0;
     for (int i = 0; i < idx.size(); i++) 
       out_idx = out_idx*dims_[i] + idx[i];
     return out_idx;
   }
 
-  Dtype& at(const std::vector<unsigned> idx) {
-    return data_array_[GetIdx(idx)];
+  const std::vector<size_t>& GetDims() const {
+    return dims_;
   }
 
-  Dtype* GetDataPtr() {
+  Dtype* GetDataPtr() const {
     return data_array_;
   }
 
-  size_t size() {
-    return len_;
+  Dtype& at(const std::vector<int> idx) {
+    assert(isValidIdx(idx));
+    return data_array_[GetIdx(idx)];
   }
 
-  const std::vector<size_t>& GetDims() {
-    return dims_;
+  const Dtype atPadding(const std::vector<int> idx, Dtype default_val = 0.0) const {
+    assert(idx.size() == dims_.size());
+    if (!isValidIdx(idx)) return default_val;
+    return data_array_[GetIdx(idx)];
+  }
+
+  bool isValidIdx(const std::vector<int> idx) const {
+    if(idx.size() != dims_.size()) return false;
+    for(int i = 0; i < idx.size(); i++) {
+      if(idx[i] < 0 && idx[i] >= dims_.size()) return false;
+    }
+    return true;
+  }
+
+  size_t size() const {
+    return len_;
   }
 
   const bool gpu;

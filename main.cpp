@@ -2,26 +2,65 @@
 #include "layers/conv2d.hpp"
 #include "basics/tensor.hpp"
 #include "basics/session.hpp"
+#include "tmp/bitmap_image.hpp"
 #include "initializers/gaussian_kernel_initializer.hpp"
 #include <assert.h>
 #include <cmath>
 
 void test_session() {
   std::cout<< "Testing Session .."<<std::endl;
-  Session* session = Session::GetSession();
+  Session* session = Session::GetNewSession();
   session->gpu = true;
   std::cout<< "use gpu: "<< session->gpu <<std::endl;
 }
 
 void test_conv_layer() {
   std::cout<< "Testing Conv2D .."<<std::endl;
+
+  Session* session = Session::GetNewSession();
+  session->gpu = false;
+
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float>* conv_layer = new Conv2D<float>(5, 5, 3, 5, 1);
+  Conv2D<float>* conv_layer = new Conv2D<float>(5, 5, 1, 1, 1);
   assert(conv_layer->kernel_height==5);
   assert(conv_layer->kernel_width==5);
-  assert(conv_layer->in_channels==3);
-  assert(conv_layer->out_channels==5);
+  assert(conv_layer->in_channels==1);
+  assert(conv_layer->out_channels==1);
   assert(conv_layer->stride==1);
+
+  const char* INPUT_BMP_PATH = "./tmp/test/steel_wool_small.bmp";
+  const char* OUTPUT_REFERENCE_BMP_PATH = "./tmp/test/steel_wool_large_reference_output.bmp";
+  const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
+
+  size_t h = 10;
+  size_t w = 10;
+  bitmap_image img(w, h);
+  Tensor<float> bottom = Tensor<float>({1, h, w, 1});
+
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      // bottom.at({0, i, j, 0}) = (float)img.red_channel(j, i);
+      bottom.at({0, i, j, 0}) = (float) (rand() % 255);
+      std::cout<< bottom.at({0, i, j, 0}) << " ";
+    }
+    std::cout<<std::endl;
+  }
+
+  // (n, hei, wid, channel)
+
+  Tensor<float> top = Tensor<float>({1, h, w, 1});
+  conv_layer->Forward(&bottom, &top);
+
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      unsigned val = (unsigned) top.at({0, i, j, 0});
+      std::cout<< top.at({0, i, j, 0}) << " ";
+      img.set_pixel(j, i, val, val, val);
+    }
+    std::cout<<std::endl;
+  }
+  
+  img.save_image(OUTPUT_BMP_PATH);
   delete conv_layer;
 }
 
@@ -43,8 +82,8 @@ void test_gaussian_kernel() {
   Tensor<float>b = Tensor<float>({1});
   GaussianKernelInitializer<float>(5.0).Initialize(&W, &b);
   double sum = 0.0;
-  for (unsigned i = 0; i < W.GetDims()[0]; i++) {
-    for (unsigned j = 0; j < W.GetDims()[1]; j++) {
+  for (int i = 0; i < W.GetDims()[0]; i++) {
+    for (int j = 0; j < W.GetDims()[1]; j++) {
       sum += W.at({i, j, 0, 0});
       std::cout<<W.at({i, j, 0, 0})<<"\t";
     }

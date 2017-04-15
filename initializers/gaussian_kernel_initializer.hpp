@@ -20,16 +20,16 @@ public:
       auto w_dims = W->GetDims();
       assert(w_dims.size() == 4);
       
-      for(unsigned i = 0; i < w_dims[2]; i++) {
+      for(int i = 0; i < w_dims[2]; i++) {
         // input channel i ;
-        for (unsigned j = 0; j < w_dims[3]; j++) {
+        for (int j = 0; j < w_dims[3]; j++) {
           // output channel j;
 
           // init kernel according to mu_ and sigma_;
           double x_mu_ = (w_dims[1]-1)/2;
           double y_mu_ = (w_dims[0]-1)/2;
-          for (unsigned x = 0; x < w_dims[1]; ++x) {
-            for (unsigned y = 0; y < w_dims[0]; ++y) {
+          for (int x = 0; x < w_dims[1]; ++x) {
+            for (int y = 0; y < w_dims[0]; ++y) {
               double g = exp(-0.5 * (pow((x - x_mu_) / sigma_, 2.0) + pow((y - y_mu_) / sigma_, 2.0))) / (2 * PI * sigma_ * sigma_);
               W->at({y, x, i, j}) = (Dtype)g;
             }
@@ -37,13 +37,13 @@ public:
 
           // normalize the filter
           Dtype sum = 0.0;
-          for (unsigned x = 0; x < w_dims[1]; ++x) {
-            for (unsigned y = 0; y < w_dims[0]; ++y) {
+          for (int x = 0; x < w_dims[1]; ++x) {
+            for (int y = 0; y < w_dims[0]; ++y) {
               sum += W->at({y, x, i, j});
             }
           }
-          for (unsigned x = 0; x < w_dims[1]; ++x) {
-            for (unsigned y = 0; y < w_dims[0]; ++y) {
+          for (int x = 0; x < w_dims[1]; ++x) {
+            for (int y = 0; y < w_dims[0]; ++y) {
               W->at({y, x, i, j}) /= sum;
             }
           }
