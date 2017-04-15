@@ -1,7 +1,15 @@
 #include <iostream>
 #include "layers/conv2d.hpp"
 #include "basics/tensor.hpp"
+#include "basics/session.hpp"
 #include <assert.h>
+
+void test_session() {
+  std::cout<< "Testing Session .."<<std::endl;
+  Session* session = Session::GetSession();
+  session->gpu = true;
+  std::cout<< "use gpu: "<< session->gpu <<std::endl;
+}
 
 void test_conv_layer() {
   std::cout<< "Testing Conv2D .."<<std::endl;
@@ -29,4 +37,5 @@ void test_tensor() {
 int main(void) {
   test_conv_layer();
   test_tensor();  
+  test_session();
 }
