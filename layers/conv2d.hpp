@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <assert.h>
-#include <iostream>
-#include <stdio.h>
 #include "basics/layer.hpp"
 #include "basics/tensor.hpp"
 #include "basics/session.hpp"
@@ -64,7 +62,6 @@ public:
             for(int y = 0; y < bottom->GetDims()[1]; y += 1) {
               // batch idx b, output layer o, pixel (x, y)
               // top->at({b, y, x, o}) = 
-              // printf("%d %d %d %d \n", b, y, x, o);
               conv(bottom, top, {b, y, x, o});
             }
           }
@@ -108,7 +105,6 @@ private:
     }
     sum += b_->at({0});
     top->at(idx) = sum;
-    // printf("%d %d %d %d: %f \n",idx[0], idx[1], idx[2], idx[3], top->at(idx));
   }
 };
 
