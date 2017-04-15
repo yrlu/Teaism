@@ -13,9 +13,9 @@ public:
   GaussianKernelInitializer(double sigma): sigma_(sigma) {}
   void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b) const {
     if (W->gpu) {
-      
+      // TODO: GPU
     } else {
-      // cpu
+      // CPU
       Dtype* w_data_array = W->GetDataPtr();
       auto w_dims = W->GetDims();
       assert(w_dims.size() == 4);
@@ -54,7 +54,7 @@ public:
       for (int i = 0; i < b->size(); i++) {
         b->GetDataPtr()[i] = 0;
       }
-    }  
+    }
   }
 
 private:

@@ -1,21 +1,34 @@
 #ifndef SESSION_HPP_
 #define SESSION_HPP_
+#include <iostream>
 
 class Session {
 public:
-  static Session * GetSession() {
+  static Session* GetNewSession() {
+    if (session) {
+      Session * tmp = session;
+      session = NULL;
+      delete tmp;
+    }
+    session = new Session();
+    return session;
+  }
+  static Session* GetSession() {
     if (!session) {
       session = new Session();
     }
     return session;
   }
   ~Session() {
-    delete session;
+    if (session) {
+      delete session;
+      session = NULL;
+    }
   }
-  bool gpu = false;
-  unsigned device = 0;
+  bool gpu;
+  unsigned device;
 private:
-  Session() {}
+  Session():gpu(false), device(0) {}
   static Session* session;
 };
 

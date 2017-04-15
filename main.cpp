@@ -2,6 +2,7 @@
 #include "layers/conv2d.hpp"
 #include "basics/tensor.hpp"
 #include "basics/session.hpp"
+#include "initializers/gaussian_kernel_initializer.hpp"
 #include <assert.h>
 
 void test_session() {
@@ -34,8 +35,27 @@ void test_tensor() {
   delete tensor;
 }
 
+void test_gaussian_kernel() {
+  std::cout<< "Testing gaussian kernel initializer .. "<<std::endl;  
+  std::cout<<Session::GetNewSession()->gpu<<std::endl;
+  Tensor<float>* W = new Tensor<float>({5,5,1,1});
+  Tensor<float>* b = new Tensor<float>({1});
+  GaussianKernelInitializer<float>(5.0).Initialize(W, b);
+  for (unsigned i = 0; i < W->GetDims()[0]; i++) {
+    for (unsigned j = 0; j < W->GetDims()[1]; j++) {
+      std::cout<<W->at({i, j, 0, 0})<<"\t";
+    }
+    std::cout<<std::endl;
+  }
+
+  delete W;
+  delete b;
+}
+
+
 int main(void) {
   test_conv_layer();
   test_tensor();  
   test_session();
+  test_gaussian_kernel();
 }

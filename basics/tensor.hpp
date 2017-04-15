@@ -10,7 +10,7 @@
 template<class Dtype>
 class Tensor {
 public:
-  Tensor(std::vector<size_t> dims):dims_(dims), gpu(Session::GetSession()->gpu) {
+  Tensor(std::vector<size_t> dims, const bool _gpu=false):dims_(dims), gpu(_gpu) {
     len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
     AllocateMemory();
   }
@@ -20,7 +20,10 @@ public:
       // TODO: free GPU memory 
     } else {
       // cpu
-      free(data_array_);
+      if (data_array_ != NULL) {
+        free(data_array_);
+        data_array_ = NULL;
+      }
     }
   }
 
