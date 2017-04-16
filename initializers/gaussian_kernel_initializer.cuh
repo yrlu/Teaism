@@ -2,6 +2,7 @@
 #define GAUSSIAN_INITIALIZER_CUH_
 
 #include "basics/initializer.hpp"
+#include "utils/helper_cuda.h"
 #include <cmath>
 
 #define PI (3.1415926535)
@@ -58,19 +59,17 @@ public:
   GaussianKernelInitializer(double sigma): sigma_(sigma) {}
   void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b) const {
     if (W->gpu) {
-      // TODO: GPU
+      Tensor<Dtype> _W(W->GetDims());
+      Tensor<Dtype> _b(b->GetDims());
+      InitGaussian(&_W, &_b);
+      cudaStatus = cudaMemcpy(W.GetDataPtr(), _W.GetDataPtr(), _W.size()*sizeof(Dtype), cudaMemcpyHostToDevice);
+      checkCudaErrors(cudaStatus);
+      cudaStatus = cudaMemcpy(b.GetDataPtr(), _b.GetDataPtr(), _b.size()*sizeof(Dtype), cudaMemcpyHostToDevice);
+      checkCudaErrors(cudaStatus);
+    } else {
       Dtype * w_data_array = W->GetDataPtr();
       auto w_dims = W->GetDims();
       assert(w_dims.size() == 4);
-      
-      Tensor<Dtype> * _W = new Tensor<Dtype>(W->GetDims());
-      Tensor<Dtype> * _b = new Tensor<Dtype>(b->GetDims());
-      InitGaussian(_W, _b);
-
-      
-  // cudaStatus = cudaMemcpy(*d_gaussian, &gaussian[0], FILTER_SIZE * FILTER_SIZE * sizeof(float), cudaMemcpyHostToDevice);
-  // checkCudaErrors(cudaStatus);
-    } else {
       InitGaussian(W, b);
     }
   }

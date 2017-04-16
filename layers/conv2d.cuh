@@ -45,6 +45,33 @@ public:
     }
   }
 
+  __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int b, int o) {
+    // b is the index of the tensor
+    // o is the output channel
+    int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
+    int x = x_top*stride;
+    int y = y_top*stride;
+    if (!top->isValidIdx({b, y, x, o})) {
+      return;
+    }
+    std::vector<int> idx = {b, y, x, o};
+    size_t in_channels = bottom->GetDims[3];
+    Dtype sum = 0.0;
+    for(int c = 0; c < in_channels; c++) {
+      for(int i = 0; i < kernel_height; i++) {
+        for(int j = 0; j < kernel_width; j++) {
+          // (n, hei, wid, channel),   // (hei, wid, input, output)
+          sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
+        }
+      }
+    }
+    sum += b_->at({0});
+    top->at({b, y_top, x_top, o}) = sum;
+  }
+
+  const int BLOCKDIM = 32;
+
   void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     // Assert dimensions (n, hei, wid, channel)
     assert(bottom->GetDims()[3]==in_channels);
@@ -52,9 +79,22 @@ public:
     assert(bottom->GetDims().size() == 4);
     assert(top->GetDims().size() == 4);
     assert(bottom->GetDims()[0] == top->GetDims()[0]);
-    // TODO: implement CPU convolution
     if (Session::GetSession()->gpu) {
       // TODO: implement GPU convolution
+      // 1) decide the blocksize and number of blocks
+      // 
+      size_t n = bottom->GetDims[0];
+      size_t hei = top->GetDims[1];
+      size_t wid = top->GetDims[2];
+      size_t out_channels = top->GetDims[3];
+
+      dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
+      dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+      for (int b = 0; b < n; b++) {
+        for (int o = 0; o < out_channels; o++) {
+          conv << <blocksInGrid, threadsPerBlock >> > (bottom, top, b, o);
+        }
+      }
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
