@@ -1,9 +1,9 @@
 #include <iostream>
-#include "layers/conv2d.hpp"
+#include "layers/conv2d.cuh"
 #include "basics/tensor.hpp"
 #include "basics/session.hpp"
 #include "tmp/bitmap_image.hpp"
-#include "initializers/gaussian_kernel_initializer.hpp"
+#include "initializers/gaussian_kernel_initializer.cuh"
 #include <assert.h>
 #include <cmath>
 
@@ -21,13 +21,12 @@ void test_conv_layer() {
   session->gpu = false;
 
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float>* conv_layer = new Conv2D<float>(5, 5, 1, 1, 1);
+  Conv2D<float>* conv_layer = new Conv2D<float>(5, 5, 1, 1, 2);
   
   const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
 
-  size_t h = 200;
-  size_t w = 200;
-  bitmap_image img(w, h);
+  size_t h = 400;
+  size_t w = 600;
   Tensor<float> bottom = Tensor<float>({1, h, w, 1});
 
   for (int i = 0; i < h; i++) {
@@ -37,11 +36,13 @@ void test_conv_layer() {
   }
   // (n, hei, wid, channel)
 
-  Tensor<float> top = Tensor<float>({1, h, w, 1});
+  Tensor<float> top = Tensor<float>({1, h/2, w/2, 1});
   conv_layer->Forward(&bottom, &top);
 
-  for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
+
+  bitmap_image img(w/2, h/2);
+  for (int i = 0; i < h/2; i++) {
+    for (int j = 0; j < w/2; j++) {
       unsigned val = (unsigned) top.at({0, i, j, 0});
       img.set_pixel(j, i, val, val, val);
     }

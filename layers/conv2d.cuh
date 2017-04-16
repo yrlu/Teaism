@@ -7,7 +7,7 @@
 #include "basics/tensor.hpp"
 #include "basics/session.hpp"
 #include "basics/initializer.hpp"
-#include "initializers/gaussian_kernel_initializer.hpp"
+#include "initializers/gaussian_kernel_initializer.cuh"
 
 
 // TODO: implement CUDA kernel for forward()
@@ -103,22 +103,22 @@ private:
     }
   }
 
-  // cpu kernel operation
-  void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, const std::vector<int> idx) {
-    // idx = {b, y, x, o}
-    // batch idx b, output layer o, pixel (x, y)
-    Dtype sum = 0.0;
-    for(int c = 0; c < in_channels; c++) {
-      for(int i = 0; i < kernel_height; i++) {
-        for(int j = 0; j < kernel_width; j++) {
-          // (n, hei, wid, channel),   // (hei, wid, input, output)
-          sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
-        }
-      }
-    }
-    sum += b_->at({0});
-    top->at(idx) = sum;
-  }
+  // // cpu kernel operation
+  // void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, const std::vector<int> idx) {
+  //   // idx = {b, y, x, o}
+  //   // batch idx b, output layer o, pixel (x, y)
+  //   Dtype sum = 0.0;
+  //   for(int c = 0; c < in_channels; c++) {
+  //     for(int i = 0; i < kernel_height; i++) {
+  //       for(int j = 0; j < kernel_width; j++) {
+  //         // (n, hei, wid, channel),   // (hei, wid, input, output)
+  //         sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
+  //       }
+  //     }
+  //   }
+  //   sum += b_->at({0});
+  //   top->at(idx) = sum;
+  // }
 };
 
 #endif  // CONV2D_LAYER_CUH_
