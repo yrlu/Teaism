@@ -58,11 +58,24 @@ public:
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
-          for(int x = 0; x < bottom->GetDims()[2]; x += 1) {
-            for(int y = 0; y < bottom->GetDims()[1]; y += 1) {
+          for(int x = 0, x_top = 0; x < bottom->GetDims()[2]; x += stride, x_top += 1) {
+            for(int y = 0, y_top = 0; y < bottom->GetDims()[1]; y += stride, y_top += 1) {
               // batch idx b, output layer o, pixel (x, y)
               // top->at({b, y, x, o}) = 
-              conv(bottom, top, {b, y, x, o});
+              std::vector<int> idx = {b, y, x, o};
+
+              Dtype sum = 0.0;
+              for(int c = 0; c < in_channels; c++) {
+                for(int i = 0; i < kernel_height; i++) {
+                  for(int j = 0; j < kernel_width; j++) {
+                    // (n, hei, wid, channel),   // (hei, wid, input, output)
+                    sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
+                  }
+                }
+              }
+              sum += b_->at({0});
+              top->at({b, y_top, x_top, o}) = sum;
+              //conv(bottom, top, {b, y, x, o});
             }
           }
         }

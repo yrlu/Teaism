@@ -25,8 +25,8 @@ void test_conv_layer() {
   
   const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
 
-  size_t h = 100;
-  size_t w = 100;
+  size_t h = 200;
+  size_t w = 200;
   bitmap_image img(w, h);
   Tensor<float> bottom = Tensor<float>({1, h, w, 1});
 
@@ -42,7 +42,7 @@ void test_conv_layer() {
 
   for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
-      unsigned val = (unsigned) bottom.at({0, i, j, 0});
+      unsigned val = (unsigned) top.at({0, i, j, 0});
       img.set_pixel(j, i, val, val, val);
     }
   }
