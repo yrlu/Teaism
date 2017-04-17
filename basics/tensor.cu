@@ -67,6 +67,11 @@ public:
   }
 
   const bool gpu;
+
+  __host__ __device__ void AllocateDataArray {
+    data_array_ = new Dtype[len_];
+  }
+
   size_t dims_[4];
   size_t len_;
   Dtype* data_array_;
