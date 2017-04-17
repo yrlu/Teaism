@@ -16,5 +16,8 @@ conv2d.o:
 main:
 	$(NVCC) $(GCC_OPTS) main.cu -o main.o -I.
 
+tests:
+	$(NVCC) $(GCC_OPTS) tests.cu -o tests.o -I.
+
 clean:
 	rm *.o
