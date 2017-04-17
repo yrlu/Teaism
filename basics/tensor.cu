@@ -1,33 +1,23 @@
 #ifndef TENSOR_CUH_
 #define TENSOR_CUH_
 
-#include <vector>
 #include <assert.h>
 #include <cstdlib>
 #include <numeric>
 #include <functional>
-#include <iostream>
 #include "basics/session.hpp"
 #include "cuda_runtime.h"
 #include "utils/helper_cuda.h"
 
 
-
-
 template<class Dtype>
 class Tensor {
 public:
-  __host__ __device__ Tensor(size_t* dims, const bool _gpu=true):gpu(_gpu) {
-    //len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
-    len_ = dims[0] * dims[1] * dims[2] * dims[3];
-    dims_[0] = dims[0];
-    dims_[1] = dims[1];
-    dims_[2] = dims[2];
-    dims_[3] = dims[3];
-  }
 
   __host__ __device__ ~Tensor() {
-    delete [] data_array_;
+    if(data_array_ != NULL) {
+      delete [] data_array_;
+    }
   }
 
   __host__ __device__ unsigned GetIdx(const int* idx) const {
@@ -66,17 +56,73 @@ public:
     return len_;
   }
 
-  const bool gpu;
+  __host__ __device__ void AllocateDataArray() {
+    data_array_ = new Dtype[len_];
+  }
 
- __host__ __device__ void AllocateDataArray() {
-   data_array_ = new Dtype[len_];
- }
+  __host__ Tensor<Dtype> * GetGPUPtr() const {
+    if(gpu_ptr_ == NULL) {
+      cudaMalloc((void**)&gpu_ptr_, sizeof(Tensor<Dtype>));
+      cudaMemcpy(gpu_ptr_, this, sizeof(Tensor<Dtype>), cudaMemcpyHostToDevice);
+    }
+    return gpu_ptr_;
+  }
+  __host__ void AllocateDataArrayGPU();
+
+  __host__ static Tensor<Dtype>* CreateTensorGPU(size_t* dims, bool allocate_memory = true) {
+    Tensor<Dtype> tensor_cpu(dims);
+    Tensor<Dtype>* tensor_gpu;
+    cudaMalloc((void**)&tensor_gpu, sizeof(Tensor<Dtype>));
+    cudaMemcpy(tensor_gpu, &tensor_cpu, sizeof(Tensor<Dtype>), cudaMemcpyHostToDevice);
+    if (allocate_memory) {
+      AllocateDataArrayGPU(tensor_gpu);
+    }
+    return tensor_gpu;
+  }
+
+  __host__ static Tensor<Dtype>* CreateTensorCPU(size_t* dims, bool allocate_memory = true) {
+    Tensor<Dtype> * tensor_cpu = new Tensor(dims);
+    if (allocate_memory) {
+      tensor_cpu->AllocateDataArray();
+    }
+    return tensor_cpu;
+  }
+
+  __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
+
+private:
+  __host__ __device__ Tensor(size_t* dims): gpu_ptr_(NULL), data_array_(NULL) {
+    //len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
+    len_ = dims[0] * dims[1] * dims[2] * dims[3];
+    dims_[0] = dims[0];
+    dims_[1] = dims[1];
+    dims_[2] = dims[2];
+    dims_[3] = dims[3];
+  }
 
   size_t dims_[4];
   size_t len_;
   Dtype* data_array_;
-
-private:
+  Tensor<Dtype> * gpu_ptr_;
 };
+
+
+template<class Dtype>
+__global__ void allocate_tensor_dataarray(Tensor<Dtype> * tensor_gpu) {
+  tensor_gpu->AllocateDataArray();
+}
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::AllocateDataArrayGPU() {
+  Tensor<Dtype>* _gpu_ptr = GetGPUPtr();
+  allocate_tensor_dataarray<Dtype><<<1, 1>>>(_gpu_ptr);
+}
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu) {
+  allocate_tensor_dataarray<Dtype><<<1, 1>>>(tensor_gpu);
+}
+
+
 
 #endif // TENSOR_CUH_

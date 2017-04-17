@@ -3,8 +3,6 @@
 #include "initializers/gaussian_kernel_initializer.cu"
 #include <assert.h>
 #include <cmath>
-#include "utils/cuda_utils.cu"
-
 
 
 cudaError_t cudaStatus = cudaSetDevice(0);
@@ -37,26 +35,24 @@ __global__ void access_tensor_dataarray(Tensor<float> * tensor_gpu) {
 }
 
 void test_tensor_gpu() {
-  size_t dims[4] = {3, 3, 3, 3};
-  Tensor<float>* tensor_cpu = new Tensor<float>(dims);
-  Tensor<float>* tensor_gpu;
-  cudaMalloc((void **)&tensor_gpu, sizeof(Tensor<float>));
-  cudaMemcpy(tensor_gpu, tensor_cpu, sizeof(Tensor<float>), cudaMemcpyHostToDevice);
+  printf("-- Example usage of tensor on gpu --\n");
+  size_t dims[4] = {1, 3, 3, 1};
 
+  Tensor<float>* tensor_gpu = Tensor<float>::CreateTensorGPU(dims);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
-  
-  allocate_tensor_dataarray<<<1, 1>>>(tensor_gpu);
+  // Tensor<float>::AllocateDataArrayGPU(tensor_gpu);
   access_tensor_dataarray<<<1, 1>>>(tensor_gpu);
-  delete tensor_cpu;
+  
   cudaFree(tensor_gpu);
 }
 
 
 void test_tensor_cpu() {
-  size_t dims[4] = {3,3,3,3};
-  Tensor<float> * tensor_cpu = new Tensor<float>(dims);
-  tensor_cpu->AllocateDataArray();
+  printf("-- Example usage of tensor on cpu --\n");
+  size_t dims[4] = {1,3,3,1};
+  Tensor<float> * tensor_cpu = Tensor<float>::CreateTensorCPU(dims);
+  // tensor_cpu->AllocateDataArray();
 
   for(int i = 0; i < tensor_cpu->size(); i++) {
     tensor_cpu->GetDataPtr()[i] = i;
@@ -73,18 +69,21 @@ void test_tensor_cpu() {
       }
     }
   }
+
+  for(int i = 0; i < tensor_cpu->size(); i++) {
+    printf("%f \n", tensor_cpu->GetDataPtr()[i]);
+  }
   delete tensor_cpu;
 }
 
 
-int main(void) {  
+int main(void) {
+  // tensor
   checkCudaErrors(cudaStatus);
   test_tensor_gpu();  
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
-
-
   test_tensor_cpu();
 }

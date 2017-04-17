@@ -2,7 +2,6 @@
 #ifndef CONV2D_LAYER_CUH_
 #define CONV2D_LAYER_CUH_
 
-#include <vector>
 #include <assert.h>
 #include "basics/layer.hpp"
 #include "basics/tensor.cu"
@@ -33,7 +32,7 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
   size_t kernel_height = W->GetDims()[0];
   size_t kernel_width = W->GetDims()[1];
   W->GetDataPtr();
-  std::vector<int> idx = {bi, y, x, o};
+  int idx[4] = {bi, y, x, o};
   size_t in_channels = bottom->GetDims()[3];
   Dtype sum = 0.0;
   for(int c = 0; c < in_channels; c++) {
@@ -112,8 +111,7 @@ public:
             for(int y = 0, y_top = 0; y < bottom->GetDims()[1]; y += stride, y_top += 1) {
               // batch idx b, output layer o, pixel (x, y)
               // top->at({b, y, x, o}) = 
-              std::vector<int> idx = {b, y, x, o};
-
+              int idx[4] = {b, y, x, o};
               Dtype sum = 0.0;
               for(int c = 0; c < in_channels; c++) {
                 for(int i = 0; i < kernel_height; i++) {
