@@ -25,12 +25,15 @@ __device__ GaussianKernelInitializer<float>* gaussian_initializer = NULL;
 
 class Dummy {
 public:
-  __device__ Dummy(int n):num(n) {
+  __host__ __device__ Dummy(int n):num(n) {
 
   }
 
-  __device__ int get_num() {
+  __host__ __device__ int get_num() {
     return num;
+  }
+
+  __host__ __device__ void get_one() {
   }
 
 private:
@@ -39,21 +42,22 @@ private:
 
 
 
-__device__ Dummy* dummy = NULL;
+Dummy* dummy = NULL;
 
 
-__global__ void init_dummy() {
-  dummy = new Dummy(10000);
-  printf("afdasf");
-  printf("%d", dummy->get_num());
+__global__ void init_dummy(Dummy* dummy) {
+  dummy->get_one();
 }
 
 void test_dummy() {
+  dummy = new Dummy(10000);
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
-  init_dummy<<<1, 1>>>();
+  init_dummy<<<1, 1>>>(dummy);
   // use 48KB for shared memory, and 16KB for L1D$
   cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
 }
 
@@ -101,16 +105,47 @@ void test_dummy() {
 //   delete conv_layer;
 // }
 
-// void test_tensor() {
-//   std::cout<< "Testing Tensor .."<<std::endl;
-//   // inputs: tensor dimensions
-//   Tensor<float>* tensor = new Tensor<float>({3,3,3});
-//   assert(tensor->GetIdx({2,2,2})==26);
-//   assert(tensor->GetIdx({1,2,2})==17);
-//   assert(tensor->GetIdx({2,1,2})==23);
-//   assert(tensor->GetIdx({2,2,1})==25);
-//   delete tensor;
-// }
+
+__global__ void test_tensor_gpu(Tensor<float>* tensor) {
+  //int idx[4] = {1, 2, 2, 2};
+  //printf("%d\n", tensor->GetIdx(idx));
+}
+void test_tensor() {
+  // inputs: tensor dimensions
+
+  cudaError_t cudaStatus = cudaSetDevice(0);
+  size_t dims[4] = {3, 3, 3, 3};
+  Tensor<float>* tensor_cpu = new Tensor<float>(dims);
+  Tensor<float>* tensor_gpu;
+  cudaMalloc((void **)&tensor_gpu, sizeof(Tensor<float>));
+  cudaMemcpy(tensor_gpu, tensor_cpu, sizeof(Tensor<float>), cudaMemcpyHostToDevice);
+  
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  
+  float data_ary_cpu[3*3*3*3];
+  float * data_ary;
+  cudaMalloc((void**) &data_ary, sizeof(float)*3*3*3*3);
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaMemcpy(data_ary, data_ary_cpu, sizeof(float)*81, cudaMemcpyHostToDevice);
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaMemcpy(&tensor_gpu->data_array_, &data_ary, sizeof(float*), cudaMemcpyHostToDevice);
+   
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+//  test_tensor_gpu<<<1,1>>>(tensor_gpu);
+
+  delete tensor_cpu;
+}
+
+void test_tensor_cpu() {
+  size_t dims[4] = {3, 3, 3, 3};
+  Tensor<float>* tensor = new Tensor<float>(dims, false);
+  int idx[4] = {1, 2, 2, 2};
+  printf("%d\n", tensor->GetIdx(idx));
+}
 
 // void test_gaussian_kernel() {
 //   std::cout<< "Testing gaussian kernel initializer .. "<<std::endl;  
@@ -133,7 +168,18 @@ void test_dummy() {
 int main(void) {
   test_dummy();
   // test_conv_layer();
-  // test_tensor();  
+
+  cudaError_t cudaStatus = cudaSetDevice(0);
+  checkCudaErrors(cudaStatus);
+
+
+  test_tensor();  
+//  test_tensor_cpu();
   // test_session();
   // test_gaussian_kernel();
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaStatus = cudaDeviceSynchronize();
+  checkCudaErrors(cudaStatus);
+
 }
