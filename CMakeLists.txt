@@ -8,9 +8,13 @@ set (Teaism_VERSION_MINOR 1)
 # Add the binary tree to the search path for including files
 include_directories("${PROJECT_SOURCE_DIR}")
 
-# Set CXX compiler
+# Set CUDA
+
+find_package(CUDA QUIET REQUIRED)
+
+# Set CXX compiler / CUDA compiler
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
 
 # Add the executable
-add_executable (main.o main.cpp)
+cuda_add_executable (main.o main.cu)
 
