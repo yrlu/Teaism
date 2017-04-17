@@ -8,18 +8,23 @@
 
 #define PI (3.1415926535)
 
+
+// public Initializer<Dtype>
 // Initialize gaussian kernels
 template<class Dtype>
-class GaussianKernelInitializer: public Initializer<Dtype> {
+class GaussianKernelInitializer {
 private:
   const double sigma_;
 
-  __device__ void InitGaussian(Tensor<Dtype>* W, Tensor<Dtype> *b) const {
-    // CPU
+public:
+  GaussianKernelInitializer(double sigma): sigma_(sigma) {}
+  void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b, bool gpu = true) const;
+
+  __host__ __device__ static void InitGaussian(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma_) {
     Dtype* w_data_array = W->GetDataPtr();
-    std::vector<size_t> w_dims = W->GetDims();
-    assert(w_dims.size() == 4);
+    const size_t * w_dims = W->GetDims();
     
+    // W
     for(int i = 0; i < w_dims[2]; i++) {
       // input channel i ;
       for (int j = 0; j < w_dims[3]; j++) {
@@ -31,7 +36,8 @@ private:
         for (int x = 0; x < w_dims[1]; ++x) {
           for (int y = 0; y < w_dims[0]; ++y) {
             double g = exp(-0.5 * (pow((x - x_mu_) / sigma_, 2.0) + pow((y - y_mu_) / sigma_, 2.0))) / (2 * PI * sigma_ * sigma_);
-            W->at({y, x, i, j}) = (Dtype)g;
+            int idx[4] = {y, x, i, j};
+            W->at(idx) = (Dtype)g;
           }
         }
 
@@ -39,44 +45,41 @@ private:
         Dtype sum = 0.0;
         for (int x = 0; x < w_dims[1]; ++x) {
           for (int y = 0; y < w_dims[0]; ++y) {
-            sum = sum + W->at({y, x, i, j});
+            int idx[4] = {y, x, i, j};
+            sum = sum + W->at(idx);
           }
         }
         for (int x = 0; x < w_dims[1]; ++x) {
           for (int y = 0; y < w_dims[0]; ++y) {
-            W->at({y, x, i, j}) /= sum;
+            int idx[4] = {y, x, i, j};
+            W->at(idx) /= sum;
           }
         }
       }
     }
 
-    assert(b->GetDims().size() == 1);
+
+    // b
     for (int i = 0; i < b->size(); i++) {
       b->GetDataPtr()[i] = 0;
     }
   }
-
-public:
-  GaussianKernelInitializer(double sigma): sigma_(sigma) {}
-  __device__ void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b) const {
-    if (W->gpu) {
-      Tensor<Dtype>* _W = new Tensor<Dtype>(W->GetDims());
-      Tensor<Dtype>* _b = new Tensor<Dtype>(b->GetDims());
-      InitGaussian(_W, _b);
-      cudaError_t cudaStatus = cudaMemcpy(W->GetDataPtr(), _W->GetDataPtr(), _W->size()*sizeof(Dtype), cudaMemcpyHostToDevice);
-      checkCudaErrors(cudaStatus);
-      cudaStatus = cudaMemcpy(b->GetDataPtr(), _b->GetDataPtr(), _b->size()*sizeof(Dtype), cudaMemcpyHostToDevice);
-      checkCudaErrors(cudaStatus);
-      delete _W;
-      delete _b;
-    } else {
-      Dtype * w_data_array = W->GetDataPtr();
-      std::vector<size_t> w_dims = W->GetDims();
-      assert(w_dims.size() == 4);
-      InitGaussian(W, b);
-    }
-  }
-
 };
+
+template <class Dtype>
+__global__ void InitializeGPU(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma) {
+  GaussianKernelInitializer<Dtype>::InitGaussian(W, b, sigma);
+}
+
+template <class Dtype>
+void GaussianKernelInitializer<Dtype>::Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b, bool gpu) const {
+  if (gpu) {
+    InitializeGPU<<<1, 1>>>(W, b, sigma_);
+  } else {
+    GaussianKernelInitializer<Dtype>::InitGaussian(W, b, sigma_);
+  }
+}
+
+
 
 #endif // GAUSSIAN_INITIALIZER_CUH_

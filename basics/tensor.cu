@@ -10,8 +10,12 @@
 #include "utils/helper_cuda.h"
 
 
+/* 
+4D Tensor
+*/
 template<class Dtype>
 class Tensor {
+
 public:
 
   __host__ __device__ ~Tensor() {
@@ -57,9 +61,13 @@ public:
   }
 
   __host__ __device__ void AllocateDataArray() {
-    data_array_ = new Dtype[len_];
+    if(data_array_ == NULL) {
+      data_array_ = new Dtype[len_];
+    }
   }
 
+
+  // host functions
   __host__ Tensor<Dtype> * GetGPUPtr() const {
     if(gpu_ptr_ == NULL) {
       cudaMalloc((void**)&gpu_ptr_, sizeof(Tensor<Dtype>));
@@ -91,8 +99,7 @@ public:
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
 
 private:
-  __host__ __device__ Tensor(size_t* dims): gpu_ptr_(NULL), data_array_(NULL) {
-    //len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
+  __host__ __device__ Tensor(size_t dims[4]): gpu_ptr_(NULL), data_array_(NULL) {
     len_ = dims[0] * dims[1] * dims[2] * dims[3];
     dims_[0] = dims[0];
     dims_[1] = dims[1];

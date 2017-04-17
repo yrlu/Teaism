@@ -17,7 +17,8 @@ main:
 	$(NVCC) $(GCC_OPTS) main.cu -o main.o -I.
 
 tests:
-	$(NVCC) $(GCC_OPTS) tests_tensor.cu -o tests_tensor.o -I.
+	# $(NVCC) $(GCC_OPTS) tests_tensor.cu -o tests_tensor.o -I.
+	$(NVCC) $(GCC_OPTS) tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.
 
 clean:
 	rm *.o
