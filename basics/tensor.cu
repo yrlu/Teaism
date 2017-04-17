@@ -27,7 +27,7 @@ public:
   }
 
   __host__ __device__ ~Tensor() {
-      // TODO: free GPU memory
+    delete [] data_array_;
   }
 
   __host__ __device__ unsigned GetIdx(const int* idx) const {
