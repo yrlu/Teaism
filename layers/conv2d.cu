@@ -1,23 +1,58 @@
+
 #ifndef CONV2D_LAYER_CUH_
 #define CONV2D_LAYER_CUH_
 
 #include <vector>
 #include <assert.h>
 #include "basics/layer.hpp"
-#include "basics/tensor.hpp"
+#include "basics/tensor.cu"
 #include "basics/session.hpp"
 #include "basics/initializer.hpp"
-#include "initializers/gaussian_kernel_initializer.cuh"
-
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "utils/helper_cuda.h"
+#include "utils/helper_string.h"
+#include "initializers/gaussian_kernel_initializer.cu"
 
 // TODO: implement CUDA kernel for forward()
 // TODO: implement CUDA kernel for backward()
+
+
+template <class Dtype>
+__global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride) {
+  // bi is the index of the tensor
+  // o is the output channel
+  int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
+  int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
+  int x = x_top*stride;
+  int y = y_top*stride;
+  if (!top->isValidIdx({bi, y, x, o})) {
+    return;
+  }
+
+  size_t kernel_height = W->GetDims()[0];
+  size_t kernel_width = W->GetDims()[1];
+  W->GetDataPtr();
+  std::vector<int> idx = {bi, y, x, o};
+  size_t in_channels = bottom->GetDims()[3];
+  Dtype sum = 0.0;
+  for(int c = 0; c < in_channels; c++) {
+    for(int i = 0; i < kernel_height; i++) {
+      for(int j = 0; j < kernel_width; j++) {
+        // (n, hei, wid, channel),   // (hei, wid, input, output)
+        sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W->at({i, j, c, idx[3]});
+      }
+    }
+  }
+  sum += b->at({0});
+  top->at({bi, y_top, x_top, o}) = sum;
+}
 
 template <class Dtype>
 class Conv2D: public Layer<Dtype> {
 public:
   // use the same initializer to initialize W_ and b_
-  Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
+  __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
     size_t out_channels, size_t stride, Initializer<Dtype>* initializer = NULL):
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
@@ -28,13 +63,13 @@ public:
   }
 
   // directly pass in W & b
-  Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
+  __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
     size_t out_channels, size_t stride, Tensor<Dtype>* W, Tensor<Dtype>* b):
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
       stride(stride), W_(W), b_(b) {}
 
-  ~Conv2D() {
+  __device__ ~Conv2D() {
     if(W_ != NULL) {
       delete W_;
       W_ = NULL;
@@ -43,31 +78,6 @@ public:
       delete b_;
       b_ = NULL;
     }
-  }
-
-  __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int b, int o) {
-    // b is the index of the tensor
-    // o is the output channel
-    int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
-    int x = x_top*stride;
-    int y = y_top*stride;
-    if (!top->isValidIdx({b, y, x, o})) {
-      return;
-    }
-    std::vector<int> idx = {b, y, x, o};
-    size_t in_channels = bottom->GetDims[3];
-    Dtype sum = 0.0;
-    for(int c = 0; c < in_channels; c++) {
-      for(int i = 0; i < kernel_height; i++) {
-        for(int j = 0; j < kernel_width; j++) {
-          // (n, hei, wid, channel),   // (hei, wid, input, output)
-          sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
-        }
-      }
-    }
-    sum += b_->at({0});
-    top->at({b, y_top, x_top, o}) = sum;
   }
 
   const int BLOCKDIM = 32;
@@ -83,16 +93,16 @@ public:
       // TODO: implement GPU convolution
       // 1) decide the blocksize and number of blocks
       // 
-      size_t n = bottom->GetDims[0];
-      size_t hei = top->GetDims[1];
-      size_t wid = top->GetDims[2];
-      size_t out_channels = top->GetDims[3];
+      size_t n = bottom->GetDims()[0];
+      size_t hei = top->GetDims()[1];
+      size_t wid = top->GetDims()[2];
+      size_t out_channels = top->GetDims()[3];
 
       dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
       dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
       for (int b = 0; b < n; b++) {
         for (int o = 0; o < out_channels; o++) {
-          conv << <blocksInGrid, threadsPerBlock >> > (bottom, top, b, o);
+          conv<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
         }
       }
     } else {
@@ -122,6 +132,7 @@ public:
       }
     }
   }
+
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
   const size_t kernel_height;
@@ -134,14 +145,14 @@ private:
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
   const Initializer<Dtype>* initializer_;
-  void InitParams() {
+  __device__ void InitParams() {
     if (initializer_!=NULL) {
       initializer_->Initialize(W_, b_);
     } else {
-      // ConstInitializer<Dtype>((Dtype)0.1, (Dtype)0).Initialize(W_, b_);
       GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_);
     }
   }
+
 
   // // cpu kernel operation
   // void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, const std::vector<int> idx) {
@@ -160,5 +171,6 @@ private:
   //   top->at(idx) = sum;
   // }
 };
+
 
 #endif  // CONV2D_LAYER_CUH_

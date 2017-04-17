@@ -13,15 +13,16 @@
 
 
 
+
 template<class Dtype>
 class Tensor {
 public:
-  Tensor(std::vector<size_t> dims, const bool _gpu=false):dims_(dims), gpu(_gpu) {
+  __device__ Tensor(std::vector<size_t> dims, const bool _gpu=false):dims_(dims), gpu(_gpu) {
     len_ = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int>());
     AllocateMemory();
   }
 
-  ~Tensor() {
+  __device__ ~Tensor() {
     if (gpu) {
       // TODO: free GPU memory
       if (data_array_ != NULL) {
@@ -52,7 +53,7 @@ public:
     return data_array_;
   }
 
-  __device__  Dtype& at(const std::vector<int> idx) {
+  __device__ Dtype& at(const std::vector<int> idx) {
     assert(isValidIdx(idx));
     return data_array_[GetIdx(idx)];
   }

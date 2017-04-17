@@ -4,6 +4,7 @@
 #include "basics/initializer.hpp"
 #include "utils/helper_cuda.h"
 #include <cmath>
+#include <vector>
 
 #define PI (3.1415926535)
 
@@ -13,10 +14,10 @@ class GaussianKernelInitializer: public Initializer<Dtype> {
 private:
   const double sigma_;
 
-  void InitGaussian(Tensor<Dtype>* W, Tensor<Dtype> *b) {
+  __device__ void InitGaussian(Tensor<Dtype>* W, Tensor<Dtype> *b) const {
     // CPU
     Dtype* w_data_array = W->GetDataPtr();
-    auto w_dims = W->GetDims();
+    std::vector<size_t> w_dims = W->GetDims();
     assert(w_dims.size() == 4);
     
     for(int i = 0; i < w_dims[2]; i++) {
@@ -38,7 +39,7 @@ private:
         Dtype sum = 0.0;
         for (int x = 0; x < w_dims[1]; ++x) {
           for (int y = 0; y < w_dims[0]; ++y) {
-            sum += W->at({y, x, i, j});
+            sum = sum + W->at({y, x, i, j});
           }
         }
         for (int x = 0; x < w_dims[1]; ++x) {
@@ -57,18 +58,20 @@ private:
 
 public:
   GaussianKernelInitializer(double sigma): sigma_(sigma) {}
-  void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b) const {
+  __device__ void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b) const {
     if (W->gpu) {
-      Tensor<Dtype> _W(W->GetDims());
-      Tensor<Dtype> _b(b->GetDims());
-      InitGaussian(&_W, &_b);
-      cudaStatus = cudaMemcpy(W.GetDataPtr(), _W.GetDataPtr(), _W.size()*sizeof(Dtype), cudaMemcpyHostToDevice);
+      Tensor<Dtype>* _W = new Tensor<Dtype>(W->GetDims());
+      Tensor<Dtype>* _b = new Tensor<Dtype>(b->GetDims());
+      InitGaussian(_W, _b);
+      cudaError_t cudaStatus = cudaMemcpy(W->GetDataPtr(), _W->GetDataPtr(), _W->size()*sizeof(Dtype), cudaMemcpyHostToDevice);
       checkCudaErrors(cudaStatus);
-      cudaStatus = cudaMemcpy(b.GetDataPtr(), _b.GetDataPtr(), _b.size()*sizeof(Dtype), cudaMemcpyHostToDevice);
+      cudaStatus = cudaMemcpy(b->GetDataPtr(), _b->GetDataPtr(), _b->size()*sizeof(Dtype), cudaMemcpyHostToDevice);
       checkCudaErrors(cudaStatus);
+      delete _W;
+      delete _b;
     } else {
       Dtype * w_data_array = W->GetDataPtr();
-      auto w_dims = W->GetDims();
+      std::vector<size_t> w_dims = W->GetDims();
       assert(w_dims.size() == 4);
       InitGaussian(W, b);
     }

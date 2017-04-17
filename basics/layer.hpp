@@ -1,7 +1,7 @@
 #ifndef LAYER_HPP_
 #define LAYER_HPP_
 
-#include "tensor.hpp"
+#include "tensor.cu"
 
 // TODO: discuss and finalize interfaces: forward() & backward()
 
