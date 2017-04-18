@@ -54,6 +54,7 @@ void test_tensor_gpu() {
 void test_tensor_gpu_to_cpu() {
   size_t dims[4] = {1,3,3,1};
   Tensor<float>* tensor_gpu = Tensor<float>::CreateTensorGPU(dims);
+//  Tensor<float>::AllocateDataArrayGPU(tensor_gpu);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
@@ -61,10 +62,28 @@ void test_tensor_gpu_to_cpu() {
   
   Tensor<float> * tensor_cpu = (Tensor<float> *)malloc(sizeof(Tensor<float>));
   cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<float>), cudaMemcpyDeviceToHost);
-  float * data_array_ = (float*) malloc(tensor_cpu->size()*sizeof(float));
   printf("%d \n", tensor_cpu->size() * sizeof(float));
-  float * data_array_gpu = NULL;
-  cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
+  printf("%d \n", tensor_cpu->GetDataPtr());
+
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  float * data_array_cpu;
+  data_array_cpu = (float*) malloc(tensor_cpu->size()*sizeof(float));
+  cudaMemcpy(data_array_cpu, tensor_cpu->GetDataPtr(), tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToHost);
+
+//  float * data_array_gpu = NULL;
+//  cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
+
+
+//  Tensor<float> * tensor_cpu = Tensor<float>::TensorGPUtoCPU(tensor_gpu);
+/*    Tensor<Dtype> * tensor_cpu = (Tensor<Dtype> *)malloc(sizeof(Tensor<Dtype>));
+    cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<Dtype>), cudaMemcpyDeviceToHost);
+    // TODO:
+    Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
+    cudaMemcpy(data_array_, tensor_gpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
+    tensor_cpu->SetDataPtr(data_array_);
+    return tensor_cpu;
+*/
   // TODO
   // cudaMemcpy(data_array_gpu, data_array_gpu,  tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
   // float* data_array_ptr_gpu;
@@ -108,11 +127,11 @@ void test_tensor_cpu() {
 int main(void) {
   // tensor
   checkCudaErrors(cudaStatus);
-  test_tensor_gpu();
+//  test_tensor_gpu();
   test_tensor_gpu_to_cpu();
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
-  test_tensor_cpu();
+//  test_tensor_cpu();
 }

@@ -132,6 +132,10 @@ void test_tensor() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   cudaMemcpy(&tensor_gpu->data_array_, &data_ary, sizeof(float*), cudaMemcpyHostToDevice);
+
+
+  float * data_ary_cpu2 = (float*)malloc(sizeof(float)*81);
+  cudaMemcpy(data_ary_cpu2, data_ary, sizeof(float)*81, cudaMemcpyDeviceToHost);
    
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -142,7 +146,7 @@ void test_tensor() {
 
 void test_tensor_cpu() {
   size_t dims[4] = {3, 3, 3, 3};
-  Tensor<float>* tensor = new Tensor<float>(dims, false);
+  Tensor<float>* tensor = new Tensor<float>(dims);
   int idx[4] = {1, 2, 2, 2};
   printf("%d\n", tensor->GetIdx(idx));
 }

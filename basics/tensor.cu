@@ -103,6 +103,9 @@ public:
     cudaMalloc((void**)&tensor_gpu, sizeof(Tensor<Dtype>));
     cudaMemcpy(tensor_gpu, &tensor_cpu, sizeof(Tensor<Dtype>), cudaMemcpyHostToDevice);
     if (allocate_memory) {
+//      Dtype* data_array_gpu;
+//      cudaMalloc((void**)&(data_array_gpu), sizeof(Dtype)*(tensor_cpu.size()));
+//      cudaMemcpy(&(tensor_gpu->data_array_), &data_array_gpu, sizeof(Dtype*), cudaMemcpyHostToDevice);
       AllocateDataArrayGPU(tensor_gpu);
     }
     return tensor_gpu;
@@ -120,16 +123,16 @@ public:
     Tensor<Dtype> * tensor_cpu = (Tensor<Dtype> *)malloc(sizeof(Tensor<Dtype>));
     cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<Dtype>), cudaMemcpyDeviceToHost);
     // TODO:
-    // Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
-    // cudaMemcpy(data_array_, tensor_cpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
-    // tensor_cpu->SetDataPtr(data_array_);
+    Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
+    cudaMemcpy(data_array_, tensor_gpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
+    tensor_cpu->SetDataPtr(data_array_);
     return tensor_cpu;
   }
 
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
 
   Dtype* data_array_;
-private:
+//private:
   __host__ __device__ Tensor(size_t dims[4]): gpu_ptr_(NULL), data_array_(NULL) {
     len_ = dims[0] * dims[1] * dims[2] * dims[3];
     dims_[0] = dims[0];
@@ -137,6 +140,7 @@ private:
     dims_[2] = dims[2];
     dims_[3] = dims[3];
   }
+  __host__ __device__ Tensor(): gpu_ptr_(NULL), data_array_(NULL) {}
 
   size_t dims_[4];
   size_t len_;
@@ -144,7 +148,7 @@ private:
   Tensor<Dtype> * gpu_ptr_;
 };
 
-
+/*
 template<class Dtype>
 __global__ void allocate_tensor_dataarray(Tensor<Dtype> * tensor_gpu) {
   tensor_gpu->AllocateDataArray();
@@ -154,11 +158,15 @@ template<class Dtype>
 __host__ void Tensor<Dtype>::AllocateDataArrayGPU() {
   Tensor<Dtype>* _gpu_ptr = GetGPUPtr();
   allocate_tensor_dataarray<Dtype><<<1, 1>>>(_gpu_ptr);
-}
+}*/
 
 template<class Dtype>
 __host__ void Tensor<Dtype>::AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu) {
-  allocate_tensor_dataarray<Dtype><<<1, 1>>>(tensor_gpu);
+    size_t * len = (size_t *) malloc(sizeof(size_t));
+    cudaMemcpy(len, &tensor_gpu->len_, sizeof(size_t), cudaMemcpyDeviceToHost);
+    Dtype* data_array_gpu;
+    cudaMalloc((void**)&(data_array_gpu), sizeof(Dtype)*(*len));
+    cudaMemcpy(&(tensor_gpu->data_array_), &data_array_gpu, sizeof(Dtype*), cudaMemcpyHostToDevice);
 }
 
 
