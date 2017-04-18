@@ -231,8 +231,8 @@ struct pixel_t {
 
 int main() {
 
-	const char* INPUT_BMP_PATH = "./test/steel_wool_large.bmp";
-	const char* OUTPUT_REFERENCE_BMP_PATH = "./test/steel_wool_large_reference_output.bmp";
+	const char* INPUT_BMP_PATH = "./test/steel_wool_small.bmp";
+	const char* OUTPUT_REFERENCE_BMP_PATH = "./test/steel_wool_small_reference_output.bmp";
 	const char* OUTPUT_BMP_PATH = "./test/out.bmp";
 
 	// LOAD IMAGE FROM FILE
