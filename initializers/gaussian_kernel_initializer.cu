@@ -9,10 +9,8 @@
 #define PI (3.1415926535)
 
 
-// public Initializer<Dtype>
-// Initialize gaussian kernels
 template<class Dtype>
-class GaussianKernelInitializer {
+class GaussianKernelInitializer: public Initializer<Dtype> {
 private:
   const double sigma_;
 
