@@ -8,7 +8,7 @@
 #include "basics/session.hpp"
 #include "cuda_runtime.h"
 #include "utils/helper_cuda.h"
-
+#include "stdio.h"
 
 /* 
 4D Tensor
@@ -39,9 +39,23 @@ public:
     return data_array_;
   }
 
+  __host__ __device__ void SetDataPtr(Dtype* data_array_ptr) {
+    data_array_ = data_array_ptr;
+  }
+
+  __host__ __device__ Dtype& at(const int i0, const int i1, const int i2, const int i3) {
+    int idx[4] = {i0, i1, i2, i3};
+    return at(idx);
+  }
+
   __host__ __device__ Dtype& at(const int* idx) {
     assert(isValidIdx(idx));
     return data_array_[GetIdx(idx)];
+  }
+
+  __host__ __device__ const Dtype atPadding(const int i0, const int i1, const int i2, const int i3) {
+    int idx[4] = {i0, i1, i2, i3};
+    return atPadding(idx);
   }
 
   __host__ __device__ const Dtype atPadding(int* idx, Dtype default_val = 0.0) const {
@@ -49,9 +63,15 @@ public:
     return data_array_[GetIdx(idx)];
   }
 
+  __host__ __device__ bool isValidIdx(const int i0, const int i1, const int i2, const int i3) {
+    int idx[4] = {i0, i1, i2, i3};
+    return isValidIdx(idx);
+  }
+
   __host__ __device__ bool isValidIdx(const int* idx) const {
     for(int i = 0; i < 4; i++) {
-      if(idx[i] < 0 && idx[i] >= 4) return false;
+      // printf("%d\n", idx[i]);
+      if(idx[i] < 0 || idx[i] >= dims_[i]) return false;
     }
     return true;
   }
@@ -96,8 +116,18 @@ public:
     return tensor_cpu;
   }
 
+  __host__ static Tensor<Dtype> * TensorGPUtoCPU(Tensor<Dtype> * tensor_gpu) {
+    Tensor<Dtype> * tensor_cpu = (Tensor<Dtype> *)malloc(sizeof(Tensor<Dtype>));
+    cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<Dtype>), cudaMemcpyDeviceToHost);
+    // Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
+    // cudaMemcpy(data_array_, tensor_cpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
+    // tensor_cpu->SetDataPtr(data_array_);
+    return tensor_cpu;
+  }
+
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
 
+  Dtype* data_array_;
 private:
   __host__ __device__ Tensor(size_t dims[4]): gpu_ptr_(NULL), data_array_(NULL) {
     len_ = dims[0] * dims[1] * dims[2] * dims[3];
@@ -109,7 +139,7 @@ private:
 
   size_t dims_[4];
   size_t len_;
-  Dtype* data_array_;
+  
   Tensor<Dtype> * gpu_ptr_;
 };
 

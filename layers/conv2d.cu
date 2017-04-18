@@ -3,6 +3,7 @@
 #define CONV2D_LAYER_CUH_
 
 #include <assert.h>
+#include <stdio.h>
 #include "basics/layer.hpp"
 #include "basics/tensor.cu"
 #include "basics/session.hpp"
@@ -16,6 +17,8 @@
 // TODO: implement CUDA kernel for forward()
 // TODO: implement CUDA kernel for backward()
 
+#define BLOCKDIM 32
+
 
 template <class Dtype>
 __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride) {
@@ -25,7 +28,7 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
   int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
   int x = x_top*stride;
   int y = y_top*stride;
-  if (!top->isValidIdx({bi, y, x, o})) {
+  if (!top->isValidIdx(bi, y, x, o)) {
     return;
   }
 
@@ -39,76 +42,93 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
     for(int i = 0; i < kernel_height; i++) {
       for(int j = 0; j < kernel_width; j++) {
         // (n, hei, wid, channel),   // (hei, wid, input, output)
-        sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W->at({i, j, c, idx[3]});
+        sum += bottom->atPadding(idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c) * W->at(i, j, c, idx[3]);
       }
     }
   }
-  sum += b->at({0});
-  top->at({bi, y_top, x_top, o}) = sum;
+  sum += b->at(0, 0, 0, 0);
+  top->at(bi, y_top, x_top, o) = sum;
+}
+
+template <class Dtype>
+__global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride) {
+  size_t n = bottom->GetDims()[0];
+  size_t hei = top->GetDims()[1];
+  size_t wid = top->GetDims()[2];
+  size_t out_channels = top->GetDims()[3];
+
+  dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
+  dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+  for (int b = 0; b < n; b++) {
+    for (int o = 0; o < out_channels; o++) {
+      conv<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
+    }
+  }
 }
 
 template <class Dtype>
 class Conv2D: public Layer<Dtype> {
 public:
   // use the same initializer to initialize W_ and b_
-  __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
+  Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
     size_t out_channels, size_t stride, Initializer<Dtype>* initializer = NULL):
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
-      stride(stride), initializer_(initializer), 
-      W_(new Tensor<Dtype>({kernel_height, kernel_width, in_channels, out_channels})),
-      b_(new Tensor<Dtype>({out_channels})) {
+      stride(stride), initializer_(initializer) {
+    size_t w_dims[4] = {kernel_height, kernel_width, in_channels, out_channels};
+    size_t b_dims[4] = {1, 1, 1, out_channels};  
+    if (Session::GetSession()->gpu) {
+      W_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
+      b_ = Tensor<Dtype>::CreateTensorGPU(b_dims);
+    } else {
+      W_ = Tensor<Dtype>::CreateTensorCPU(w_dims);
+      b_ = Tensor<Dtype>::CreateTensorCPU(b_dims);
+    }
     InitParams();
   }
 
-  // directly pass in W & b
-  __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
-    size_t out_channels, size_t stride, Tensor<Dtype>* W, Tensor<Dtype>* b):
-      kernel_height(kernel_height), kernel_width(kernel_width),
-      in_channels(in_channels), out_channels(out_channels), 
-      stride(stride), W_(W), b_(b) {}
+  // // directly pass in W & b
+  // __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
+  //   size_t out_channels, size_t stride, Tensor<Dtype>* W, Tensor<Dtype>* b):
+  //     kernel_height(kernel_height), kernel_width(kernel_width),
+  //     in_channels(in_channels), out_channels(out_channels), 
+  //     stride(stride), W_(W), b_(b) {}
 
-  __device__ ~Conv2D() {
-    if(W_ != NULL) {
-      delete W_;
-      W_ = NULL;
-    }
-    if(b_ != NULL) {
-      delete b_;
-      b_ = NULL;
+  ~Conv2D() {
+    if (Session::GetSession()->gpu) {
+      if (W_!= NULL) {
+        cudaFree(W_);
+        W_ = NULL;
+      }
+      if (b_ != NULL) {
+        cudaFree(b_);
+        b_ = NULL;
+      }
+    } else {
+      if(W_ != NULL) {
+        delete W_;
+        W_ = NULL;
+      }
+      if(b_ != NULL) {
+        delete b_;
+        b_ = NULL;
+      }
     }
   }
 
-  const int BLOCKDIM = 32;
+  // const int BLOCKDIM = 32;
 
   void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
-    // Assert dimensions (n, hei, wid, channel)
-    assert(bottom->GetDims()[3]==in_channels);
-    assert(top->GetDims()[3]==out_channels);
-    assert(bottom->GetDims().size() == 4);
-    assert(top->GetDims().size() == 4);
-    assert(bottom->GetDims()[0] == top->GetDims()[0]);
     if (Session::GetSession()->gpu) {
       // TODO: implement GPU convolution
       // 1) decide the blocksize and number of blocks
       // 
-      size_t n = bottom->GetDims()[0];
-      size_t hei = top->GetDims()[1];
-      size_t wid = top->GetDims()[2];
-      size_t out_channels = top->GetDims()[3];
-
-      dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-      dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-      for (int b = 0; b < n; b++) {
-        for (int o = 0; o < out_channels; o++) {
-          conv<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
-        }
-      }
+      ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
-          for(int x = 0, x_top = 0; x < bottom->GetDims()[2]; x += stride, x_top += 1) {
-            for(int y = 0, y_top = 0; y < bottom->GetDims()[1]; y += stride, y_top += 1) {
+          for(int x = 0, x_top = 0; x < bottom->GetDims()[2] && x_top < top->GetDims()[2]; x += stride, x_top += 1) {
+            for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride, y_top += 1) {
               // batch idx b, output layer o, pixel (x, y)
               // top->at({b, y, x, o}) = 
               int idx[4] = {b, y, x, o};
@@ -117,13 +137,18 @@ public:
                 for(int i = 0; i < kernel_height; i++) {
                   for(int j = 0; j < kernel_width; j++) {
                     // (n, hei, wid, channel),   // (hei, wid, input, output)
-                    sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
+                    int b_idx[4] = {idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c};
+                    int t_idx[4] = {i, j, c, idx[3]};
+                    // printf("%f \n", bottom->atPadding(b_idx));
+                    sum += bottom->atPadding(b_idx) * W_->at(t_idx);
                   }
                 }
               }
-              sum += b_->at({0});
-              top->at({b, y_top, x_top, o}) = sum;
-              //conv(bottom, top, {b, y, x, o});
+              int b_idx[4] = {0,0,0,0};
+              sum += b_->at(b_idx);
+              int t_idx[4] = {b, y_top, x_top, o};
+              
+              top->at(t_idx) = sum;
             }
           }
         }
@@ -143,11 +168,11 @@ private:
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
   const Initializer<Dtype>* initializer_;
-  __device__ void InitParams() {
+  void InitParams() {
     if (initializer_!=NULL) {
       initializer_->Initialize(W_, b_);
     } else {
-      GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_);
+      GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_, Session::GetSession()->gpu);
     }
   }
 

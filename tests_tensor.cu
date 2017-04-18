@@ -32,6 +32,9 @@ __global__ void access_tensor_dataarray(Tensor<float> * tensor_gpu) {
   for(int i = 0; i < tensor_gpu->size(); i++) {
     printf("%f \n", tensor_gpu->GetDataPtr()[i]);
   }
+
+  printf("%d \n", tensor_gpu->size()*sizeof(float));
+  printf("%d \n", tensor_gpu->GetDataPtr());
 }
 
 void test_tensor_gpu() {
@@ -47,6 +50,33 @@ void test_tensor_gpu() {
   cudaFree(tensor_gpu);
 }
 
+
+void test_tensor_gpu_to_cpu() {
+  size_t dims[4] = {1,3,3,1};
+  Tensor<float>* tensor_gpu = Tensor<float>::CreateTensorGPU(dims);
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+
+  access_tensor_dataarray<<<1, 1>>>(tensor_gpu);
+  
+  Tensor<float> * tensor_cpu = (Tensor<float> *)malloc(sizeof(Tensor<float>));
+  cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<float>), cudaMemcpyDeviceToHost);
+  float * data_array_ = (float*) malloc(tensor_cpu->size()*sizeof(float));
+  printf("%d \n", tensor_cpu->size() * sizeof(float));
+  float * data_array_gpu = NULL;
+  cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
+  // cudaMemcpy(data_array_gpu, data_array_gpu,  tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
+  // float* data_array_ptr_gpu;
+  // cudaMemcpy(&data_array_ptr_gpu, &tensor_gpu->data_array_, sizeof(float*), cudaMemcpyDeviceToHost);
+  // cudaMemcpy(data_array_gpu, data_array_ptr_gpu, tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
+  // printf("%d \n", data_array_ptr_gpu);
+  
+  // cudaMemcpy(data_array_, tensor_cpu->GetDataPtr(), tensor_cpu->size() * sizeof(float), cudaMemcpyDeviceToHost);
+  // tensor_cpu->SetDataPtr(data_array_);
+
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+}
 
 void test_tensor_cpu() {
   printf("-- Example usage of tensor on cpu --\n");
@@ -80,7 +110,8 @@ void test_tensor_cpu() {
 int main(void) {
   // tensor
   checkCudaErrors(cudaStatus);
-  test_tensor_gpu();  
+  test_tensor_gpu();
+  test_tensor_gpu_to_cpu();
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
