@@ -85,26 +85,6 @@ void test_tensor_gpu_to_cpu() {
     }
   }
   
-//  float * data_array_gpu = NULL;
-//  cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
-
-
-//  Tensor<float> * tensor_cpu = Tensor<float>::TensorGPUtoCPU(tensor_gpu);
-/*    Tensor<Dtype> * tensor_cpu = (Tensor<Dtype> *)malloc(sizeof(Tensor<Dtype>));
-    cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<Dtype>), cudaMemcpyDeviceToHost);
-    // TODO:
-    Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
-    cudaMemcpy(data_array_, tensor_gpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
-    tensor_cpu->SetDataPtr(data_array_);
-    return tensor_cpu;
-*/
-  // TODO
-  // cudaMemcpy(data_array_gpu, data_array_gpu,  tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
-  // float* data_array_ptr_gpu;
-  // cudaMemcpy(&data_array_ptr_gpu, &tensor_gpu->data_array_, sizeof(float*), cudaMemcpyDeviceToHost);
-  // cudaMemcpy(data_array_gpu, data_array_ptr_gpu, tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
-  // printf("%d \n", data_array_ptr_gpu);
-  
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 }
@@ -113,7 +93,7 @@ void test_tensor_cpu() {
   printf("-- Example usage of tensor on cpu --\n");
   size_t dims[4] = {1,3,3,1};
   Tensor<float> * tensor_cpu = Tensor<float>::CreateTensorCPU(dims);
-  // tensor_cpu->AllocateDataArray();
+//  Tensor<float>::AllocateDataArrayCPU(tensor_cpu);
 
   for(int i = 0; i < tensor_cpu->size(); i++) {
     tensor_cpu->GetDataPtr()[i] = i;

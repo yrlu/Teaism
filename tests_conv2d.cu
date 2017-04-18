@@ -116,18 +116,18 @@ void test_conv2d_gpu() {
   // printf("%d %d %d %d\n", top_cpu->GetDims()[0], top_cpu->GetDims()[1], top_cpu->GetDims()[2], top_cpu->GetDims()[3]);
   // printf("%d \n", top_cpu->size());
   // printf("%d \n", top_cpu->GetDataPtr());
-  // bitmap_image img(w/2, h/2);	
-  // for (int i = 0; i < h/2; i++) {
-  //   for (int j = 0; j < w/2; j++) {
-  //     unsigned val = (unsigned) top_cpu->at(0, i, j, 0);
-  //     img.set_pixel(j, i, val, val, val);
-  //   }
-  // }
-  // img.save_image(OUTPUT_BMP_PATH);
-  // delete conv_layer;
-  // delete top_cpu;
-  // cudaFree(bottom);
-  // cudaFree(top);
+  bitmap_image img(w/2, h/2);	
+  for (int i = 0; i < h/2; i++) {
+    for (int j = 0; j < w/2; j++) {
+      unsigned val = (unsigned) top_cpu->at(0, i, j, 0);
+      img.set_pixel(j, i, val, val, val);
+    }
+  }
+  img.save_image(OUTPUT_BMP_PATH);
+  delete conv_layer;
+  delete top_cpu;
+  cudaFree(bottom);
+  cudaFree(top);
 }
 
 
