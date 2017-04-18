@@ -77,6 +77,7 @@ public:
   __host__ static Tensor<Dtype>* CreateTensorCPU(size_t* dims, bool allocate_memory = true);
   __host__ static Tensor<Dtype> * TensorGPUtoCPU(Tensor<Dtype> * tensor_gpu);
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
+  __host__ static void AllocateDataArrayCPU(Tensor<Dtype> * tensor_cpu);
 
   __host__ __device__ ~Tensor() {
     if(data_array_ != NULL) {
@@ -102,7 +103,7 @@ private:
 
 // Create CPU/GPU Tensor
 template<class Dtype>
-__host__ Tensor<Dtype>* Tensor<Dtype>::CreateTensorCPU(size_t* dims, bool allocate_memory = true) {
+__host__ Tensor<Dtype>* Tensor<Dtype>::CreateTensorCPU(size_t* dims, bool allocate_memory) {
   Tensor<Dtype> * tensor_cpu = new Tensor(dims);
   if (allocate_memory) {
     AllocateDataArrayCPU(tensor_cpu);
@@ -111,7 +112,7 @@ __host__ Tensor<Dtype>* Tensor<Dtype>::CreateTensorCPU(size_t* dims, bool alloca
 }
 
 template<class Dtype>
-__host__ static Tensor<Dtype>* Tensor<Dtype>::CreateTensorGPU(size_t* dims, bool allocate_memory = true) {
+__host__ Tensor<Dtype>* Tensor<Dtype>::CreateTensorGPU(size_t* dims, bool allocate_memory) {
   Tensor<Dtype> tensor_cpu(dims);
   Tensor<Dtype>* tensor_gpu;
   cudaMalloc((void**)&tensor_gpu, sizeof(Tensor<Dtype>));
@@ -145,7 +146,7 @@ __host__ void Tensor<Dtype>::AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu) {
 template<class Dtype>
 __host__ void Tensor<Dtype>::AllocateDataArrayCPU(Tensor<Dtype> * tensor_cpu) {
   if (tensor_cpu->data_array_ == NULL) {
-    tensor_cpu->data_array_ = new Dtype[len_];
+    tensor_cpu->data_array_ = new Dtype[tensor_cpu->len_];
   }
 }
 
