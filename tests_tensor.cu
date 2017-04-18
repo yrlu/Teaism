@@ -65,15 +65,13 @@ void test_tensor_gpu_to_cpu() {
   printf("%d \n", tensor_cpu->size() * sizeof(float));
   float * data_array_gpu = NULL;
   cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
+  // TODO
   // cudaMemcpy(data_array_gpu, data_array_gpu,  tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
   // float* data_array_ptr_gpu;
   // cudaMemcpy(&data_array_ptr_gpu, &tensor_gpu->data_array_, sizeof(float*), cudaMemcpyDeviceToHost);
   // cudaMemcpy(data_array_gpu, data_array_ptr_gpu, tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToDevice);
   // printf("%d \n", data_array_ptr_gpu);
   
-  // cudaMemcpy(data_array_, tensor_cpu->GetDataPtr(), tensor_cpu->size() * sizeof(float), cudaMemcpyDeviceToHost);
-  // tensor_cpu->SetDataPtr(data_array_);
-
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 }

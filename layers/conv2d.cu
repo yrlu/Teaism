@@ -14,7 +14,6 @@
 #include "utils/helper_string.h"
 #include "initializers/gaussian_kernel_initializer.cu"
 
-// TODO: implement CUDA kernel for forward()
 // TODO: implement CUDA kernel for backward()
 
 #define BLOCKDIM 32
@@ -87,13 +86,6 @@ public:
     InitParams();
   }
 
-  // // directly pass in W & b
-  // __device__ Conv2D(size_t kernel_height, size_t kernel_width, size_t in_channels, 
-  //   size_t out_channels, size_t stride, Tensor<Dtype>* W, Tensor<Dtype>* b):
-  //     kernel_height(kernel_height), kernel_width(kernel_width),
-  //     in_channels(in_channels), out_channels(out_channels), 
-  //     stride(stride), W_(W), b_(b) {}
-
   ~Conv2D() {
     if (Session::GetSession()->gpu) {
       if (W_!= NULL) {
@@ -116,13 +108,8 @@ public:
     }
   }
 
-  // const int BLOCKDIM = 32;
-
   void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     if (Session::GetSession()->gpu) {
-      // TODO: implement GPU convolution
-      // 1) decide the blocksize and number of blocks
-      // 
       ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
@@ -139,7 +126,6 @@ public:
                     // (n, hei, wid, channel),   // (hei, wid, input, output)
                     int b_idx[4] = {idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c};
                     int t_idx[4] = {i, j, c, idx[3]};
-                    // printf("%f \n", bottom->atPadding(b_idx));
                     sum += bottom->atPadding(b_idx) * W_->at(t_idx);
                   }
                 }
@@ -175,24 +161,6 @@ private:
       GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_, Session::GetSession()->gpu);
     }
   }
-
-
-  // // cpu kernel operation
-  // void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, const std::vector<int> idx) {
-  //   // idx = {b, y, x, o}
-  //   // batch idx b, output layer o, pixel (x, y)
-  //   Dtype sum = 0.0;
-  //   for(int c = 0; c < in_channels; c++) {
-  //     for(int i = 0; i < kernel_height; i++) {
-  //       for(int j = 0; j < kernel_width; j++) {
-  //         // (n, hei, wid, channel),   // (hei, wid, input, output)
-  //         sum += bottom->atPadding({idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c}) * W_->at({i, j, c, idx[3]});
-  //       }
-  //     }
-  //   }
-  //   sum += b_->at({0});
-  //   top->at(idx) = sum;
-  // }
 };
 
 
