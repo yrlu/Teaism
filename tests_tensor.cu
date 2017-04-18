@@ -71,6 +71,20 @@ void test_tensor_gpu_to_cpu() {
   data_array_cpu = (float*) malloc(tensor_cpu->size()*sizeof(float));
   cudaMemcpy(data_array_cpu, tensor_cpu->GetDataPtr(), tensor_cpu->size()*sizeof(float), cudaMemcpyDeviceToHost);
 
+
+  Tensor<float> * tensor_cpu2 = Tensor<float>::TensorGPUtoCPU(tensor_gpu);
+  for(int i0 = 0; i0 < dims[0]; i0++) {
+    for(int i1 = 0; i1 < dims[1]; i1++) {
+      for(int i2 = 0; i2 <dims[2]; i2++) {
+        for(int i3 = 0; i3 < dims[3]; i3++) {
+          int idx[4] = {i0, i1, i2, i3};
+          printf("%f \n", tensor_cpu2->at(idx));
+          tensor_cpu2->at(idx) = 0;
+        }
+      }
+    }
+  }
+  
 //  float * data_array_gpu = NULL;
 //  cudaMalloc(&data_array_gpu, tensor_cpu->size()*sizeof(float));
 

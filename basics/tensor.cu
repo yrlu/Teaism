@@ -103,9 +103,6 @@ public:
     cudaMalloc((void**)&tensor_gpu, sizeof(Tensor<Dtype>));
     cudaMemcpy(tensor_gpu, &tensor_cpu, sizeof(Tensor<Dtype>), cudaMemcpyHostToDevice);
     if (allocate_memory) {
-//      Dtype* data_array_gpu;
-//      cudaMalloc((void**)&(data_array_gpu), sizeof(Dtype)*(tensor_cpu.size()));
-//      cudaMemcpy(&(tensor_gpu->data_array_), &data_array_gpu, sizeof(Dtype*), cudaMemcpyHostToDevice);
       AllocateDataArrayGPU(tensor_gpu);
     }
     return tensor_gpu;
@@ -122,9 +119,8 @@ public:
   __host__ static Tensor<Dtype> * TensorGPUtoCPU(Tensor<Dtype> * tensor_gpu) {
     Tensor<Dtype> * tensor_cpu = (Tensor<Dtype> *)malloc(sizeof(Tensor<Dtype>));
     cudaMemcpy(tensor_cpu, tensor_gpu, sizeof(Tensor<Dtype>), cudaMemcpyDeviceToHost);
-    // TODO:
     Dtype * data_array_ = (Dtype*) malloc(tensor_cpu->size()*sizeof(Dtype));
-    cudaMemcpy(data_array_, tensor_gpu->GetDataPtr(), tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
+    cudaMemcpy(data_array_, tensor_cpu->data_array_, tensor_cpu->size() * sizeof(Dtype), cudaMemcpyDeviceToHost);
     tensor_cpu->SetDataPtr(data_array_);
     return tensor_cpu;
   }
