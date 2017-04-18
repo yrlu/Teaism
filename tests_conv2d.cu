@@ -79,7 +79,7 @@ void test_conv2d_gpu() {
   session->gpu = true;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> * conv_layer = new Conv2D<float>(5,5,1,1,2);
+  Conv2D<float> * conv_layer = new Conv2D<float>(15,15,1,1,2,new GaussianKernelInitializer<float>(15));
   const char* OUTPUT_BMP_PATH = "./tmp/test/out_gpu.bmp";
 
   cudaStatus = cudaGetLastError();
@@ -132,6 +132,6 @@ void test_conv2d_gpu() {
 
 
 int main() {
-  test_conv2d_cpu();
+  //test_conv2d_cpu();
   test_conv2d_gpu();
 }
