@@ -1,6 +1,6 @@
 
-#ifndef CONV2D_LAYER_CUH_
-#define CONV2D_LAYER_CUH_
+#ifndef DATA_LAYER_CUH_
+#define DATA_LAYER_CUH_
 
 #include <assert.h>
 #include <stdio.h>
@@ -12,6 +12,8 @@
 #include "utils/bitmap_image.hpp"
 #include "basics/session.hpp"
 
+// TODO: implement prefetch data in CPU memory
+// TODO: implement prefetch data in another thread of CPU
 // TODO: implement CUDA kernel for backward()
 
 #define BLOCKDIM 32
@@ -114,4 +116,4 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
   }
 }
 
-#endif  // CONV2D_LAYER_CUH_
+#endif  // DATA_LAYER_CUH_
