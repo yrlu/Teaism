@@ -2,6 +2,7 @@
 #define LAYER_HPP_
 
 #include "tensor.cu"
+#include <vector>
 
 // TODO: discuss and finalize interfaces: forward() & backward()
 

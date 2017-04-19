@@ -5,12 +5,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
+#include <iostream>
 #include "basics/layer.hpp"
 #include "basics/tensor.cu"
+#include "utils/bitmap_image.hpp"
 #include "basics/session.hpp"
-#include "cuda_runtime.h"
-#include "utils/helper_cuda.h"
-#include "utils/helper_string.h"
 
 // TODO: implement CUDA kernel for backward()
 
@@ -20,65 +20,93 @@
 template <class Dtype>
 class Data: public Layer<Dtype> {
 public:
-  // use the same initializer to initialize W_ and b_
-  Data(unsigned batch_size, std::string img_list):
-      batch_size(batch_size), img_list(img_list) {
-    if (Session::GetSession()->gpu) {
-      W_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
-      b_ = Tensor<Dtype>::CreateTensorGPU(b_dims);
-    } else {
-      W_ = Tensor<Dtype>::CreateTensorCPU(w_dims);
-      b_ = Tensor<Dtype>::CreateTensorCPU(b_dims);
+  Data(unsigned batch_size, char img_list_path[]):
+       batch_size(batch_size), begin_(0) {
+    std::string img_path;
+    size_t lab;
+
+    std::ifstream file(img_list_path);
+    std::string tmp;
+    while(std::getline(file, tmp)) {
+      std::istringstream iss(tmp);
+      iss >> img_path;
+      img_list.push_back(img_path);
+      iss >> lab;
+      lab_list.push_back(lab);
     }
-    InitParams();
+    num_data_ = lab_list.size();
+    assert(num_data_ > 0);
+    assert(num_data_ >= batch_size);
+    bitmap_image img(img_list[0]);
+    img_h = img.height();
+    img_w = img.width();
   }
 
-  ~Conv2D() {
-    if (Session::GetSession()->gpu) {
-      if (W_!= NULL) {
-        cudaFree(W_);
-        W_ = NULL;
-      }
-      if (b_ != NULL) {
-        cudaFree(b_);
-        b_ = NULL;
-      }
-    } else {
-      if(W_ != NULL) {
-        delete W_;
-        W_ = NULL;
-      }
-      if(b_ != NULL) {
-        delete b_;
-        b_ = NULL;
-      }
-    }
-  }
+  ~Data() {}
 
-  void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
-    if (Session::GetSession()->gpu) {
-      ForwardGPU<<<1,1>>>(top, batch_size, img_list);
-    } else {
-      ForwardCPU(top, batch_size, img_list);
-  }
+  void Forward(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {}
+  std::vector<Tensor<Dtype>* >& Forward(const std::vector<Tensor<Dtype> *> &bottom) {}
+  std::vector<Tensor<Dtype>* > Forward();
+
+  __host__ Tensor<Dtype>* FetchBatchDataCPU();
 
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
   const size_t batch_size;
-  const std::string img_list;
+  std::vector<std::string> img_list;
+  std::vector<size_t> lab_list;
+
+  size_t img_h;
+  size_t img_w;
 
 private:
-  Tensor<Dtype>* W_;
-  Tensor<Dtype>* b_;
-  const Initializer<Dtype>* initializer_;
-  void InitParams() {
-    if (initializer_!=NULL) {
-      initializer_->Initialize(W_, b_);
-    } else {
-      GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_, Session::GetSession()->gpu);
-    }
-  }
+  size_t begin_;
+  size_t end_;
+  size_t num_data_;
+//  size_t img_c;
 };
 
+template <class Dtype>
+std::vector<Tensor<Dtype>* > Data<Dtype>::Forward() {
+  end_ = begin_ + batch_size;
+  if (end_ > num_data_) {
+    begin_ = 0;
+    end_ = begin_ + batch_size;
+  }
+
+  Tensor<Dtype>* top_t;
+  size_t dims[4] = {batch_size, img_h, img_w, 3};
+  top_t = FetchBatchDataCPU();
+  
+  if (Session::GetSession()->gpu) {
+    Tensor<Dtype>* top_t_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_t);
+    delete top_t;
+    top_t = top_t_gpu;
+  }
+
+  std::vector<Tensor<Dtype>* > top;
+  top.push_back(top_t);
+  return top;
+}
+
+template <class Dtype>
+__host__ Tensor<Dtype>* Data<Dtype>::FetchBatchDataCPU() {
+  size_t dims[4] = {batch_size, img_h, img_w, 3};
+  Tensor<Dtype>* top_t = Tensor<Dtype>::CreateTensorCPU(dims);
+
+  bitmap_image* img;
+  for (size_t i = begin_; i < end_; ++i) {
+    img = new bitmap_image(img_list[i]);
+    for (size_t y = 0; y < img_h; ++y) {
+      for (size_t x = 0; x < img_w; ++x) {
+        top_t->at(i,y,x,0) = (Dtype) img->red_channel(x,y);
+        top_t->at(i,y,x,1) = (Dtype) img->green_channel(x,y);
+        top_t->at(i,y,x,2) = (Dtype) img->blue_channel(x,y);
+      }
+    }
+    delete img;
+  }
+  return top_t;
+}
 
 #endif  // CONV2D_LAYER_CUH_
