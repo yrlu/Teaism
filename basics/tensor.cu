@@ -118,6 +118,15 @@ __host__ Tensor<Dtype>* Tensor<Dtype>::CreateTensorGPU(size_t* dims, bool alloca
   Tensor<Dtype>* tensor_gpu;
   cudaMalloc((void**)&tensor_gpu, sizeof(Tensor<Dtype>));
   cudaMemcpy(tensor_gpu, &tensor_cpu, sizeof(Tensor<Dtype>), cudaMemcpyHostToDevice);
+
+/*
+  // Copy dims_ to GPU
+  size_t* dims_gpu;
+  cudaMalloc((void**)&(dims_gpu), sizeof(size_t)*4);
+  cudaMemcpy(dims_gpu, tensor_cpu.dims_, sizeof(size_t)*4, cudaMemcpyHostToDevice);
+  cudaMemcpy(&tensor_gpu->dims_, &dims_gpu, sizeof(size_t*), cudaMemcpyHostToDevice);
+*/
+
   if (allocate_memory) {
     AllocateDataArrayGPU(tensor_gpu);
   }
