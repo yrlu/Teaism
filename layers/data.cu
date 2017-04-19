@@ -48,7 +48,7 @@ public:
   std::vector<Tensor<Dtype>* >& Forward(const std::vector<Tensor<Dtype> *> &bottom) {}
   std::vector<Tensor<Dtype>* > Forward();
 
-  __host__ Tensor<Dtype>* FetchBatchDataCPU();
+  __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
 
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
@@ -74,39 +74,44 @@ std::vector<Tensor<Dtype>* > Data<Dtype>::Forward() {
     end_ = begin_ + batch_size;
   }
 
-  Tensor<Dtype>* top_t;
-  size_t dims[4] = {batch_size, img_h, img_w, 3};
-  top_t = FetchBatchDataCPU();
-  
+  size_t dims_i[4] = {batch_size, img_h, img_w, 3};
+  Tensor<Dtype>* top_i = Tensor<Dtype>::CreateTensorCPU(dims_i);
+
+  size_t dims_l[4] = {batch_size, 1, 1, 1};
+  Tensor<Dtype>* top_l = Tensor<Dtype>::CreateTensorCPU(dims_l);
+
+  FetchBatchData(top_i, top_l);  
   if (Session::GetSession()->gpu) {
-    Tensor<Dtype>* top_t_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_t);
-    delete top_t;
-    top_t = top_t_gpu;
+    Tensor<Dtype>* top_i_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_i);
+    Tensor<Dtype>* top_l_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_l);
+    delete top_i;
+    delete top_l;
+    top_i = top_i_gpu;
+    top_l = top_l_gpu;
   }
 
   std::vector<Tensor<Dtype>* > top;
-  top.push_back(top_t);
+  top.push_back(top_i);
+  top.push_back(top_l);
+
   return top;
 }
 
 template <class Dtype>
-__host__ Tensor<Dtype>* Data<Dtype>::FetchBatchDataCPU() {
-  size_t dims[4] = {batch_size, img_h, img_w, 3};
-  Tensor<Dtype>* top_t = Tensor<Dtype>::CreateTensorCPU(dims);
-
+__host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* top_l) {
   bitmap_image* img;
-  for (size_t i = begin_; i < end_; ++i) {
-    img = new bitmap_image(img_list[i]);
+  for (size_t i = 0; i < batch_size; ++i) {
+    img = new bitmap_image(img_list[i+begin_]);
+    top_l->at(i,0,0,0) = (Dtype) lab_list[i+begin_];
     for (size_t y = 0; y < img_h; ++y) {
       for (size_t x = 0; x < img_w; ++x) {
-        top_t->at(i,y,x,0) = (Dtype) img->red_channel(x,y);
-        top_t->at(i,y,x,1) = (Dtype) img->green_channel(x,y);
-        top_t->at(i,y,x,2) = (Dtype) img->blue_channel(x,y);
+        top_i->at(i,y,x,0) = (Dtype) img->red_channel(x,y);
+        top_i->at(i,y,x,1) = (Dtype) img->green_channel(x,y);
+        top_i->at(i,y,x,2) = (Dtype) img->blue_channel(x,y);
       }
     }
     delete img;
   }
-  return top_t;
 }
 
 #endif  // CONV2D_LAYER_CUH_

@@ -12,6 +12,11 @@ __global__ void show_top(Tensor<float>* top) {
   printf("%f\n", top->at(1,1000,500,2));
 }
 
+__global__ void show_top_label(Tensor<float>* top) {
+  printf("%f\n", top->at(0,0,0,0));
+  printf("%f\n", top->at(1,0,0,0));
+}
+
 void test_data_cpu() {
   printf("Begin test data layer CPU\n");
   Session* session = Session::GetNewSession();
@@ -29,6 +34,8 @@ void test_data_cpu() {
   std::vector<Tensor<float>* > top;
   top = data_layer.Forward();
   
+  printf("%f\n", top[1]->at(0,0,0,0));
+  printf("%f\n", top[1]->at(1,0,0,0));
   printf("%f\n", top[0]->at(0,1020,531,0));
   printf("%f\n", top[0]->at(1,1020,531,0));
   printf("%f\n", top[0]->at(0,1001,555,1));
@@ -60,6 +67,7 @@ void test_data_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
+  show_top_label<<<1,1>>>(top[1]);
   show_top<<<1,1>>>(top[0]);
 
   cudaStatus = cudaGetLastError();
