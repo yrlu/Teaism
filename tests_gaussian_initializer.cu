@@ -16,7 +16,7 @@ void test_gaussian_init_cpu() {
 
   for(int i = 0; i < 5; i++) {
     for(int j = 0; j < 5; j++) {
-      int idx[4] = {i, j, 1, 1};
+      int idx[4] = {i, j, 0, 0};
       printf("%f ", W_cpu->at(idx));
     }
     printf("\n");
@@ -30,7 +30,7 @@ void test_gaussian_init_cpu() {
 __global__ void print_kernel(Tensor<float> * W, Tensor<float> *b) {
   for(int i = 0; i < 5; i++) {
     for(int j = 0; j < 5; j++) {
-      int idx[4] = {i, j, 1, 1};
+      int idx[4] = {i, j, 0, 0};
       printf("%f ", W->at(idx));
     }
     printf("\n");

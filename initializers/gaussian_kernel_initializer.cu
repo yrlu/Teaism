@@ -20,7 +20,7 @@ public:
 
   __host__ __device__ static void InitGaussian(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma_) {
     Dtype* w_data_array = W->GetDataPtr();
-    const size_t * w_dims = W->GetDims();
+    const size_t *w_dims = W->GetDims();
     
     // W
     for(int i = 0; i < w_dims[2]; i++) {

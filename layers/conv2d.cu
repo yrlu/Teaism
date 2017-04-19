@@ -27,13 +27,14 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
   int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
   int x = x_top*stride;
   int y = y_top*stride;
-  if (!top->isValidIdx(bi, y, x, o)) {
+  
+  
+  if (!bottom->isValidIdx(bi, y, x, o)) {
     return;
   }
 
   size_t kernel_height = W->GetDims()[0];
   size_t kernel_width = W->GetDims()[1];
-  W->GetDataPtr();
   int idx[4] = {bi, y, x, o};
   size_t in_channels = bottom->GetDims()[3];
   Dtype sum = 0.0;
@@ -114,10 +115,11 @@ public:
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
-          for(int x = 0, x_top = 0; x < bottom->GetDims()[2] && x_top < top->GetDims()[2]; x += stride, x_top += 1) {
-            for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride, y_top += 1) {
+          for(int x = 0, x_top = 0; x < bottom->GetDims()[2]; x += stride, x_top += 1) {
+            for(int y = 0, y_top = 0; y < bottom->GetDims()[1]; y += stride, y_top += 1) {
               // batch idx b, output layer o, pixel (x, y)
               // top->at({b, y, x, o}) = 
+              // printf("%d %d %d %d \n", b, y, x, o);
               int idx[4] = {b, y, x, o};
               Dtype sum = 0.0;
               for(int c = 0; c < in_channels; c++) {
@@ -156,9 +158,9 @@ private:
   const Initializer<Dtype>* initializer_;
   void InitParams() {
     if (initializer_!=NULL) {
-      initializer_->Initialize(W_, b_);
+      initializer_->Initialize(W_, b_, Session::GetSession()->gpu);
     } else {
-      GaussianKernelInitializer<Dtype>((Dtype)5.0).Initialize(W_, b_, Session::GetSession()->gpu);
+      GaussianKernelInitializer<Dtype>((Dtype)(kernel_width+kernel_height)/2).Initialize(W_, b_, Session::GetSession()->gpu);
     }
   }
 };
