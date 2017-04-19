@@ -4,28 +4,30 @@
 #include <vector>
 #include <assert.h>
 
-/*
-__global__ void show_top(Tensor<float>* top) {
-  printf("%f\n", top->at(0,1020,531,0));
-  printf("%f\n", top->at(1,1020,531,0));
-  printf("%f\n", top->at(0,1001,555,1));
-  printf("%f\n", top->at(1,1001,555,1));
-  printf("%f\n", top->at(0,1000,500,2));
-  printf("%f\n", top->at(1,1000,500,2));
+__global__ void initial_bottom(Tensor<float>* bottom) {
+  printf("(%d, %d)\n", bottom->GetDims()[0], bottom->GetDims()[3]);
+  for (size_t i = 0; i < bottom->GetDims()[0]; ++i) {
+    for (size_t j = 0; j < bottom->GetDims()[3]; ++j) {
+      bottom->at(i,0,0,j) = (float) i + j;
+      printf("(%d, %d): %f\n", i, j, bottom->at(i,0,0,j));
+    }
+  }
 }
 
-__global__ void show_top_label(Tensor<float>* top) {
-  printf("%f\n", top->at(0,0,0,0));
-  printf("%f\n", top->at(1,0,0,0));
+__global__ void show_top(Tensor<float>* top) {
+  printf("Printing top data\n");
+  for (size_t i = 0; i < top->GetDims()[0]; ++i) {
+    for (size_t j = 0; j < top->GetDims()[3]; ++j) {
+      printf("(%d, %d): %f\n", i, j, top->at(i,0,0,j));
+    }
+  }
 }
-*/
 
 void test_softmax_cpu() {
   printf("Begin test softmax layer CPU\n");
   Session* session = Session::GetNewSession();
   session->gpu = false;
 
-  Softmax<float> softmax_layer();
 
   size_t dims[4] = {2, 1, 1, 3};
   std::vector<Tensor<float>*> bottom;
@@ -33,48 +35,60 @@ void test_softmax_cpu() {
   std::vector<Tensor<float>*> top;
   top.push_back(Tensor<float>::CreateTensorCPU(dims));
 
+  printf("(%d, %d)\n", bottom[0]->GetDims()[0], bottom[0]->GetDims()[3]);
   for (size_t i = 0; i < dims[0]; ++i) {
     for (size_t j = 0; j < dims[3]; ++j) {
-      bottom[0]->at(i,0,0,j) = i+j;
-      printf("(%d, %d): %d\n", i, j, bottom[0]->at(i,0,0,j));
+      bottom[0]->at(i,0,0,j) = (float) i + j;
+      printf("(%d, %d): %f\n", i, j, bottom[0]->at(i,0,0,j));
     }
   }
 
-//  softmax_layer.Forward(bottom, top);
+  Softmax<float> softmax_layer (0);
+  softmax_layer.Forward(bottom, top);
   
   printf("Printing bottom data\n");
   for (size_t i = 0; i < dims[0]; ++i) {
     for (size_t j = 0; j < dims[3]; ++j) {
-      printf("(%d, %d): %d\n", i, j, bottom[0]->at(i,0,0,j));
+      printf("(%d, %d): %f\n", i, j, bottom[0]->at(i,0,0,j));
     }
   }
   printf("Printing top data\n");
   for (size_t i = 0; i < dims[0]; ++i) {
     for (size_t j = 0; j < dims[3]; ++j) {
-      printf("(%d, %d): %d\n", i, j, top[0]->at(i,0,0,j));
+      printf("(%d, %d): %f\n", i, j, top[0]->at(i,0,0,j));
     }
   }
 }
 
-/*
+
 void test_softmax_gpu() {
   printf("Begin test softmax layer GPU\n");
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
-  Softmax<float> softmax_layer();
-
+  Softmax<float> softmax_layer(0);
 
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
-  std::vector<Tensor<float>* > top;
-  top = softmax_layer.Forward();
+  size_t dims[4] = {2, 1, 1, 3};
+  std::vector<Tensor<float>*> bottom;
+  bottom.push_back(Tensor<float>::CreateTensorGPU(dims));
+  std::vector<Tensor<float>*> top;
+  top.push_back(Tensor<float>::CreateTensorGPU(dims));
+
+  initial_bottom<<<1,1>>>(bottom[0]);
+
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaStatus = cudaDeviceSynchronize();
+  checkCudaErrors(cudaStatus);
+
+  softmax_layer.Forward(bottom, top);
   
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
-  show_top_label<<<1,1>>>(top[1]);
   show_top<<<1,1>>>(top[0]);
 
   cudaStatus = cudaGetLastError();
@@ -83,9 +97,9 @@ void test_softmax_gpu() {
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
 }
-*/
+
 
 int main() {
   test_softmax_cpu();
-//  test_softmax_gpu();
+  test_softmax_gpu();
 }
