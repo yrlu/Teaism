@@ -11,13 +11,13 @@
 void test_conv2d_cpu() {
   printf("Example code for conv2d cpu\n");
   size_t h = 400;
-  size_t w = 600;
+  size_t w = 400;
 
   Session* session = Session::GetNewSession();
   session->gpu = false;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> * conv_layer = new Conv2D<float>(5,5,1,1,2);
+  Conv2D<float> * conv_layer = new Conv2D<float>(15,15,1,1,2,new GaussianKernelInitializer<float>(15));
   const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
 
   size_t b_dims[4] = {1, h, w, 1};
@@ -28,7 +28,7 @@ void test_conv2d_cpu() {
   for(int i = 0; i < h; i++) {
   	for(int j = 0; j < w; j++) {
   	  int b_idx[4] = {0, i, j, 0};
-  	  bottom->at(b_idx) = (float) (rand() % 255);
+  	  bottom->at(b_idx) = (float) ((i+j) % 255);
   	}
   }
   conv_layer->Forward(bottom, top);
@@ -39,7 +39,7 @@ void test_conv2d_cpu() {
       unsigned val = (unsigned) top->at(0, i, j, 0);
       img.set_pixel(j, i, val, val, val);
     }  
-  }	
+  }
   img.save_image(OUTPUT_BMP_PATH);
   delete conv_layer;
 }
@@ -57,8 +57,8 @@ __global__ void init_bottom(Tensor<float> * bottom) {
 __global__ void show_top(Tensor<float>* top) {
   size_t h = top->GetDims()[1];
   size_t w = top->GetDims()[2];
-  for (int i = 0; i < h/2; i++) {
-    for (int j = 0; j < w/2; j++) {
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
   	  printf("%f ", top->at(0, i, j, 0));
     }
     printf("\n");
@@ -73,7 +73,7 @@ void test_conv2d_gpu() {
   checkCudaErrors(cudaStatus);
 
   size_t h = 400;
-  size_t w = 600;
+  size_t w = 400;
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
@@ -111,11 +111,9 @@ void test_conv2d_gpu() {
  
   Tensor<float> * top_cpu = Tensor<float>::TensorGPUtoCPU(top);
   cudaStatus = cudaGetLastError();
+  
   checkCudaErrors(cudaStatus);
   
-  // printf("%d %d %d %d\n", top_cpu->GetDims()[0], top_cpu->GetDims()[1], top_cpu->GetDims()[2], top_cpu->GetDims()[3]);
-  // printf("%d \n", top_cpu->size());
-  // printf("%d \n", top_cpu->GetDataPtr());
   bitmap_image img(w/2, h/2);	
   for (int i = 0; i < h/2; i++) {
     for (int j = 0; j < w/2; j++) {
@@ -132,6 +130,6 @@ void test_conv2d_gpu() {
 
 
 int main() {
-  //test_conv2d_cpu();
+  test_conv2d_cpu();
   test_conv2d_gpu();
 }
