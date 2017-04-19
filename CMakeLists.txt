@@ -17,5 +17,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
 
 # Add the executable
 # cuda_add_executable (main.o main.cu)
-cuda_add_executable (tests_data.o tests_data.cu)
+# cuda_add_executable (tests_data.o tests_data.cu)
+cuda_add_executable (tests_softmax.o tests_softmax.cu)
 
