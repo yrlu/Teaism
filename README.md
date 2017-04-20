@@ -11,16 +11,35 @@ A light weighted, flexible, and efficient deep learning library for CUDA-based e
 ## Files
 ```
 .
+├── CMakeLists.txt
 ├── Makefile
 ├── README.md
 ├── basics
 │   ├── initializer.hpp
 │   ├── layer.hpp
-│   └── tensor.hpp
+│   ├── session.hpp
+│   └── tensor.cu
 ├── initializers
-│   └── const_initializer.hpp
+│   ├── const_initializer.hpp
+│   └── gaussian_kernel_initializer.cu
 ├── layers
-│   └── conv2d.hpp
-└── main.cpp
-
+│   ├── conv2d.cu
+│   ├── data.cu
+│   ├── pooling.cu
+│   ├── relu.cu
+│   ├── softmax.cu
+│   └── softmax_loss.cu
+├── main.cu
+├── tests
+│   ├── tests_conv2d.cu
+│   ├── tests_data.cu
+│   ├── tests_gaussian_initializer.cu
+│   ├── tests_pooling.cu
+│   ├── tests_relu.cu
+│   ├── tests_softmax.cu
+│   └── tests_tensor.cu
+└── utils
+    ├── bitmap_image.hpp
+    ├── helper_cuda.h
+    └── helper_string.h
 ```
