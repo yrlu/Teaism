@@ -9,10 +9,8 @@ cudaError_t cudaStatus = cudaSetDevice(0);
 
 __global__ void access_tensor_dataarray(Tensor<float> * tensor_gpu) {
   const size_t* dims = tensor_gpu->GetDims();
-  for(int i = 0; i < 4; i++) {
-    printf("%d \n", dims[i]);
-  }
-
+  printf("%d %d %d %d \n", (int)tensor_gpu->GetDims()[0], (int)tensor_gpu->GetDims()[1], (int)tensor_gpu->GetDims()[2], (int)tensor_gpu->GetDims()[3]);
+  
   for(int i = 0; i < tensor_gpu->size(); i++) {
     tensor_gpu->GetDataPtr()[i] = i;
   }
@@ -121,8 +119,8 @@ void test_tensor_cpu() {
 int main(void) {
   // tensor
   checkCudaErrors(cudaStatus);
-//  test_tensor_gpu();
-  test_tensor_gpu_to_cpu();
+  test_tensor_gpu();
+  // test_tensor_gpu_to_cpu();
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
