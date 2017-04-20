@@ -8,8 +8,8 @@
 
 void test_relu_cpu() {
   printf("Example code for relu layer cpu\n");
-  size_t h = 20;
-  size_t w = 20;
+  size_t h = 10;
+  size_t w = 10;
 
   Session* session = Session::GetNewSession();
   session->gpu = false;
@@ -17,7 +17,7 @@ void test_relu_cpu() {
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Relu<float> * relu = new Relu<float>();
 
-  const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
+  // const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
   size_t t_dims[4] = {1, h, w, 1};
@@ -33,9 +33,9 @@ void test_relu_cpu() {
 
   for(int i = 0; i < h; i++) {
     for(int j = 0; j < w; j++) {
-      printf("%d ", top->at(0, i, j, 0));
+      printf("%f ", top->at(0, i, j, 0));
     }
-    printf("\n")
+    printf("\n");
   }
   delete relu;
 }
@@ -43,15 +43,19 @@ void test_relu_cpu() {
 
 
 __global__ void init_bottom(Tensor<float> * bottom) {
+  printf("init bottom\n");
   for(int i = 0; i < bottom->GetDims()[1]; i++) {
     for(int j = 0; j < bottom->GetDims()[2]; j++) {
       int b_idx[4] = {0, i, j, 0};
-      bottom->at(b_idx) = (float) ((i+j) % 255);
+      bottom->at(b_idx) = (float) (i-j);
+      printf("%f ", bottom->at(b_idx));
     }
+    printf("\n");
   }
 }
 
 __global__ void show_top(Tensor<float>* top) {
+  printf("show tensor\n");
   size_t h = top->GetDims()[1];
   size_t w = top->GetDims()[2];
   for (int i = 0; i < h; i++) {
@@ -59,8 +63,7 @@ __global__ void show_top(Tensor<float>* top) {
       printf("%f ", top->at(0, i, j, 0));
     }
     printf("\n");
-  } 
-  printf("%d \n", top->GetDataPtr());
+  }
 }
 
 
@@ -70,14 +73,14 @@ void test_relu_gpu() {
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
-  size_t h = 20;
-  size_t w = 20;
+  size_t h = 10;
+  size_t w = 10;
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Relu<float> * relu = new Relu<float>(2);
+  Relu<float> * relu = new Relu<float>();
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -85,7 +88,7 @@ void test_relu_gpu() {
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   
-  size_t t_dims[4] = {1, h/2, w/2, 1};
+  size_t t_dims[4] = {1, h, w, 1};
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
 
   cudaStatus = cudaGetLastError();
