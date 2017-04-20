@@ -5,15 +5,14 @@
 enum POOLING_TYPE {MAX, MIN, AVERAGE};
 
 
-
 template <class Dtype>
 __global__ void pool(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int bi, int o, size_t size, POOLING_TYPE type) {
   // bi is the index of the tensor
   // o is the output channel
   int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
   int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
-  int x = x_top*stride;
-  int y = y_top*stride;
+  int x = x_top*size;
+  int y = y_top*size;
   
   if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
     return;
