@@ -18,7 +18,7 @@ void test_pooling_cpu() {
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Pooling<float> * pooling_layer = new Pooling<float>(2);
 
-  const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
+  const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
   size_t t_dims[4] = {1, h/2, w/2, 1};
@@ -81,7 +81,7 @@ void test_pooling_gpu() {
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Pooling<float> * pooling_layer = new Pooling<float>(2);
-  const char* OUTPUT_BMP_PATH = "./tmp/test/out_gpu.bmp";
+  const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out_gpu.bmp";
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
