@@ -29,7 +29,7 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
   int y = y_top*stride;
   
   
-  if (!bottom->isValidIdx(bi, y, x, o)) {
+  if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
     return;
   }
 
@@ -51,7 +51,7 @@ __global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> 
 }
 
 template <class Dtype>
-__global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride) {
+__global__ void Conv2DForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride) {
   size_t n = bottom->GetDims()[0];
   size_t hei = top->GetDims()[1];
   size_t wid = top->GetDims()[2];
@@ -111,7 +111,7 @@ public:
 
   void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     if (Session::GetSession()->gpu) {
-      ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
+      Conv2DForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
