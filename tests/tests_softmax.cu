@@ -5,9 +5,10 @@
 #include <assert.h>
 
 __global__ void initial_bottom(Tensor<float>* bottom) {
-  printf("(%d, %d)\n", bottom->GetDims()[0], bottom->GetDims()[3]);
-  for (size_t i = 0; i < bottom->GetDims()[0]; ++i) {
-    for (size_t j = 0; j < bottom->GetDims()[3]; ++j) {
+  const size_t* dims = bottom->GetDims();
+  printf("(%d, %d)\n", int(dims[0]), int(dims[3]));
+  for (int i = 0; i < int(dims[0]); ++i) {
+    for (int j = 0; j < int(dims[3]); ++j) {
       bottom->at(i,0,0,j) = (float) i + j;
       printf("(%d, %d): %f\n", i, j, bottom->at(i,0,0,j));
     }
@@ -16,8 +17,8 @@ __global__ void initial_bottom(Tensor<float>* bottom) {
 
 __global__ void show_top(Tensor<float>* top) {
   printf("Printing top data\n");
-  for (size_t i = 0; i < top->GetDims()[0]; ++i) {
-    for (size_t j = 0; j < top->GetDims()[3]; ++j) {
+  for (int i = 0; i < int(top->GetDims()[0]); ++i) {
+    for (int j = 0; j < int(top->GetDims()[3]); ++j) {
       printf("(%d, %d): %f\n", i, j, top->at(i,0,0,j));
     }
   }
@@ -87,6 +88,8 @@ void test_softmax_gpu() {
   softmax_layer.Forward(bottom, top);
   
   cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
 
   show_top<<<1,1>>>(top[0]);
