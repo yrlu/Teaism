@@ -44,7 +44,18 @@ namespace ReluGPUKernels {
 template <class Dtype>
 class Relu: public Layer<Dtype> {
 public:
-  virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
+  void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
+                  const std::vector<size_t*> &tops_dims) {
+    assert(bottoms_dims.size());
+    assert(tops_dims.size());
+    size_t * b_dims = bottoms_dims[0];
+    size_t * t_dims = tops_dims[0];
+    t_dims[0] = b_dims[0];
+    t_dims[1] = b_dims[1];
+    t_dims[2] = b_dims[2];
+    t_dims[3] = b_dims[3];
+  }
+  void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
     assert(bottoms.size()==1);
     assert(tops.size()==1);
     Tensor<Dtype> * bottom = bottoms[0];
