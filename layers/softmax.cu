@@ -44,19 +44,34 @@ __global__ void ForwardGPU(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {
 template <class Dtype>
 class Softmax: public Layer<Dtype> {
 public:
-  Softmax(size_t filler):filler(filler) {}
+  Softmax(size_t *dims) {
+    if (Session::GetSession()->gpu) {
+      top.push_back(Tensor<Dtype>::CreateTensorGPU(dims);
+    } else {
+      top.push_back(Tensor<Dtype>::CreateTensorCPU(dims);
+    }
+  }
 
-  ~Softmax() {}
+  ~Softmax() {
+    if (Session::GetSession()->gpu) {
+      for (auto i: top) {
+        cudaFree(i);
+      }
+    } else {
+      for (auto i: top) {
+        delete i;
+      }
+    }
+}
 
   void Forward(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {}
-  std::vector<Tensor<Dtype>* > Forward(const std::vector<Tensor<Dtype> *> &) {}
+  std::vector<Tensor<Dtype>*> Forward(const std::vector<Tensor<Dtype> *> &) {}
   void Forward(const std::vector<Tensor<Dtype>*> &, std::vector<Tensor<Dtype>*> &);
 
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
-  size_t filler;
 private:
-
+  std::vector<Tensor<Dtype>*> top;
 };
 
 template <class Dtype>

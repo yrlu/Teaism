@@ -49,6 +49,7 @@ public:
   void Forward(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {}
   std::vector<Tensor<Dtype>* > Forward(const std::vector<Tensor<Dtype> *> &bottom) {}
   std::vector<Tensor<Dtype>* > Forward();
+  void Forward(vector<Tensor<Dtype>*> &bottom, vector<Tensor
 
   __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
 
