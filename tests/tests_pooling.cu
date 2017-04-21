@@ -30,7 +30,7 @@ void test_pooling_cpu() {
       bottom->at(b_idx) = (float) ((i+j) % 255);
     }
   }
-  pooling_layer->Forward(bottom, top);
+  pooling_layer->Forward({bottom}, {top});
 
   bitmap_image img(w/2, h/2);
   for (int i = 0; i < h/2; i++) {
@@ -100,7 +100,7 @@ void test_pooling_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
-  pooling_layer->Forward(bottom, top);
+  pooling_layer->Forward({bottom}, {top});
   
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);

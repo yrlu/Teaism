@@ -31,14 +31,14 @@ void test_conv2d_cpu() {
   	  bottom->at(b_idx) = (float) ((i+j) % 255);
   	}
   }
-  conv_layer->Forward(bottom, top);
+  conv_layer->Forward({bottom}, {top});
 
   bitmap_image img(w/2, h/2);
   for (int i = 0; i < h/2; i++) {
     for (int j = 0; j < w/2; j++) {
       unsigned val = (unsigned) top->at(0, i, j, 0);
       img.set_pixel(j, i, val, val, val);
-    }  
+    }
   }
   img.save_image(OUTPUT_BMP_PATH);
   delete conv_layer;
@@ -99,7 +99,7 @@ void test_conv2d_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
-  conv_layer->Forward(bottom, top);
+  conv_layer->Forward({bottom}, {top});
   
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);

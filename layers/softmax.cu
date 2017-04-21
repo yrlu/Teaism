@@ -12,33 +12,37 @@
 
 #define BLOCKDIM 32
 
-template <class Dtype>
-__global__ void ForwardGPUKernel(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {
-  const int batch_idx = threadIdx.x;
-  const int batch_size = int(bottom->GetDims()[0]);
-  const int nchannels = int(bottom->GetDims()[3]);
+namespace SoftmaxGPUKernels {
 
-  Dtype denominator = 0;
-  for (int j = 0; j < nchannels; ++j) {
-    top->at(batch_idx,0,0,j) = (Dtype) exp(bottom->at(batch_idx,0,0,j));
-    denominator += top->at(batch_idx,0,0,j);
+  template <class Dtype>
+  __global__ void ForwardGPUKernel(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {
+    const int batch_idx = threadIdx.x;
+    const int batch_size = int(bottom->GetDims()[0]);
+    const int nchannels = int(bottom->GetDims()[3]);
+
+    Dtype denominator = 0;
+    for (int j = 0; j < nchannels; ++j) {
+      top->at(batch_idx,0,0,j) = (Dtype) exp(bottom->at(batch_idx,0,0,j));
+      denominator += top->at(batch_idx,0,0,j);
+    }
+    assert(denominator != 0);
+    for (int j = 0; j < nchannels; ++j) {
+      top->at(batch_idx,0,0,j) = top->at(batch_idx,0,0,j) / denominator;
+    }
   }
-  assert(denominator != 0);
-  for (int j = 0; j < nchannels; ++j) {
-    top->at(batch_idx,0,0,j) = top->at(batch_idx,0,0,j) / denominator;
+
+  template <class Dtype>
+  __global__ void ForwardGPU(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {
+    assert(bottom->GetDims()[1] == 1);  // The dimension of the 2nd channel should be 1
+    assert(bottom->GetDims()[2] == 1);  // The dimension of the 3rd channel should be 1
+    assert(bottom->GetDims()[0] == top->GetDims()[0]);  // bottom channel should be equal to top channel
+    assert(bottom->GetDims()[1] == top->GetDims()[1]);
+    assert(bottom->GetDims()[2] == top->GetDims()[2]);
+    assert(bottom->GetDims()[3] == top->GetDims()[3]);
+
+    SoftmaxGPUKernels::ForwardGPUKernel<Dtype> <<<1,bottom->GetDims()[0]>>>(bottom, top);
   }
-}
 
-template <class Dtype>
-__global__ void ForwardGPU(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {
-  assert(bottom->GetDims()[1] == 1);  // The dimension of the 2nd channel should be 1
-  assert(bottom->GetDims()[2] == 1);  // The dimension of the 3rd channel should be 1
-  assert(bottom->GetDims()[0] == top->GetDims()[0]);  // bottom channel should be equal to top channel
-  assert(bottom->GetDims()[1] == top->GetDims()[1]);
-  assert(bottom->GetDims()[2] == top->GetDims()[2]);
-  assert(bottom->GetDims()[3] == top->GetDims()[3]);
-
-  ForwardGPUKernel<Dtype> <<<1,bottom->GetDims()[0]>>>(bottom, top);
 }
 
 template <class Dtype>
@@ -80,7 +84,7 @@ void Softmax<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottom, std::vec
   assert(top.size() == 1);  // Need only one bottom tensor
 
   if (Session::GetSession()->gpu) {
-    ForwardGPU<Dtype><<<1, 1>>>(bottom[0], top[0]); 
+    SoftmaxGPUKernels::ForwardGPU<Dtype><<<1, 1>>>(bottom[0], top[0]); 
   } else {
     assert(bottom[0]->GetDims()[1] == 1);  // The dimension of the 2nd channel should be 1
     assert(bottom[0]->GetDims()[2] == 1);  // The dimension of the 3rd channel should be 1
