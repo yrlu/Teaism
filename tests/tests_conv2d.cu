@@ -77,9 +77,11 @@ void test_conv2d_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
+
+  size_t kernel = 15;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> * conv_layer = new Conv2D<float>(15,15,1,1,2,new GaussianKernelInitializer<float>(15));
+  Conv2D<float> * conv_layer = new Conv2D<float>(15,15,1,1,2,new GaussianKernelInitializer<float>(15), VALID);
   const char* OUTPUT_BMP_PATH = "./tmp/test/out_gpu.bmp";
 
   cudaStatus = cudaGetLastError();
@@ -88,7 +90,7 @@ void test_conv2d_gpu() {
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   
-  size_t t_dims[4] = {1, h/2, w/2, 1};
+  size_t t_dims[4] = {1, h/2-kernel+1, w/2-kernel+1, 1};
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
 
   cudaStatus = cudaGetLastError();
@@ -114,9 +116,9 @@ void test_conv2d_gpu() {
   
   checkCudaErrors(cudaStatus);
   
-  bitmap_image img(w/2, h/2);	
-  for (int i = 0; i < h/2; i++) {
-    for (int j = 0; j < w/2; j++) {
+  bitmap_image img(w/2-kernel+1, h/2-kernel+1);	
+  for (int i = 0; i < h/2-kernel+1; i++) {
+    for (int j = 0; j < w/2-kernel+1; j++) {
       unsigned val = (unsigned) top_cpu->at(0, i, j, 0);
       img.set_pixel(j, i, val, val, val);
     }
