@@ -8,7 +8,7 @@
 
 #define BLOCKDIM 32
 
-namespace Relu {
+namespace ReluGPUKernels {
   template <class Dtype>
   __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int bi, int o) {
     // bi is the index of the tensor
@@ -35,7 +35,7 @@ namespace Relu {
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
-        ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
+        ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
       }
     }
   }
@@ -51,7 +51,7 @@ public:
     Tensor<Dtype> * top = tops[0];
 
     if (Session::GetSession()->gpu) {
-      Relu::ForwardGPU<<<1,1>>>(bottom, top);
+      ReluGPUKernels::ForwardGPU<<<1,1>>>(bottom, top);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < bottom->GetDims()[3]; o++) {

@@ -29,7 +29,7 @@ void test_relu_cpu() {
       bottom->at(b_idx) = (float) (i-j);
     }
   }
-  relu->Forward(bottom, top);
+  relu->Forward({bottom}, {top});
 
   for(int i = 0; i < h; i++) {
     for(int j = 0; j < w; j++) {
@@ -99,7 +99,7 @@ void test_relu_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
-  relu->Forward(bottom, top);
+  relu->Forward({bottom}, {top});
   
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);

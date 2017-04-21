@@ -10,7 +10,7 @@
 
 enum POOLING_TYPE {MAX, MIN, AVERAGE};
 
-namespace Pooling {
+namespace PoolingGPUKernels {
 
   template <class Dtype>
   __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int bi, int o, size_t size, POOLING_TYPE type) {
@@ -69,7 +69,7 @@ namespace Pooling {
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
-        ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type);
+        PoolingGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type);
       }
     }
   }
@@ -88,7 +88,7 @@ public:
     Tensor<Dtype> * top = tops[0];
 
     if (Session::GetSession()->gpu) {
-      Pooling::ForwardGPU<<<1,1>>>(bottom, top, size_, type_);
+      PoolingGPUKernels::ForwardGPU<<<1,1>>>(bottom, top, size_, type_);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < bottom->GetDims()[3]; o++) {

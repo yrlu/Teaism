@@ -18,7 +18,7 @@
 
 #define BLOCKDIM 32
 
-namespace Conv2D {
+namespace ConvGPUKernels {
 
   template <class Dtype>
   __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride) {
@@ -62,7 +62,7 @@ namespace Conv2D {
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
-        ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
+        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
       }
     }
   }
@@ -118,7 +118,7 @@ public:
     Tensor<Dtype> * top = tops[0];
 
     if (Session::GetSession()->gpu) {
-      ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
+      ConvGPUKernels::ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
