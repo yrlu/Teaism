@@ -44,7 +44,7 @@ void test_softmax_cpu() {
     }
   }
 
-  Softmax<float> softmax_layer (0);
+  Softmax<float> softmax_layer;
   softmax_layer.Forward(bottom, top);
   
   printf("Printing bottom data\n");
@@ -67,7 +67,7 @@ void test_softmax_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
-  Softmax<float> softmax_layer(0);
+  Softmax<float> softmax_layer;
 
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);

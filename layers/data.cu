@@ -46,10 +46,7 @@ public:
 
   ~Data() {}
 
-  void Forward(Tensor<Dtype>* bottom, Tensor<Dtype>* top) {}
-  std::vector<Tensor<Dtype>* > Forward(const std::vector<Tensor<Dtype> *> &bottom) {}
-  std::vector<Tensor<Dtype>* > Forward();
-  void Forward(vector<Tensor<Dtype>*> &bottom, vector<Tensor
+  void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
 
   __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
 
@@ -70,34 +67,30 @@ private:
 };
 
 template <class Dtype>
-std::vector<Tensor<Dtype>* > Data<Dtype>::Forward() {
+void Data<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
+  assert(bottoms.size() == 0);  // Should have no bottom tensor
+  assert(tops.size() == 2);  // Should have two top tensors
+
   end_ = begin_ + batch_size;
   if (end_ > num_data_) {
     begin_ = 0;
     end_ = begin_ + batch_size;
   }
 
-  size_t dims_i[4] = {batch_size, img_h, img_w, 3};
-  Tensor<Dtype>* top_i = Tensor<Dtype>::CreateTensorCPU(dims_i);
-
-  size_t dims_l[4] = {batch_size, 1, 1, 1};
-  Tensor<Dtype>* top_l = Tensor<Dtype>::CreateTensorCPU(dims_l);
-
-  FetchBatchData(top_i, top_l);  
   if (Session::GetSession()->gpu) {
-    Tensor<Dtype>* top_i_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_i);
-    Tensor<Dtype>* top_l_gpu = Tensor<Dtype>::TensorCPUtoGPU(top_l);
-    delete top_i;
-    delete top_l;
-    top_i = top_i_gpu;
-    top_l = top_l_gpu;
+    size_t dims_i[4] = {batch_size, img_h, img_w, 3};
+    Tensor<Dtype>* top_i = Tensor<Dtype>::CreateTensorCPU(dims_i);
+
+    size_t dims_l[4] = {batch_size, 1, 1, 1};
+    Tensor<Dtype>* top_l = Tensor<Dtype>::CreateTensorCPU(dims_l);
+
+    FetchBatchData(top_i, top_l);
+
+    Tensor<Dtype>::DataArrayCPUtoGPU(top_i, tops[0]);
+    Tensor<Dtype>::DataArrayCPUtoGPU(top_l, tops[1]);
+  } else {
+    FetchBatchData(tops[0], tops[1]);
   }
-
-  std::vector<Tensor<Dtype>* > top;
-  top.push_back(top_i);
-  top.push_back(top_l);
-
-  return top;
 }
 
 template <class Dtype>
