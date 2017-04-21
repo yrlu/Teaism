@@ -22,27 +22,7 @@
 template <class Dtype>
 class Data: public Layer<Dtype> {
 public:
-  Data(unsigned batch_size, char img_list_path[]):
-       batch_size(batch_size), begin_(0) {
-    std::string img_path;
-    size_t lab;
-
-    std::ifstream file(img_list_path);
-    std::string tmp;
-    while(std::getline(file, tmp)) {
-      std::istringstream iss(tmp);
-      iss >> img_path;
-      img_list.push_back(img_path);
-      iss >> lab;
-      lab_list.push_back(lab);
-    }
-    num_data_ = lab_list.size();
-    assert(num_data_ > 0);
-    assert(num_data_ >= batch_size);
-    bitmap_image img(img_list[0]);
-    img_h = img.height();
-    img_w = img.width();
-  }
+  Data(unsigned batch_size, char img_list_path[]);
 
   ~Data() {}
 
@@ -67,6 +47,29 @@ private:
   size_t num_data_;
 //  size_t img_c;
 };
+
+template <class Dtype>
+Data<Dtype>::Data(unsigned batch_size, char img_list_path[]):
+                  batch_size(batch_size), begin_(0) {
+  std::string img_path;
+  size_t lab;
+
+  std::ifstream file(img_list_path);
+  std::string tmp;
+  while(std::getline(file, tmp)) {
+    std::istringstream iss(tmp);
+    iss >> img_path;
+    img_list.push_back(img_path);
+    iss >> lab;
+    lab_list.push_back(lab);
+  }
+  num_data_ = lab_list.size();
+  assert(num_data_ > 0);
+  assert(num_data_ >= batch_size);
+  bitmap_image img(img_list[0]);
+  img_h = img.height();
+  img_w = img.width();
+}
 
 template <class Dtype>
 void Data<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
