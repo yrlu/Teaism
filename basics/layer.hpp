@@ -12,6 +12,8 @@ public:
   virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) = 0;
   // virtual std::vector<Tensor<Dtype>* > Forward(const std::vector<Tensor<Dtype> *> &bottom) = 0;
   // virtual void Backward(Packet& bottom, Packet& top) = 0;
+
+  virtual void GetTopDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims);
 };
 
 

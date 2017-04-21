@@ -5,24 +5,21 @@
 #include <assert.h>
 
 __global__ void initial_bottom(Tensor<float>* bottom_0, Tensor<float>* bottom_1) {
-  const size_t* dims = bottom_0->GetDims();
-  printf("(%d, %d)\n", dims[0], dims[3]);
-  for (int i = 0; i < dims[0]; ++i) {
-    for (int j = 0; j < dims[3]; ++j) {
-      bottom_0->at(i,0,0,j) = (float) (i + j + 1) / (dims[0] + dims[3]+2);
+  const size_t* dims =  bottom_0->GetDims();
+  printf("(%d, %d)\n", int(dims[0]), int(dims[3]));
+  for (int i = 0; i < int(dims[0]); ++i) {
+    for (int j = 0; j < int(dims[3]); ++j) {
+      bottom_0->at(i,0,0,j) = (float) (i + j + 1) / (int(dims[0]) + int(dims[3])+2);
       printf("(%d, %d): %f\n", i, j, bottom_0->at(i,0,0,j));
     }
   }
+  bottom_1->at(0,0,0,0) = 1;
   bottom_1->at(1,0,0,0) = 2;
 }
 
 __global__ void show_top(Tensor<float>* top) {
   printf("Printing top data\n");
-  for (int i = 0; i < top->GetDims()[0]; ++i) {
-    for (int j = 0; j < top->GetDims()[3]; ++j) {
-      printf("(%d, %d): %f\n", i, j, top->at(i,0,0,j));
-    }
-  }
+  printf("(%d, %d): %f\n", 0, 0, top->at(0,0,0,0));
 }
 
 void test_cross_entropy_loss_cpu() {
@@ -44,13 +41,14 @@ void test_cross_entropy_loss_cpu() {
 
   size_t dims_l[4] = {2, 1, 1, 1};
   bottom.push_back(Tensor<float>::CreateTensorCPU(dims_l));
+  bottom[1]->at(0,0,0,0) = 1;
   bottom[1]->at(1,0,0,0) = 2;
 
   size_t dims_t[4] = {1, 1, 1, 1};
   std::vector<Tensor<float>*> top;
   top.push_back(Tensor<float>::CreateTensorCPU(dims_t));
 
-  CrossEntropyLoss<float> cross_entropy_loss_layer(0);
+  CrossEntropyLoss<float> cross_entropy_loss_layer;
   cross_entropy_loss_layer.Forward(bottom, top);
   
   printf("Printing top data\n");
@@ -62,7 +60,7 @@ void test_cross_entropy_loss_cpu() {
 }
 
 void test_cross_entropy_loss_gpu() {
-  printf("Begin test softmax layer GPU\n");
+  printf("Begin test cross entropy loss layer GPU\n");
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
@@ -89,9 +87,11 @@ void test_cross_entropy_loss_gpu() {
   std::vector<Tensor<float>*> top;
   top.push_back(Tensor<float>::CreateTensorGPU(dims_t));
 
-  CrossEntropyLoss<float> cross_entropy_loss_layer(0);
+  CrossEntropyLoss<float> cross_entropy_loss_layer;
   cross_entropy_loss_layer.Forward(bottom, top);
-  
+ 
+  printf("Done GPU forward.\n");
+
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
