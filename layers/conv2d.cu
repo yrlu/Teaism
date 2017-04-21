@@ -185,7 +185,7 @@ public:
     }
   }
 
-  void GetTopDims(const std::vector<size_t*> &bottoms_dims, 
+  void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
                   const std::vector<size_t*> &tops_dims) {
     assert(bottoms_dims.size());
     assert(tops_dims.size());

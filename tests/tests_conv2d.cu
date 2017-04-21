@@ -92,9 +92,8 @@ void test_conv2d_gpu() {
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   
   size_t t_dims[4] = {1, h/2-kernel+1, w/2-kernel+1, 1};
-  size_t t_dims1[4] = {0, 0, 0, 0};
-  conv_layer->GetTopDims({b_dims}, {t_dims1});
-  printf("%d %d %d %d \n", t_dims1[0], t_dims1[1], t_dims1[2], t_dims1[3]);
+  conv_layer->GetTopsDims({b_dims}, {t_dims});
+  printf("%d %d %d %d \n", t_dims[0], t_dims[1], t_dims[2], t_dims[3]);
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
 
   cudaStatus = cudaGetLastError();

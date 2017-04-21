@@ -81,7 +81,7 @@ public:
   Pooling(size_t size=2, POOLING_TYPE type=MIN):size_(size), type_(type) {}
   ~Pooling() {}
 
-  void GetTopDims(const std::vector<size_t*> &bottoms_dims, 
+  void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
                   const std::vector<size_t*> &tops_dims) {
     assert(bottoms_dims.size());
     assert(tops_dims.size());

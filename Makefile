@@ -20,6 +20,7 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_softmax.cu -o tests_softmax.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cross_entropy_loss.cu -o tests_cross_entropy_loss.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling.cu -o tests_pooling.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.
 
 clean:
 	rm *.o

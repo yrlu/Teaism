@@ -22,7 +22,7 @@ void test_pooling_cpu() {
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
   size_t t_dims[4] = {0,0,0,0};
-  pooling_layer->GetTopDims({b_dims}, {t_dims});
+  pooling_layer->GetTopsDims({b_dims}, {t_dims});
   printf("%d %d %d %d \n", t_dims[0], t_dims[1], t_dims[2], t_dims[3]);
   // size_t t_dims[4] = {1, h/2, w/2, 1};
   Tensor<float>* top = Tensor<float>::CreateTensorCPU(t_dims);
