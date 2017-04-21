@@ -48,7 +48,7 @@ public:
 
   void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
 
-  void GetTopDims(const std::vector<size_t*> &, std::vector<size_t*> &);
+  void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &);
 
   __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
 
@@ -112,6 +112,20 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
   }
 }
 
+template <class Dtype>
+void Data<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
+  assert(bottoms_dims.size() == 1);
+  assert(tops_dims.size() == 2);  
 
+  tops_dims[0][0] = batch_size;
+  tops_dims[0][1] = img_h;
+  tops_dims[0][2] = img_w;
+  tops_dims[0][3] = 3;
+
+  tops_dims[1][0] = batch_size;
+  tops_dims[1][1] = 1;
+  tops_dims[1][2] = 1;
+  tops_dims[1][3] = 1;
+}
 
 #endif  // DATA_LAYER_CUH_

@@ -49,6 +49,8 @@ public:
   void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
+  void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &);
+
 private:
 
 };
@@ -85,5 +87,15 @@ void CrossEntropyLoss<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms
   }
 }
 
+template <class Dtype>
+void CrossEntropyLoss<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
+  assert(bottoms_dims.size() == 2);
+  assert(tops_dims.size() == 1);
+
+  tops_dims[0][0] = 1;
+  tops_dims[0][1] = 1;
+  tops_dims[0][2] = 1;
+  tops_dims[0][3] = 1;
+}
 
 #endif  // CROSS_ENTROPY_LOSS_LAYER_CUH_
