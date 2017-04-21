@@ -9,7 +9,7 @@
 template <class Dtype>
 class Layer {
 public:
-  virtual void Forward(Tensor<Dtype>* bottom, Tensor<Dtype>* top) = 0;
+  virtual void Forward(std::vector<Tensor<Dtype>*> &bottom, std::vector<Tensor<Dtype>*> &top) = 0;
   // virtual std::vector<Tensor<Dtype>* > Forward(const std::vector<Tensor<Dtype> *> &bottom) = 0;
   // virtual void Backward(Packet& bottom, Packet& top) = 0;
 };
