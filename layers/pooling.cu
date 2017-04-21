@@ -81,7 +81,19 @@ public:
   Pooling(size_t size=2, POOLING_TYPE type=MIN):size_(size), type_(type) {}
   ~Pooling() {}
 
-  virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
+  void GetTopDims(const std::vector<size_t*> &bottoms_dims, 
+                  const std::vector<size_t*> &tops_dims) {
+    assert(bottoms_dims.size());
+    assert(tops_dims.size());
+    size_t * b_dims = bottoms_dims[0];
+    size_t * t_dims = tops_dims[0];
+    t_dims[0] = b_dims[0];
+    t_dims[1] = b_dims[1]/size_;
+    t_dims[2] = b_dims[2]/size_;
+    t_dims[3] = b_dims[3];
+  }
+
+  void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
     assert(bottoms.size()==1);
     assert(tops.size()==1);
     Tensor<Dtype> * bottom = bottoms[0];
