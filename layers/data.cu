@@ -48,6 +48,8 @@ public:
 
   void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
 
+  void GetTopDims(const std::vector<size_t*> &, std::vector<size_t*> &);
+
   __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
 
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
@@ -109,5 +111,7 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
     delete img;
   }
 }
+
+
 
 #endif  // DATA_LAYER_CUH_
