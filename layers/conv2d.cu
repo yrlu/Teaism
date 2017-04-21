@@ -185,6 +185,25 @@ public:
     }
   }
 
+  void GetTopDims(const std::vector<size_t*> &bottoms_dims, 
+                  const std::vector<size_t*> &tops_dims) {
+    assert(bottoms_dims.size());
+    assert(tops_dims.size());
+    size_t * b_dims = bottoms_dims[0];
+    size_t * t_dims = tops_dims[0];
+    if(padding == SAME) {
+      t_dims[0] = b_dims[0];
+      t_dims[1] = b_dims[1]/stride;
+      t_dims[2] = b_dims[2]/stride;
+      t_dims[3] = b_dims[3];
+    } else if(padding == VALID) {
+      t_dims[0] = b_dims[0];
+      t_dims[1] = b_dims[1]/stride - kernel_height + 1;
+      t_dims[2] = b_dims[2]/stride - kernel_width + 1;
+      t_dims[3] = b_dims[3];
+    }
+  }
+
   // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
 
   const size_t kernel_height;

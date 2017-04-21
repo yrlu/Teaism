@@ -3,6 +3,7 @@
 #include "initializers/gaussian_kernel_initializer.cu"
 #include <assert.h>
 #include <cmath>
+#include <vector>
 #include "basics/session.hpp"
 #include "layers/conv2d.cu"
 #include "tmp/bitmap_image.hpp"
@@ -91,6 +92,9 @@ void test_conv2d_gpu() {
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   
   size_t t_dims[4] = {1, h/2-kernel+1, w/2-kernel+1, 1};
+  size_t t_dims1[4] = {0, 0, 0, 0};
+  conv_layer->GetTopDims({b_dims}, {t_dims1});
+  printf("%d %d %d %d \n", t_dims1[0], t_dims1[1], t_dims1[2], t_dims1[3]);
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
 
   cudaStatus = cudaGetLastError();
