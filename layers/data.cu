@@ -66,6 +66,8 @@ Data<Dtype>::Data(unsigned batch_size, char img_list_path[]):
   num_data_ = lab_list.size();
   assert(num_data_ > 0);
   assert(num_data_ >= batch_size);
+  printf("%s\n", img_list[0]);
+  std::cout << img_list[0] << std::endl;
   bitmap_image img(img_list[0]);
   img_h = img.height();
   img_w = img.width();
@@ -117,7 +119,7 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
 
 template <class Dtype>
 void Data<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
-  assert(bottoms_dims.size() == 1);
+//  assert(bottoms_dims.size() == 0);
   assert(tops_dims.size() == 2);  
 
   tops_dims[0][0] = batch_size;
