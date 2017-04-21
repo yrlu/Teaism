@@ -19,6 +19,7 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_conv2d.cu -o tests_conv2d.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_softmax.cu -o tests_softmax.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cross_entropy_loss.cu -o tests_cross_entropy_loss.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_get_tops_dims.cu -o tests_get_tops_dims.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling.cu -o tests_pooling.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu.cu -o tests_relu.o -I.
