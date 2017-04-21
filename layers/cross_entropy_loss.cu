@@ -12,29 +12,32 @@
 
 #define BLOCKDIM 32
 
-template <class Dtype>
-__global__ void ForwardGPU(Tensor<Dtype>* bottom_0, Tensor<Dtype>* bottom_1, Tensor<Dtype>* top) {
-  assert(bottom_0->GetDims()[0] == bottom_1->GetDims()[0]);
-  assert(bottom_0->GetDims()[1] == 1);
-  assert(bottom_0->GetDims()[2] == 1);
-  assert(bottom_1->GetDims()[1] == 1);
-  assert(bottom_1->GetDims()[2] == 1);
-  assert(bottom_1->GetDims()[3] == 1);
-  assert(top->GetDims()[0] == 1);
-  assert(top->GetDims()[1] == 1);
-  assert(top->GetDims()[2] == 1);
-  assert(top->GetDims()[3] == 1);
+namespace CrossEntropyGPUKernels {
 
-  size_t batch_size = bottom_0->GetDims()[0];
-  Dtype loss = 0;
-  for (size_t i = 0; i < batch_size; ++i) {
-    Dtype label = bottom_1->at(i,0,0,0);
-    Dtype p = bottom_0->at(i,0,0,label);
-    loss -= log(p);
+  template <class Dtype>
+  __global__ void ForwardGPU(Tensor<Dtype>* bottom_0, Tensor<Dtype>* bottom_1, Tensor<Dtype>* top) {
+    assert(bottom_0->GetDims()[0] == bottom_1->GetDims()[0]);
+    assert(bottom_0->GetDims()[1] == 1);
+    assert(bottom_0->GetDims()[2] == 1);
+    assert(bottom_1->GetDims()[1] == 1);
+    assert(bottom_1->GetDims()[2] == 1);
+    assert(bottom_1->GetDims()[3] == 1);
+    assert(top->GetDims()[0] == 1);
+    assert(top->GetDims()[1] == 1);
+    assert(top->GetDims()[2] == 1);
+    assert(top->GetDims()[3] == 1);
+
+    size_t batch_size = bottom_0->GetDims()[0];
+    Dtype loss = 0;
+    for (size_t i = 0; i < batch_size; ++i) {
+      Dtype label = bottom_1->at(i,0,0,0);
+      Dtype p = bottom_0->at(i,0,0,label);
+      loss -= log(p);
+    }
+    top->at(0,0,0,0) = loss / batch_size;
   }
-  top->at(0,0,0,0) = loss / batch_size;
-}
 
+}
 
 template <class Dtype>
 class CrossEntropyLoss: public Layer<Dtype> {
@@ -60,7 +63,7 @@ void CrossEntropyLoss<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottom,
 
 
   if (Session::GetSession()->gpu) {
-    ForwardGPU<<<1, 1>>>(bottom[0], bottom[1], top[0]);
+    CrossEntropyGPUKernels::ForwardGPU<<<1, 1>>>(bottom[0], bottom[1], top[0]);
   } else {  
     assert(bottom[0]->GetDims()[0] == bottom[1]->GetDims()[0]);
     assert(bottom[0]->GetDims()[1] == 1);
