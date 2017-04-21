@@ -18,50 +18,52 @@
 
 #define BLOCKDIM 32
 
+namespace Conv2D {
 
-template <class Dtype>
-__global__ void conv(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride) {
-  // bi is the index of the tensor
-  // o is the output channel
-  int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
-  int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
-  int x = x_top*stride;
-  int y = y_top*stride;
-  
-  
-  if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
-    return;
-  }
+  template <class Dtype>
+  __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride) {
+    // bi is the index of the tensor
+    // o is the output channel
+    int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
+    int x = x_top*stride;
+    int y = y_top*stride;
+    
+    
+    if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
+      return;
+    }
 
-  size_t kernel_height = W->GetDims()[0];
-  size_t kernel_width = W->GetDims()[1];
-  int idx[4] = {bi, y, x, o};
-  size_t in_channels = bottom->GetDims()[3];
-  Dtype sum = 0.0;
-  for(int c = 0; c < in_channels; c++) {
-    for(int i = 0; i < kernel_height; i++) {
-      for(int j = 0; j < kernel_width; j++) {
-        // (n, hei, wid, channel),   // (hei, wid, input, output)
-        sum += bottom->atPadding(idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c) * W->at(i, j, c, idx[3]);
+    size_t kernel_height = W->GetDims()[0];
+    size_t kernel_width = W->GetDims()[1];
+    int idx[4] = {bi, y, x, o};
+    size_t in_channels = bottom->GetDims()[3];
+    Dtype sum = 0.0;
+    for(int c = 0; c < in_channels; c++) {
+      for(int i = 0; i < kernel_height; i++) {
+        for(int j = 0; j < kernel_width; j++) {
+          // (n, hei, wid, channel),   // (hei, wid, input, output)
+          sum += bottom->atPadding(idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c) * W->at(i, j, c, idx[3]);
+        }
       }
     }
+    sum += b->at(0, 0, 0, 0);
+    top->at(bi, y_top, x_top, o) = sum;
   }
-  sum += b->at(0, 0, 0, 0);
-  top->at(bi, y_top, x_top, o) = sum;
-}
 
-template <class Dtype>
-__global__ void Conv2DForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride) {
-  size_t n = bottom->GetDims()[0];
-  size_t hei = top->GetDims()[1];
-  size_t wid = top->GetDims()[2];
-  size_t out_channels = top->GetDims()[3];
+  template <class Dtype>
+  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride) {
+    size_t n = bottom->GetDims()[0];
+    size_t hei = top->GetDims()[1];
+    size_t wid = top->GetDims()[2];
+    size_t out_channels = top->GetDims()[3];
 
-  dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-  dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-  for (int b = 0; b < n; b++) {
-    for (int o = 0; o < out_channels; o++) {
-      conv<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
+    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    for (int b = 0; b < n; b++) {
+      for (int o = 0; o < out_channels; o++) {
+        ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride);
+      }
     }
   }
 }
@@ -109,9 +111,14 @@ public:
     }
   }
 
-  void Forward(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
+  virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
+    assert(bottoms.size()==1);
+    assert(tops.size()==1);
+    Tensor<Dtype> * bottom = bottoms[0];
+    Tensor<Dtype> * top = tops[0];
+
     if (Session::GetSession()->gpu) {
-      Conv2DForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
+      ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {
