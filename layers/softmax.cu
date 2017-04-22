@@ -20,9 +20,16 @@ namespace SoftmaxGPUKernels {
     const int batch_size = int(bottom->GetDims()[0]);
     const int nchannels = int(bottom->GetDims()[3]);
 
+    Dtype max_value = 0;
+    for (int j = 0; j < nchannels; ++j) {
+      if (bottom->at(batch_idx,0,0,j) > max_value) {
+        max_value = bottom->at(batch_idx,0,0,j);
+      }
+    }
+
     Dtype denominator = 0;
     for (int j = 0; j < nchannels; ++j) {
-      top->at(batch_idx,0,0,j) = (Dtype) exp(bottom->at(batch_idx,0,0,j));
+      top->at(batch_idx,0,0,j) = (Dtype) exp(bottom->at(batch_idx,0,0,j)-max_value);
       denominator += top->at(batch_idx,0,0,j);
     }
     assert(denominator != 0);
@@ -80,10 +87,18 @@ void Softmax<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
     const size_t nchannels = bottoms[0]->GetDims()[3];
 
     Dtype denominator;
+    Dtype max_value;
     for (int i = 0; i < batch_size; ++i) {
+      max_value = 0;
+      for (int j = 0; j < nchannels; ++j) {
+        if (bottoms[0]->at(i,0,0,j) > max_value) {
+          max_value = bottoms[0]->at(i,0,0,j);
+        }
+      }
+
       denominator = 0;
       for (int j = 0; j < nchannels; ++j) {
-        tops[0]->at(i,0,0,j) = (Dtype) exp(bottoms[0]->at(i,0,0,j));
+        tops[0]->at(i,0,0,j) = (Dtype) exp(bottoms[0]->at(i,0,0,j)-max_value);
         denominator += tops[0]->at(i,0,0,j);
       }
       for (int j = 0; j < nchannels; ++j) {
