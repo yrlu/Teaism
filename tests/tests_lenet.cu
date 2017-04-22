@@ -14,6 +14,23 @@
 #include "device_launch_parameters.h"
 #include "utils/helper_cuda.h"
 
+// show memory usage of GPU
+void show_mem(cudaError_t cuda_status) {
+  size_t free_byte;
+  size_t total_byte;
+  cuda_status = cudaMemGetInfo(&free_byte, &total_byte);
+  if(cudaSuccess!=cuda_status) {
+  	printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status));
+  	return;
+  }
+  double free_db = (double)free_byte;
+  double total_db = (double)total_byte;
+  double used_db = total_db - free_db;
+
+  printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+  used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
+}
+
 
 // used by startTimer() and stopTimer()
 cudaEvent_t start, stop;
@@ -36,7 +53,7 @@ float stopTimer() {
 void test_lenet_gpu() {
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
-
+  show_mem(cudaStatus);
   startTimer();
 
   Session* session = Session::GetNewSession();
@@ -110,13 +127,12 @@ void test_lenet_gpu() {
   Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(cel_top_dims);
 
   printf("network finished setup: %3.1f ms \n", stopTimer());
-
-  startTimer();
+  show_mem(cudaStatus);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
 
-
+  startTimer();
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
   conv1.Forward({data_tops[0]}, {conv1_top});
   pool1.Forward({conv1_top}, {pool1_top});
@@ -129,8 +145,26 @@ void test_lenet_gpu() {
   fc4.Forward({relu3_top}, {fc4_top});
   softmax.Forward({fc4_top}, {sm_top});
   cel.Forward({sm_top, data_tops[1]}, {cel_top});
-
   printf("finished forward: %3.1f ms \n", stopTimer());
+  show_mem(cudaStatus);
+
+
+  startTimer();
+  data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
+  conv1.Forward({data_tops[0]}, {conv1_top});
+  pool1.Forward({conv1_top}, {pool1_top});
+  relu1.Forward({pool1_top}, {relu1_top});
+  conv2.Forward({relu1_top}, {conv2_top});
+  pool2.Forward({conv2_top}, {pool2_top});
+  relu2.Forward({pool2_top}, {relu2_top});
+  fc3.Forward({relu2_top}, {fc3_top});
+  relu3.Forward({fc3_top}, {relu3_top});
+  fc4.Forward({relu3_top}, {fc4_top});
+  softmax.Forward({fc4_top}, {sm_top});
+  cel.Forward({sm_top, data_tops[1]}, {cel_top});
+  printf("finished forward: %3.1f ms \n", stopTimer());
+  show_mem(cudaStatus);
+
 
 
   Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
@@ -163,6 +197,8 @@ void test_lenet_gpu() {
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
+
+  show_mem(cudaStatus);
 }
 
 
