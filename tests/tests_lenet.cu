@@ -10,15 +10,40 @@
 #include "layers/relu.cu"
 #include "tmp/bitmap_image.hpp"
 
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "utils/helper_cuda.h"
+
+
+// used by startTimer() and stopTimer()
+cudaEvent_t start, stop;
+
+void startTimer() {
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+}
+
+/** Return elapsed time (in ms) since startTime() was called */
+float stopTimer() {
+	float time;
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&time, start, stop);
+	return time;
+}
 
 void test_lenet_gpu() {
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
+  startTimer();
+
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
   size_t batch_size = 2;
+
 
   Data<float> data_layer(2, "tmp/test/img_list.txt");
   // vector<size_t*> data_tops_dims;
@@ -84,7 +109,12 @@ void test_lenet_gpu() {
   cel.GetTopsDims({sm_top_dims, data_tops_dims1}, {cel_top_dims});
   Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(cel_top_dims);
 
+  printf("network finished setup: %3.1f ms \n", stopTimer());
 
+  startTimer();
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
+  
 
 
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
@@ -99,6 +129,40 @@ void test_lenet_gpu() {
   fc4.Forward({relu3_top}, {fc4_top});
   softmax.Forward({fc4_top}, {sm_top});
   cel.Forward({sm_top, data_tops[1]}, {cel_top});
+
+  printf("finished forward: %3.1f ms \n", stopTimer());
+
+
+  Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
+  Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
+
+
+  // printf("%f \n", sm_top->at(0,0,0,0));
+  for(int i = 0; i < sm_top_dims[0]; i++) {
+  	for(int j = 0; j < sm_top_dims[3]; j++) {
+  	  printf("%f ", output_cpu->at(i, 0, 0, j));
+  	}
+  	printf("\n");
+  }
+
+  for(int i = 0; i < fc4_top_dims[0]; i++) {
+  	for(int j = 0; j < fc4_top_dims[3]; j++) {
+  	  printf("%f ", fc4_cpu->at(i, 0, 0, j));
+  	}
+  	printf("\n");
+  }
+
+
+
+
+  printf("%d %d %d %d \n", fc4_top_dims[0], fc4_top_dims[1], fc4_top_dims[2], fc4_top_dims[3]);
+  printf("%d %d %d %d \n", data_tops_dims1[0], data_tops_dims1[1], data_tops_dims1[2], data_tops_dims1[3]);
+  printf("%d %d %d %d \n", cel_top_dims[0], cel_top_dims[1], cel_top_dims[2], cel_top_dims[3]);
+  printf("%d %d %d %d \n", sm_top_dims[0], sm_top_dims[1], sm_top_dims[2], sm_top_dims[3]);
+  
+
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
 }
 
 
