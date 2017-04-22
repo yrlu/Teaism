@@ -59,10 +59,10 @@ void test_lenet_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
-  size_t batch_size = 2;
+  size_t batch_size = 64;
 
 
-  Data<float> data_layer(2, "tmp/test/img_list.txt");
+  Data<float> data_layer(batch_size, "tmp/test/img_list.txt");
   // vector<size_t*> data_tops_dims;
   size_t data_tops_dims0[4];
   size_t data_tops_dims1[4];
