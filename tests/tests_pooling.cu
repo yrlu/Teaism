@@ -21,7 +21,10 @@ void test_pooling_cpu() {
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
-  size_t t_dims[4] = {1, h/2, w/2, 1};
+  size_t t_dims[4] = {0,0,0,0};
+  pooling_layer->GetTopsDims({b_dims}, {t_dims});
+  printf("%d %d %d %d \n", t_dims[0], t_dims[1], t_dims[2], t_dims[3]);
+  // size_t t_dims[4] = {1, h/2, w/2, 1};
   Tensor<float>* top = Tensor<float>::CreateTensorCPU(t_dims);
 
   for(int i = 0; i < h; i++) {
@@ -30,7 +33,7 @@ void test_pooling_cpu() {
       bottom->at(b_idx) = (float) ((i+j) % 255);
     }
   }
-  pooling_layer->Forward(bottom, top);
+  pooling_layer->Forward({bottom}, {top});
 
   bitmap_image img(w/2, h/2);
   for (int i = 0; i < h/2; i++) {
@@ -100,7 +103,7 @@ void test_pooling_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
-  pooling_layer->Forward(bottom, top);
+  pooling_layer->Forward({bottom}, {top});
   
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);

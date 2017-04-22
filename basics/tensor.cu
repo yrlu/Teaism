@@ -77,6 +77,7 @@ public:
   __host__ static Tensor<Dtype>* CreateTensorCPU(size_t* dims, bool allocate_memory = true);
   __host__ static Tensor<Dtype> * TensorGPUtoCPU(Tensor<Dtype> * tensor_gpu);
   __host__ static Tensor<Dtype> * TensorCPUtoGPU(Tensor<Dtype> * tensor_cpu);
+  __host__ static void DataArrayCPUtoGPU(Tensor<Dtype>*, Tensor<Dtype>*);
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
   __host__ static void AllocateDataArrayCPU(Tensor<Dtype> * tensor_cpu);
 
@@ -147,6 +148,13 @@ __host__ Tensor<Dtype> * Tensor<Dtype>::TensorCPUtoGPU(Tensor<Dtype> * tensor_cp
   cudaMemcpy(&tensor_gpu->data_array_, &data_array, sizeof(Dtype*), cudaMemcpyHostToDevice);
 
   return tensor_gpu;
+}
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::DataArrayCPUtoGPU(Tensor<Dtype> *tensor_cpu, Tensor<Dtype> *tensor_gpu) {
+  Dtype* data_array;
+  cudaMemcpy(&data_array, &tensor_gpu->data_array_, sizeof(Dtype*), cudaMemcpyDeviceToHost);
+  cudaMemcpy(data_array, tensor_cpu->data_array_, sizeof(Dtype)*tensor_cpu->size(), cudaMemcpyHostToDevice);
 }
 
 // Allocate Memory 
