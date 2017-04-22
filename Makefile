@@ -16,7 +16,7 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_tensor.cu -o tests_tensor.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_data.cu -o tests_data.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_conv2d.cu -o tests_conv2d.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_softmax.cu -o tests_softmax.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cross_entropy_loss.cu -o tests_cross_entropy_loss.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_get_tops_dims.cu -o tests_get_tops_dims.o -I.

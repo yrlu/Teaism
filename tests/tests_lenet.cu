@@ -134,18 +134,29 @@ void test_lenet_gpu() {
 
   startTimer();
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
+  printf("data forward: %3.1f ms \n", stopTimer()); startTimer();
   conv1.Forward({data_tops[0]}, {conv1_top});
+  printf("conv1 forward: %3.1f ms \n", stopTimer()); startTimer();
   pool1.Forward({conv1_top}, {pool1_top});
+  printf("pool1 forward: %3.1f ms \n", stopTimer()); startTimer();
   relu1.Forward({pool1_top}, {relu1_top});
+  printf("relu1 forward: %3.1f ms \n", stopTimer()); startTimer();
   conv2.Forward({relu1_top}, {conv2_top});
+  printf("conv2 forward: %3.1f ms \n", stopTimer()); startTimer();
   pool2.Forward({conv2_top}, {pool2_top});
+  printf("pool2 forward: %3.1f ms \n", stopTimer()); startTimer();
   relu2.Forward({pool2_top}, {relu2_top});
+  printf("relu2 forward: %3.1f ms \n", stopTimer()); startTimer();
   fc3.Forward({relu2_top}, {fc3_top});
+  printf("fc3 forward: %3.1f ms \n", stopTimer()); startTimer();
   relu3.Forward({fc3_top}, {relu3_top});
+  printf("relu3 forward: %3.1f ms \n", stopTimer()); startTimer();
   fc4.Forward({relu3_top}, {fc4_top});
+  printf("fc4 forward: %3.1f ms \n", stopTimer()); startTimer();
   softmax.Forward({fc4_top}, {sm_top});
+  printf("softmax forward: %3.1f ms \n", stopTimer()); startTimer();
   cel.Forward({sm_top, data_tops[1]}, {cel_top});
-  printf("finished forward: %3.1f ms \n", stopTimer());
+  printf("cel forward: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
 
 
