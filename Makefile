@@ -4,7 +4,7 @@ NVCC=nvcc
 
 NVCC_OPTS=-arch=sm_35 -rdc=true
 
-GCC_OPTS=-std=c++11
+GCC_OPTS=-std=c++11 -w
 
 all: make_tests
 

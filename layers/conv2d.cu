@@ -82,8 +82,8 @@ namespace ConvGPUKernels {
   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride, PADDING padding=SAME) {
     size_t n = bottom->GetDims()[0];
     size_t out_channels = top->GetDims()[3];
-    // size_t hei = top->GetDims()[1];
-    // size_t wid = top->GetDims()[2];
+    //size_t hei = top->GetDims()[1];
+    //size_t wid = top->GetDims()[2];
 
     dim3 blocksInGrid(n / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
@@ -247,12 +247,12 @@ void Conv2D<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims,
     t_dims[0] = b_dims[0];
     t_dims[1] = b_dims[1]/stride;
     t_dims[2] = b_dims[2]/stride;
-    t_dims[3] = b_dims[3];
+    t_dims[3] = out_channels;
   } else if(padding == VALID) {
     t_dims[0] = b_dims[0];
     t_dims[1] = b_dims[1]/stride - kernel_height + 1;
     t_dims[2] = b_dims[2]/stride - kernel_width + 1;
-    t_dims[3] = b_dims[3];
+    t_dims[3] = out_channels;
   }
 }
 
