@@ -36,9 +36,9 @@ __global__ void InitializeGPU(Tensor<Dtype> * W, Tensor<Dtype> *b, const Dtype w
 template <class Dtype>
 void ConstInitializer<Dtype>::Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b, bool gpu) const {
   if (gpu) {
-    InitializeGPU<<<1, 1>>>(W, b, sigma_);
+    InitializeGPU<<<1, 1>>>(W, b, w_val_, b_val_);
   } else {
-    ConstInitializer<Dtype>::InitConst(W, b, sigma_);
+    ConstInitializer<Dtype>::InitConst(W, b, w_val_, b_val_);
   }
 }
 
