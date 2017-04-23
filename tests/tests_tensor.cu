@@ -115,6 +115,39 @@ void test_tensor_cpu() {
   delete tensor_cpu;
 }
 
+void test_reshape_cpu() {
+  size_t dims[4] = {1,3,3,1};
+  Tensor<float> * tensor_cpu = Tensor<float>::CreateTensorCPU(dims);
+  dims[1] = 6;
+  dims[2] = 1;
+  Tensor<float>::ReshapeTensorCPU(tensor_cpu, dims);
+
+
+  printf("%d %d %d %d\n", tensor_cpu->GetDims()[0], 
+    tensor_cpu->GetDims()[1], tensor_cpu->GetDims()[2], tensor_cpu->GetDims()[3]);
+}
+
+
+__global__ show_dims(Tensor<float> *tensor_gpu) {
+  printf("%d %d %d %d\n", tensor_gpu->GetDims()[0], 
+    tensor_gpu->GetDims()[1], tensor_gpu->GetDims()[2], tensor_gpu->GetDims()[3]); 
+}
+
+void test_reshape_gpu() {
+  size_t dims[4] = {1,3,3,1};
+  Tensor<float> * tensor_gpu = Tensor<float>::CreateTensorGPU(dims);
+  dims[1] = 6;
+  dims[2] = 1;
+  Tensor<float>::ReshapeTensorGPU(tensor_gpu, dims);
+
+  checkCudaErrors(cudaGetLastError());
+
+  show_dims<<<1, 1>>>show_dims(tensor_gpu)
+  cudaFree(tensor_gpu);
+  
+  checkCudaErrors(cudaGetLastError());
+}
+
 
 int main(void) {
   // tensor
@@ -125,5 +158,7 @@ int main(void) {
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
-//  test_tensor_cpu();
+//  test_tensor_cpu();  
+
+
 }
