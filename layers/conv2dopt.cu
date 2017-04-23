@@ -66,14 +66,18 @@ namespace ConvGPUKernels {
     size_t out_channels = top->GetDims()[3];
     size_t hei = top->GetDims()[1];
     size_t wid = top->GetDims()[2];
-  
+    
     dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    for (int b = 0; b < n; b++) {
-      for (int o = 0; o < out_channels; o++) {
-        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
-      }
+
+    int b = threadIdx.x;
+    if (b < 0 || b >= n) return;
+
+    // for (int b = 0; b < n; b++) {
+    for (int o = 0; o < out_channels; o++) {
+      ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
     }
+    // }
   }
 }
 
@@ -157,7 +161,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
   Tensor<Dtype> * top = tops[0];
 
   if (Session::GetSession()->gpu) {
-    ConvGPUKernels::ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride, padding);
+    ConvGPUKernels::ForwardGPU<<<1,Session::GetSession()->batch_size>>>(bottom, top, W_, b_, stride, padding);
   } else {
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
