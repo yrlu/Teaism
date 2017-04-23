@@ -102,6 +102,8 @@ void test_lenet_gpu() {
   Conv2D<float> conv2(5,5,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv2_top_dims[4];
   conv2.GetTopsDims({relu1_top_dims}, {conv2_top_dims});
+  printf("relu1 top dims: %d %d %d %d \n", (int)relu1_top_dims[0], (int)relu1_top_dims[1], (int)relu1_top_dims[2], (int)relu1_top_dims[3]);
+  printf("conv2 top dims: %d %d %d %d \n", (int)conv2_top_dims[0], (int)conv2_top_dims[1], (int)conv2_top_dims[2], (int)conv2_top_dims[3]);
   Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
   assert(conv2_top_dims[0] == batch_size);  
   assert(conv2_top_dims[1] == 14);  
