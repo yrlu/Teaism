@@ -57,7 +57,7 @@ void test_lenet_gpu() {
   startTimer();
 
   Session* session = Session::GetNewSession();
-  session->gpu = false;
+  session->gpu = true;
 
   size_t batch_size = 2;
 
@@ -68,13 +68,13 @@ void test_lenet_gpu() {
   size_t data_tops_dims1[4];
   data_layer.GetTopsDims({}, {data_tops_dims0, data_tops_dims1});
   std::vector<Tensor<float>*> data_tops;
-  data_tops.push_back(Tensor<float>::CreateTensorCPU(data_tops_dims0));
-  data_tops.push_back(Tensor<float>::CreateTensorCPU(data_tops_dims1));
+  data_tops.push_back(Tensor<float>::CreateTensorGPU(data_tops_dims0));
+  data_tops.push_back(Tensor<float>::CreateTensorGPU(data_tops_dims1));
 
   Conv2D<float> conv1(5,5,3,32,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv1_top_dims[4];
   conv1.GetTopsDims({data_tops_dims0}, {conv1_top_dims});
-  Tensor<float> * conv1_top = Tensor<float>::CreateTensorCPU(conv1_top_dims);
+  Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
   assert(conv1_top_dims[0] == batch_size);
   assert(conv1_top_dims[1] == 28);
   assert(conv1_top_dims[2] == 28);
@@ -83,7 +83,7 @@ void test_lenet_gpu() {
   Pooling<float> pool1(2);
   size_t pool1_top_dims[4];
   pool1.GetTopsDims({conv1_top_dims}, {pool1_top_dims});
-  Tensor<float> * pool1_top = Tensor<float>::CreateTensorCPU(pool1_top_dims);
+  Tensor<float> * pool1_top = Tensor<float>::CreateTensorGPU(pool1_top_dims);
   assert(pool1_top_dims[0] == batch_size);  
   assert(pool1_top_dims[1] == 14);  
   assert(pool1_top_dims[2] == 14);  
@@ -92,7 +92,7 @@ void test_lenet_gpu() {
   Relu<float> relu1;
   size_t relu1_top_dims[4];
   relu1.GetTopsDims({pool1_top_dims}, {relu1_top_dims});
-  Tensor<float> * relu1_top = Tensor<float>::CreateTensorCPU(relu1_top_dims);
+  Tensor<float> * relu1_top = Tensor<float>::CreateTensorGPU(relu1_top_dims);
   assert(relu1_top_dims[0] == batch_size);
   assert(relu1_top_dims[1] == 14);
   assert(relu1_top_dims[2] == 14);
@@ -101,7 +101,7 @@ void test_lenet_gpu() {
   Conv2D<float> conv2(5,5,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv2_top_dims[4];
   conv2.GetTopsDims({relu1_top_dims}, {conv2_top_dims});
-  Tensor<float> * conv2_top = Tensor<float>::CreateTensorCPU(conv2_top_dims);
+  Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
   assert(conv2_top_dims[0] == batch_size);  
   assert(conv2_top_dims[1] == 14);  
   assert(conv2_top_dims[2] == 14);  
@@ -110,7 +110,7 @@ void test_lenet_gpu() {
   Pooling<float> pool2(2);
   size_t pool2_top_dims[4];
   pool2.GetTopsDims({conv2_top_dims}, {pool2_top_dims});
-  Tensor<float> * pool2_top = Tensor<float>::CreateTensorCPU(pool2_top_dims);
+  Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);
   assert(pool2_top_dims[0] == batch_size);  
   assert(pool2_top_dims[1] == 7);  
   assert(pool2_top_dims[2] == 7);  
@@ -119,14 +119,14 @@ void test_lenet_gpu() {
   Relu<float> relu2;
   size_t relu2_top_dims[4];
   relu2.GetTopsDims({pool2_top_dims}, {relu2_top_dims});
-  Tensor<float> * relu2_top = Tensor<float>::CreateTensorCPU(relu2_top_dims);
+  Tensor<float> * relu2_top = Tensor<float>::CreateTensorGPU(relu2_top_dims);
 
   Conv2D<float> fc3(7,7,64,1024,1, new GaussianKernelInitializer<float>(0.1), VALID);
   size_t fc3_top_dims[4];
   fc3.GetTopsDims({relu2_top_dims}, {fc3_top_dims});
   printf("relu2 top dims: %d %d %d %d \n", relu2_top_dims[0], relu2_top_dims[1], relu2_top_dims[2], relu2_top_dims[3]);
   printf("fc3 top dims: %d %d %d %d \n", fc3_top_dims[0], fc3_top_dims[1], fc3_top_dims[2], fc3_top_dims[3]);
-  Tensor<float> * fc3_top = Tensor<float>::CreateTensorCPU(fc3_top_dims);
+  Tensor<float> * fc3_top = Tensor<float>::CreateTensorGPU(fc3_top_dims);
   assert(fc3_top_dims[0] == batch_size);
   assert(fc3_top_dims[1] == 1);
   assert(fc3_top_dims[2] == 1);
@@ -136,12 +136,12 @@ void test_lenet_gpu() {
   Relu<float> relu3;
   size_t relu3_top_dims[4];
   relu3.GetTopsDims({fc3_top_dims}, {relu3_top_dims});
-  Tensor<float> * relu3_top = Tensor<float>::CreateTensorCPU(relu3_top_dims);
+  Tensor<float> * relu3_top = Tensor<float>::CreateTensorGPU(relu3_top_dims);
 
   Conv2D<float> fc4(1,1,1024,10,1, new GaussianKernelInitializer<float>(0.1), VALID);
   size_t fc4_top_dims[4];
   fc4.GetTopsDims({relu3_top_dims}, {fc4_top_dims});
-  Tensor<float> * fc4_top = Tensor<float>::CreateTensorCPU(fc4_top_dims);
+  Tensor<float> * fc4_top = Tensor<float>::CreateTensorGPU(fc4_top_dims);
   assert(fc4_top_dims[0] == batch_size);
   assert(fc4_top_dims[1] == 1);  
   assert(fc4_top_dims[2] == 1);  
@@ -150,12 +150,12 @@ void test_lenet_gpu() {
   Softmax<float> softmax;
   size_t sm_top_dims[4];
   softmax.GetTopsDims({fc4_top_dims}, {sm_top_dims});
-  Tensor<float> * sm_top = Tensor<float>::CreateTensorCPU(sm_top_dims);
+  Tensor<float> * sm_top = Tensor<float>::CreateTensorGPU(sm_top_dims);
 
   CrossEntropyLoss<float> cel;
   size_t cel_top_dims[4];
   cel.GetTopsDims({sm_top_dims, data_tops_dims1}, {cel_top_dims});
-  Tensor<float> * cel_top = Tensor<float>::CreateTensorCPU(cel_top_dims);
+  Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(cel_top_dims);
 
   printf("network finished setup: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
