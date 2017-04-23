@@ -186,7 +186,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
   Tensor<Dtype> * top = tops[0];
 
   if (Session::GetSession()->gpu) {
-    ConvGPUKernels::ForwardGPU<<<1,1>>>(bottom, top, W_, b_, stride, padding);
+    ConvGPUKernels::ForwardGPU<<<1,Session::GetSession()->batch_size>>>(bottom, top, W_, b_, stride, padding);
   } else {
     size_t b_hei = bottom->GetDims()[2];
     size_t b_wid = bottom->GetDims()[3];
