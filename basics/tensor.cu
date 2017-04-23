@@ -25,6 +25,16 @@ public:
     return out_idx;
   }
 
+  __host__ __device__ const size_t* SetDims(size_t * dims) {
+    assert(dims[0] == dims_[0]);
+    size_t new_len = dims[0]*dims[1]*dims[2]*dims[3];
+    assert(new_len == len_);
+    dims_[0] = dims[0];
+    dims_[1] = dims[1];
+    dims_[2] = dims[2];
+    dims_[3] = dims[3];
+  }
+
   __host__ __device__ const size_t* GetDims() const {
     return dims_;
   }
@@ -80,6 +90,9 @@ public:
   __host__ static void DataArrayCPUtoGPU(Tensor<Dtype>*, Tensor<Dtype>*);
   __host__ static void AllocateDataArrayGPU(Tensor<Dtype> * tensor_gpu);
   __host__ static void AllocateDataArrayCPU(Tensor<Dtype> * tensor_cpu);
+  __host__ static void ReshapeTensorGPU(Tensor<Dtype> * tensor_gpu, size_t * dims);
+  __host__ static void ReshapeTensorCPU(Tensor<Dtype> * tensor_cpu, size_t * dims);
+
 
   __host__ __device__ ~Tensor() {
     if(data_array_ != NULL) {
@@ -102,6 +115,15 @@ private:
   size_t len_;
 };
 
+template<class Dtype>
+__host__ void Tensor<Dtype>::ReshapeTensorCPU(Tensor<Dtype> * tensor_cpu, size_t * dims) {
+  tensor_cpu->SetDims(dims);
+}
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::ReshapeTensorGPU(Tensor<Dtype> * tensor_gpu, size_t * dims) {
+  cudaMemcpy(tensor_gpu->dims_, dims, sizeof(size_t)*4, cudaMemcpyHostToDevice);
+}
 
 // Create CPU/GPU Tensor
 template<class Dtype>

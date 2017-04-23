@@ -3,4 +3,4 @@
 *.bin
 build
 .DS_Store
-tmp/test/img_list.txt
+tmp/tests/*
