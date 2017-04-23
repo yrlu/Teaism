@@ -25,11 +25,12 @@ public:
       session = NULL;
     }
   }
+  bool test;
   bool gpu;
   unsigned device;
   size_t batch_size;
 private:
-  Session():gpu(false), device(0), batch_size(1) {}
+  Session():test(true), gpu(false), device(0), batch_size(1) {}
   static Session* session;
 };
 
