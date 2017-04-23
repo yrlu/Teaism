@@ -13,7 +13,7 @@ main:
 	$(NVCC) $(GCC_OPTS) main.cu -o main.o -I.
 
 make_tests:
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_data.cu -o tests_data.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.
@@ -25,11 +25,11 @@ make_tests:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu.cu -o tests_relu.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lenet.cu -o tests_lenet.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lenet_fc.cu -o tests_lenet_fc.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lenet_fc.cu -o tests_lenet_fc.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_rng.cu -o tests_rng.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_const_initializer.cu -o tests_const_initializer.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_dropout.cu -o tests_dropout.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lrn.cu -o tests_lrn.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_alexnet.cu -o tests_alexnet.o -I.
 

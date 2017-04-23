@@ -45,6 +45,8 @@ namespace ConvGPUKernels {
     size_t kernel_width = W->GetDims()[1];
     int x = x_top*stride;
     int y = y_top*stride;
+    
+    size_t in_channels = bottom->GetDims()[3];   
 
     if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
       return;
@@ -68,38 +70,20 @@ namespace ConvGPUKernels {
       }
     }
 
-    size_t in_channels = bottom->GetDims()[3];
     Dtype sum = 0.0;
-    for(int c = 0; c < in_channels; c++) {
-      for(int i = 0; i < kernel_height; i++) {
-        for(int j = 0; j < kernel_width; j++) {
+    for(int i = 0; i < kernel_height; i++) {
+      for(int j = 0; j < kernel_width; j++) {
+        for(int c = 0; c < in_channels; c++) {
           // (n, hei, wid, channel),   // (hei, wid, input, output)
           // sum += bottom->atPadding(idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c) * W->at(i, j, c, idx[3]);
           sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
     }
-    sum += b->at(0, 0, 0, 0);
+    sum += b->at(0, 0, 0, o);
     top->at(bi, y_top, x_top, o) = sum;
   }
 
-//   template <class Dtype>
-//   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride, PADDING padding=SAME) {
-//     size_t n = bottom->GetDims()[0];
-//     size_t out_channels = top->GetDims()[3];
-//     size_t hei = top->GetDims()[1];
-//     size_t wid = top->GetDims()[2];
-    
-// //    int b = threadIdx.x;
-// //    if(b < 0 || b >= n) return;
-//     dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-//     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-//     for (int b = 0; b < n; b++) {
-//       for (int o = 0; o < out_channels; o++) {
-//         ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
-//       }
-//     }
-//   }
 }
 
 template <class Dtype>
@@ -192,12 +176,10 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < bs; b++) {
       for (int o = 0; o < out_channels; o++) {
-        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)+(BLOCKDIM+kernel_height)*(BLOCKDIM+kernel_width)*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
-        //ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
-        // ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
+//        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)+(BLOCKDIM+kernel_height)*(BLOCKDIM+kernel_width)*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
+        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
       }
     }
-    // ConvGPUKernels::ForwardGPU<<<1, 1>>>(bottom, top, W_, b_, stride, padding);
   } else {
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
@@ -218,7 +200,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
                   }
                 }
               }
-              int b_idx[4] = {0,0,0,0};
+              int b_idx[4] = {0,0,0,o};
               sum += b_->at(b_idx);
               int t_idx[4] = {b, y_top, x_top, o};
               
@@ -242,7 +224,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
                   }
                 }
               }
-              int b_idx[4] = {0,0,0,0};
+              int b_idx[4] = {0,0,0,o};
               sum += b_->at(b_idx);
               int t_idx[4] = {b, y_top, x_top, o};        
               top->at(t_idx) = sum;
