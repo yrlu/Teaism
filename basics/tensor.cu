@@ -26,9 +26,9 @@ public:
   }
 
   __host__ __device__ const size_t* SetDims(size_t * dims) {
-    assert(dims[0] == tensor_cpu->GetDims()[0]);
+    assert(dims[0] == dims_[0]);
     size_t new_len = dims[0]*dims[1]*dims[2]*dims[3];
-    assert(new_len == tensor_cpu->size());
+    assert(new_len == len_);
     dims_[0] = dims[0];
     dims_[1] = dims[1];
     dims_[2] = dims[2];
