@@ -34,9 +34,7 @@ namespace ConvGPUKernels {
     idx[0] = idx0; idx[1] = idx1; idx[2] = idx2;
     return GetIdx(dims, idx);
   }
-
-
-
+  
   template <class Dtype>
   __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int o, int stride, PADDING padding) {
     // bi is the index of the tensor
