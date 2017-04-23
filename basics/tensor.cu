@@ -93,7 +93,7 @@ public:
   __host__ static void AllocateDataArrayCPU(Tensor<Dtype> * tensor_cpu);
   __host__ static void ReshapeTensorGPU(Tensor<Dtype> * tensor_gpu, size_t * dims);
   __host__ static void ReshapeTensorCPU(Tensor<Dtype> * tensor_cpu, size_t * dims);
-
+  __host__ static void GetTensorGPUDims(Tensor<Dtype> * tensor_gpu, size_t * dims);
 
   __host__ __device__ ~Tensor() {
     if(data_array_ != NULL) {
@@ -115,6 +115,12 @@ private:
   size_t dims_[4];
   size_t len_;
 };
+
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::GetTensorGPUDims(Tensor<Dtype> * tensor_gpu, size_t * dims) {
+  cudaMemcpy(dims, tensor_gpu->dims_, sizeof(size_t)*4, cudaMemcpyHostToDevice);
+}
 
 template<class Dtype>
 __host__ void Tensor<Dtype>::ReshapeTensorCPU(Tensor<Dtype> * tensor_cpu, size_t * dims) {
