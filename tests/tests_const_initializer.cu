@@ -4,10 +4,7 @@
 #include <assert.h>
 #include <cmath>
 
-
-
 void test_const_init_cpu() {
-  // kernel_height, kernel_width, in_ch, out_ch;
   size_t w_dims[4] = {5,5,1,1};
   Tensor<float> * W_cpu = Tensor<float>::CreateTensorCPU(w_dims);
   size_t b_dims[4] = {1, 1, 1, 1};
