@@ -2,23 +2,27 @@
 #define FC_LAYER_CUH_
 
 #include "initializers/const_initializer.cu"
+#include "basics/layer.hpp"
+
+
+#define BLOCKDIM 32
 
 namespace FCGPUKernels {
   template <class Dtype>
-  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, size_t size, Tensor<Dtype> * W_, Tensor<Dtype> * b_) {
+  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_) {
     size_t n = bottom->GetDims()[0];
     size_t in_channels = bottom->GetDims()[3];
-
+    size_t out_channels = top->GetDims()[3];
     int bi = (blockDim.x * blockIdx.x) + threadIdx.x; // batch idx
-    int o = (blockDim.y * blockIdx.y) + threadIdx.y;  // output idx
-    if (bi < 0 || b >= n || o < 0 || o >= out_channels) {
+    int o = (blockDim.y * blockIdx.y) + threadIdx.y;  // output idi
+    if (bi < 0 || bi >= n || o < 0 || o >= out_channels) {
       return;
     }
     Dtype sum = 0;
     for(int i = 0; i < in_channels; i++) {
       sum += W_->at(0,0,i,o);
     }
-    sum += b->at(0,0,0,o);
+    sum += b_->at(0,0,0,o);
     top->at(bi,0,0,o) = sum;
   }
 }
@@ -84,7 +88,7 @@ public:
           for(int i = 0; i < in_channels; i++) {
             sum += W_->at(0,0,i,o);
           }
-          sum += b->at(0,0,0,o);
+          sum += b_->at(0,0,0,o);
           top->at(b,0,0,o) = sum;
         }
       }

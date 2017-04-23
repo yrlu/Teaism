@@ -4,6 +4,7 @@
 #include <vector>
 #include "basics/session.hpp"
 #include "initializers/const_initializer.cu"
+#include "layers/fc.cu"
 
 
 
@@ -33,10 +34,10 @@ void test_fc_gpu() {
   size_t out_channels = 10;
 
   Session* session = Session::GetNewSession();
-  session->gpu = false;
+  session->gpu = true;
   session->batch_size = 64;
 
-  ConstInitializer<float>* const_init(2.0, 1.0)
+  ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> fc(in_channels, out_channels, &const_init);
 
   size_t b_dims[4] = {session->batch_size, 1, 1, 64};
@@ -50,11 +51,11 @@ void test_fc_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
-  fc.Forword({bottom}, {top});
+  fc.Forward({bottom}, {top});
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
-  show_top<<<1,1>>>(top)
+  show_top<<<1,1>>>(top);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
@@ -74,7 +75,7 @@ void test_fc_cpu() {
   session->gpu = false;
   session->batch_size = 64;
 
-  ConstInitializer<float>* const_init(2.0, 1.0)
+  ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> fc(in_channels, out_channels, &const_init);
 
   size_t b_dims[4] = {session->batch_size, 1, 1, 64};
@@ -82,15 +83,15 @@ void test_fc_cpu() {
   size_t t_dims[4] = {session->batch_size, 1, 1, 10};
   Tensor<float>* top = Tensor<float>::CreateTensorCPU(t_dims);
 
-  for(int b = 0; b < session->batch_size; i++) {
+  for(int b = 0; b < session->batch_size; b++) {
     for(int i = 0; i < in_channels; i++) {
       bottom->at(b, 0, 0, i) = 2;
     }
   }
 
-  fc.Forword({bottom}, {top});
-  for(int b = 0; b < session->batch_size; i++) {
-    for(int i = 0; i < in_channels; i++) {
+  fc.Forward({bottom}, {top});
+  for(int b = 0; b < session->batch_size; b++) {
+    for(int i = 0; i < out_channels; i++) {
       printf("%f ", top->at(b, 0, 0, i));
     }
     printf("\n");
