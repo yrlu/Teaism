@@ -59,41 +59,21 @@ namespace ConvGPUKernels {
     sum += b->at(0, 0, 0, 0);
     top->at(bi, y_top, x_top, o) = sum;
   }
-  
-  template <class Dtype>
-  __global__ void ForwardGPU2(Tensor<Dtype> *bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride, PADDING padding=SAME) {
-    size_t n = bottom->GetDims()[0];
-    size_t hei = top->GetDims()[1];
-    size_t wid = top->GetDims()[2];
-    size_t out_channels = top->GetDims()[3];
-
-    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
- 
-    int b = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int o = (blockDim.y * blockIdx.y) + threadIdx.y;
-    if (b < 0 || b >= n || o < 0 || o >= out_channels) {
-      return;
-    }
-    ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
-  }
 
   template <class Dtype>
   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride, PADDING padding=SAME) {
     size_t n = bottom->GetDims()[0];
     size_t out_channels = top->GetDims()[3];
-    //size_t hei = top->GetDims()[1];
-    //size_t wid = top->GetDims()[2];
-
-    dim3 blocksInGrid(n / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
+    size_t hei = top->GetDims()[1];
+    size_t wid = top->GetDims()[2];
+  
+    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    ConvGPUKernels::ForwardGPU2<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, stride, padding);
-/*    for (int b = 0; b < n; b++) {
+    for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
         ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
       }
     }
-*/
   }
 }
 
