@@ -5,7 +5,7 @@
 #include <cmath>
 #include <vector>
 #include "basics/session.hpp"
-#include "layers/conv2dopt.cu"
+#include "layers/conv2d.cu"
 #include "tmp/bitmap_image.hpp"
 
 /*
@@ -169,7 +169,7 @@ void test_conv2d_gpu() {
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Conv2D<float> conv_layer = Conv2D<float>(5,5,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
 
-  size_t b_dims[4] = {session->batch_size, 32, 14, 14};
+  size_t b_dims[4] = {session->batch_size, 14, 14, 32};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   init_bottom<<<1,1>>>(bottom);
 
@@ -185,7 +185,7 @@ void test_conv2d_gpu() {
   checkCudaErrors(cudaGetLastError());
   printf("conv layer forward: %3.4f ms \n", stopTimer()); 
 
-  show_top<<<1,1>>>(top);
+  // show_top<<<1,1>>>(top);
   cudaFree(top);
   cudaFree(bottom);
   checkCudaErrors(cudaGetLastError());

@@ -20,7 +20,7 @@ namespace FCGPUKernels {
     }
     Dtype sum = 0;
     for(int i = 0; i < in_channels; i++) {
-      sum += W_->at(0,0,i,o);
+      sum +=  bottom->at(bi, 0, 0, i) * W_->at(0,0,o,i);
     }
     sum += b_->at(0,0,0,o);
     top->at(bi,0,0,o) = sum;
@@ -34,7 +34,7 @@ public:
 
   FC(size_t in_channels, size_t out_channels, Initializer<Dtype>* initializer = NULL):
       in_channels(in_channels), out_channels(out_channels), initializer_(initializer) {
-    size_t w_dims[4] = {1, 1, in_channels, out_channels};
+    size_t w_dims[4] = {1, 1, out_channels, in_channels};
     size_t b_dims[4] = {1, 1, 1, out_channels};
     if (Session::GetSession()->gpu) {
       W_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
@@ -68,7 +68,7 @@ public:
     }
   }
 
-  virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
+  void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
     assert(bottoms.size() == 1);
     assert(tops.size() == 1);
     Tensor<Dtype> * bottom = bottoms[0];
@@ -85,7 +85,7 @@ public:
         for(int o = 0; o < out_channels; o++) {
           Dtype sum = 0;
           for(int i = 0; i < in_channels; i++) {
-            sum += W_->at(0,0,i,o);
+            sum += bottom->at(b, 0, 0, i) * W_->at(0,0,o,i);
           }
           sum += b_->at(0,0,0,o);
           top->at(b,0,0,o) = sum;
