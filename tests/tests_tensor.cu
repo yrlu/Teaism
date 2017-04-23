@@ -148,6 +148,21 @@ void test_reshape_gpu() {
 }
 
 
+void test_indices() {
+  size_t dims[4] = {3,3,3,3};
+  Tensor<float> * tensor_cpu = Tensor<float>::CreateTensorCPU(dims);
+  for(int i = 0; i < tensor_cpu->size(); i++) {
+    tensor_cpu->GetDataPtr()[i] = i;
+  }
+
+  for(int i = 0; i < 3; i++) {
+    printf("%f \n", tensor_cpu->at(0,0,0,i));
+  }
+
+  delete tensor_cpu;
+}
+
+
 int main(void) {
   // tensor
   checkCudaErrors(cudaStatus);
@@ -160,5 +175,5 @@ int main(void) {
 //  test_tensor_cpu();  
   test_reshape_gpu();
   test_reshape_cpu();
-
+  test_indices();
 }

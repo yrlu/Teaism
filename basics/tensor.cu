@@ -20,7 +20,8 @@ public:
 
   __host__ __device__ unsigned GetIdx(const int* idx) const {
     unsigned out_idx = 0;
-    for (int i = 3; i >= 0; i--)
+    // for (int i = 3; i >= 0; i--)
+    for(int i = 0; i < 4; i++)
       out_idx = out_idx*dims_[i] + idx[i];
     return out_idx;
   }
