@@ -24,8 +24,9 @@ make_tests:
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu.cu -o tests_relu.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lenet.cu -o tests_lenet.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_rng.cu -o tests_rng.o -I.
+	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_rng.cu -o tests_rng.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_const_initializer.cu -o tests_const_initializer.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_dropout.cu -o tests_dropout.o -I.
 
 clean:
 	rm *.o
