@@ -43,7 +43,7 @@ namespace ReluGPUKernels {
     ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
   }
   
-  template<classs Dtype>
+  template<class Dtype>
   __global__ void ForwardGPU3(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     Dtype* b_data = bottom->GetDataPtr();
@@ -54,7 +54,7 @@ namespace ReluGPUKernels {
 
   template <class Dtype>
   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
-    size_t * size = bottom->size();    
+    size_t size = bottom->size();    
     ReluGPUKernels::ForwardGPU3<Dtype><<<size/(BLOCKDIM*BLOCKDIM) + 1, BLOCKDIM*BLOCKDIM>>>(bottom, top);
 /*
     size_t n = bottom->GetDims()[0];
