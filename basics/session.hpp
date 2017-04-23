@@ -25,10 +25,11 @@ public:
       session = NULL;
     }
   }
+  bool test;
   bool gpu;
   unsigned device;
 private:
-  Session():gpu(false), device(0) {}
+  Session():test(true), gpu(false), device(0) {}
   static Session* session;
 };
 
