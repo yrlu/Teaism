@@ -46,8 +46,10 @@ namespace ReluGPUKernels {
   template<classs Dtype>
   __global__ void ForwardGPU3(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    Dtype b_data = bottom->GetDataPtr();
-    if(idx < 0 || idx >=  
+    Dtype* b_data = bottom->GetDataPtr();
+    Dtype* t_data = top->GetDataPtr();
+    if(idx < 0 || idx >= bottom->size()) return;
+    t_data[idx] = (b_data[idx] >= 0 ? b_data[idx] : 0);
   }
 
   template <class Dtype>
