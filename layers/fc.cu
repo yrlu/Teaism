@@ -76,7 +76,6 @@ public:
 
     if (Session::GetSession()->gpu) {
       size_t batch_size = Session::GetSession()->batch_size;
-
       dim3 blocksInGrid(batch_size / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
       dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
 
