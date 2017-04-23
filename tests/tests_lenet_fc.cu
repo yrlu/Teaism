@@ -59,8 +59,8 @@ void test_lenet_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-
-  size_t batch_size = 2;
+  session->batch_size = 64;
+  size_t batch_size = session->batch_size;
 
 
   Data<float> data_layer(batch_size, "tmp/test/img_list.txt");
@@ -123,9 +123,15 @@ void test_lenet_gpu() {
   Tensor<float> * relu2_top = Tensor<float>::CreateTensorGPU(relu2_top_dims);
 
   FC<float> fc3(7*7*64,1024);
+  size_t to_fc3_dims[4];
+  to_fc3_dims[0] = relu2_top_dims[0];
+  to_fc3_dims[1] = 1;
+  to_fc3_dims[2] = 1;
+  to_fc3_dims[3] = relu2_top_dims[1]*relu2_top_dims[2]*relu2_top_dims[3];
+  
   size_t fc3_top_dims[4];
 
-  fc3.GetTopsDims({relu2_top_dims}, {fc3_top_dims});
+  fc3.GetTopsDims({to_fc3_dims}, {fc3_top_dims});
   printf("relu2 top dims: %d %d %d %d \n", relu2_top_dims[0], relu2_top_dims[1], relu2_top_dims[2], relu2_top_dims[3]);
   printf("fc3 top dims: %d %d %d %d \n", fc3_top_dims[0], fc3_top_dims[1], fc3_top_dims[2], fc3_top_dims[3]);
   Tensor<float> * fc3_top = Tensor<float>::CreateTensorGPU(fc3_top_dims);
@@ -180,11 +186,6 @@ void test_lenet_gpu() {
   relu2.Forward({pool2_top}, {relu2_top});
   printf("relu2 forward: %3.1f ms \n", stopTimer()); startTimer();
   // flatten the tensor
-  size_t to_fc3_dims[4];
-  to_fc3_dims[0] = relu2_top_dims[0];
-  to_fc3_dims[1] = 1;
-  to_fc3_dims[2] = 1;
-  to_fc3_dims[3] = relu2_top_dims[1]*relu2_top_dims[2]*relu2_top_dims[3];
   Tensor<float>::ReshapeTensorGPU(relu2_top, to_fc3_dims);
   fc3.Forward({relu2_top}, {fc3_top});
   printf("fc3 forward: %3.1f ms \n", stopTimer()); startTimer();

@@ -25,19 +25,52 @@ namespace ReluGPUKernels {
   }
 
   template <class Dtype>
-  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
+  __global__ void ForwardGPU2(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     size_t n = bottom->GetDims()[0];
     size_t hei = top->GetDims()[1];
-    size_t wid = top->GetDims()[2];
+    size_t wid = top->GetDims()[2]; 
     size_t out_channels = top->GetDims()[3];
+
+    int b = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int o = (blockDim.y * blockIdx.y) + threadIdx.y;  
+    if(b < 0 || b >= n || o < 0 || o >= out_channels) {
+      return;
+    }
 
     dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+
+    ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
+  }
+  
+  template<classs Dtype>
+  __global__ void ForwardGPU3(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    Dtype b_data = bottom->GetDataPtr();
+    if(idx < 0 || idx >=  
+  }
+
+  template <class Dtype>
+  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
+    size_t * size = bottom->size();    
+    ReluGPUKernels::ForwardGPU3<Dtype><<<size/(BLOCKDIM*BLOCKDIM) + 1, BLOCKDIM*BLOCKDIM>>>(bottom, top);
+/*
+    size_t n = bottom->GetDims()[0];
+    //size_t hei = top->GetDims()[1];
+    //size_t wid = top->GetDims()[2];
+    size_t out_channels = top->GetDims()[3];
+    dim3 blocksInGrid(n / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    ReluGPUKernels::ForwardGPU2<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top);
+    /*
+    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
         ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
       }
-    }
+    }*/
   }
 }
 
