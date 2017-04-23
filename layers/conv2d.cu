@@ -66,7 +66,7 @@ namespace ConvGPUKernels {
     size_t out_channels = top->GetDims()[3];
     size_t hei = top->GetDims()[1];
     size_t wid = top->GetDims()[2];
-  
+    
     dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
