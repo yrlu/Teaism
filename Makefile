@@ -13,7 +13,7 @@ main:
 	$(NVCC) $(GCC_OPTS) main.cu -o main.o -I.
 
 make_tests:
-	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_data.cu -o tests_data.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2d.cu -o tests_conv2d.o -I.

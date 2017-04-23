@@ -162,6 +162,15 @@ void test_indices() {
   delete tensor_cpu;
 }
 
+void test_dims() {
+  size_t dims[4] = {3,3,3,3};
+  Tensor<float> * tensor_gpu = Tensor<float>::CreateTensorGPU(dims);
+  size_t dims2[4];
+  Tensor<float>::GetTensorGPUDims(tensor_gpu, dims2);
+  printf("%d %d %d %d \n", dims2[0], dims2[1], dims2[2], dims2[3]);
+  checkCudaErrors(cudaGetLastError());
+}
+
 
 int main(void) {
   // tensor
@@ -176,4 +185,5 @@ int main(void) {
   test_reshape_gpu();
   test_reshape_cpu();
   test_indices();
+  test_dims();
 }

@@ -178,9 +178,11 @@ void test_conv2d_gpu() {
   printf("%d %d %d %d \n", (int)b_dims[0], (int)b_dims[1], (int)b_dims[2], (int)b_dims[3]);
   printf("%d %d %d %d \n", (int)t_dims[0], (int)t_dims[1], (int)t_dims[2], (int)t_dims[3]);
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
+  checkCudaErrors(cudaGetLastError());
 
   startTimer();
   conv_layer.Forward({bottom}, {top});
+  checkCudaErrors(cudaGetLastError());
   printf("conv layer forward: %3.4f ms \n", stopTimer()); 
 
   show_top<<<1,1>>>(top);

@@ -119,7 +119,7 @@ private:
 
 template<class Dtype>
 __host__ void Tensor<Dtype>::GetTensorGPUDims(Tensor<Dtype> * tensor_gpu, size_t * dims) {
-  cudaMemcpy(dims, tensor_gpu->dims_, sizeof(size_t)*4, cudaMemcpyHostToDevice);
+  cudaMemcpy(dims, tensor_gpu->dims_, sizeof(size_t)*4, cudaMemcpyDeviceToHost);
 }
 
 template<class Dtype>
