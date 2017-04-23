@@ -5,7 +5,7 @@ A minimalistic convolutional neural network library for CUDA-based embedded and 
 ## Dependencies
 
 - C++0x
-- CUDA 8.0
+- CUDA >= 7.5
 - CMake 3.5
 
 ## Files
