@@ -20,6 +20,9 @@ namespace PoolingGPUKernels {
     int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
     int x = x_top*stride;
     int y = y_top*stride;
+
+    int hei = bottom->GetDims()[1];
+    int wid = bottom->GetDims()[2];
     
     if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
       return;
@@ -27,8 +30,8 @@ namespace PoolingGPUKernels {
 
     if (type==MAX) {
       Dtype pooled_val=bottom->at(bi, y, x, o);
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           Dtype val = bottom->at(bi, i, j, o);
           if (val > pooled_val) {
             pooled_val = val;
@@ -38,8 +41,8 @@ namespace PoolingGPUKernels {
       top->at(bi, y_top, x_top, o) = pooled_val;
     } else if(type==MIN) {
       Dtype pooled_val=bottom->at(bi, y, x, o);
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           Dtype val = bottom->at(bi, i, j, o);
           if (val < pooled_val) {
             pooled_val = val;
@@ -49,12 +52,14 @@ namespace PoolingGPUKernels {
       top->at(bi, y_top, x_top, o) = pooled_val;
     } else if(type==AVERAGE) {
       Dtype pooled_val=0;
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      int cnt = 0;
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           pooled_val += bottom->at(bi, i, j, o);
+          cnt += 1;
         }
       }
-      top->at(bi, y_top, x_top, o) = pooled_val/size/size;
+      top->at(bi, y_top, x_top, o) = pooled_val/cnt;
     }
   }
 
