@@ -5,7 +5,7 @@
 #include <cmath>
 #include <vector>
 #include "basics/session.hpp"
-#include "layers/conv2d.cu"
+#include "layers/conv2d1.cu"
 #include "utils/utils.cu"
 
 /*
