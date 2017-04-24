@@ -82,16 +82,18 @@ void test_pooling_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
  
-  // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Pooling<float> * pooling_layer = new Pooling<float>(2, MAX, 2);
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out_gpu.bmp";
-
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
-  
+ 
+
+  printf("after new layer \n");
+ 
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
   
+  return;
   size_t t_dims[4] = {1, h/2, w/2, 1};
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
 

@@ -59,7 +59,7 @@ namespace PoolingGPUKernels {
   }
 
   template <class Dtype>
-  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, size_t size, POOLING_TYPE type) {
+  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, size_t size, POOLING_TYPE type, size_t stride) {
     size_t n = bottom->GetDims()[0];
     size_t hei = top->GetDims()[1];
     size_t wid = top->GetDims()[2];
@@ -69,7 +69,7 @@ namespace PoolingGPUKernels {
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
-        PoolingGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type);
+        PoolingGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type, stride);
       }
     }
   }
@@ -78,7 +78,7 @@ namespace PoolingGPUKernels {
 template <class Dtype>
 class Pooling: public Layer<Dtype> {
 public:
-  Pooling(size_t size=2, POOLING_TYPE type=MIN, stride=1):size_(size), type_(type), stride_(stride) {}
+  Pooling(size_t size=2, POOLING_TYPE type=MIN, size_t stride=1):size_(size), type_(type), stride_(stride) {}
   ~Pooling() {}
 
   void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
