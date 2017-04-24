@@ -11,12 +11,13 @@ net = caffe.Net("deploy.prototxt", "bvlc_reference_caffenet.caffemodel", caffe.T
 
 f_out = open('model.txt', 'w')
 
-layers = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'fc6', 'fc7', 'fc8']
+layers = ['fc8']
 for l in layers:
   print l, "weights: ", net.params[l][0].data.shape
   params = net.params[l][0].data.flatten().tolist()
-  for i in params:
-    f_out.write(str(i) + " ")
+  for cnt, p in enumerate(params):
+    f_out.write(str(p) + " ")
+#    print cnt, p
   f_out.write("\n")
 
   print l, "biases: ", net.params[l][0].data.shape
