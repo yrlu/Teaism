@@ -16,7 +16,7 @@ void test_pooling_cpu() {
   session->gpu = false;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Pooling<float> * pooling_layer = new Pooling<float>(2);
+  Pooling<float> * pooling_layer = new Pooling<float>(2, MAX, 2);
 
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
@@ -83,7 +83,7 @@ void test_pooling_gpu() {
   session->gpu = true;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Pooling<float> * pooling_layer = new Pooling<float>(2);
+  Pooling<float> * pooling_layer = new Pooling<float>(2, MAX, 2);
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out_gpu.bmp";
 
   cudaStatus = cudaGetLastError();
