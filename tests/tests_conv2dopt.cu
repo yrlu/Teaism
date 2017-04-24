@@ -146,8 +146,8 @@ __global__ void init_bottom(Tensor<float> * bottom) {
 }
 
 __global__ void show_top(Tensor<float>* top) {
-  size_t h = top->GetDims()[2];
-  size_t w = top->GetDims()[3];
+  size_t h = top->GetDims()[1];
+  size_t w = top->GetDims()[2];
   for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
       printf("%f ", top->at(0, i, j, 0));
@@ -185,7 +185,7 @@ void test_conv2d_gpu() {
   checkCudaErrors(cudaGetLastError());
   printf("conv layer forward: %3.4f ms \n", stopTimer()); 
 
-  // show_top<<<1,1>>>(top);
+  show_top<<<1,1>>>(top);
   cudaFree(top);
   cudaFree(bottom);
   checkCudaErrors(cudaGetLastError());
