@@ -7,4 +7,3 @@ tmp/test/*
 *.caffemodel
 *.solverstate
 *.mdb
-*.txt
