@@ -7,11 +7,12 @@ caffe_root = '/home/jyh/caffe/'
 sys.path.insert(0, caffe_root + 'python')
 import caffe
 
-net = caffe.Net("deploy.prototxt", "bvlc_reference_caffenet.caffemodel", caffe.TEST);
+caffe.set_mode_cpu()
+net = caffe.Net("test.prototxt", "snapshots/cifar10_iter_1000.caffemodel", caffe.TEST);
 
 f_out = open('model.txt', 'w')
 
-layers = ['conv1','conv2','conv3','conv4','conv5','fc6','fc7','fc8']
+layers = ['conv1','conv2','conv3', 'fc4', 'fc5']
 for l in layers:
   print l, "weights: ", net.params[l][0].data.shape
   params = net.params[l][0].data.flatten().tolist()

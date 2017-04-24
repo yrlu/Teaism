@@ -174,9 +174,9 @@ public:
   const size_t in_channels;
   const size_t out_channels;
 
-private:
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
+private:
   const Initializer<Dtype>* initializer_;
   void InitParams() {
     if (initializer_!=NULL) {

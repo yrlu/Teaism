@@ -22,7 +22,7 @@
 template <class Dtype>
 class Data: public Layer<Dtype> {
 public:
-  Data(unsigned batch_size, char img_list_path[]);
+  Data(unsigned batch_size, char img_list_path[], Dtype mean_r=128, Dtype mean_g=128, Dtype mean_b=128);
 
   ~Data() {}
 
@@ -45,12 +45,15 @@ private:
   size_t begin_;
   size_t end_;
   size_t num_data_;
+  Dtype mean_r_;
+  Dtype mean_g_;
+  Dtype mean_b_;
 //  size_t img_c;
 };
 
 template <class Dtype>
-Data<Dtype>::Data(unsigned batch_size, char img_list_path[]):
-                  batch_size(batch_size), begin_(0) {
+Data<Dtype>::Data(unsigned batch_size, char img_list_path[], Dtype mean_r, Dtype mean_g, Dtype mean_b):
+  batch_size(batch_size), begin_(0), mean_r_(mean_r), mean_g_(mean_g), mean_b_(mean_b) {
   std::string img_path;
   size_t lab;
 
@@ -108,9 +111,9 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
     top_l->at(i,0,0,0) = (Dtype) lab_list[i+begin_];
     for (size_t y = 0; y < img_h; ++y) {
       for (size_t x = 0; x < img_w; ++x) {
-        top_i->at(i,y,x,0) = (Dtype) img->red_channel(x,y);
-        top_i->at(i,y,x,1) = (Dtype) img->green_channel(x,y);
-        top_i->at(i,y,x,2) = (Dtype) img->blue_channel(x,y);
+        top_i->at(i,y,x,2) = (Dtype) img->red_channel(x,y) - mean_r_;
+        top_i->at(i,y,x,1) = (Dtype) img->green_channel(x,y) - mean_g_;
+        top_i->at(i,y,x,0) = (Dtype) img->blue_channel(x,y) - mean_b_;
       }
     }
     delete img;

@@ -159,9 +159,9 @@ public:
   const size_t out_channels;
   const size_t stride;
   const PADDING padding;
-private:
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
+private:
   const Initializer<Dtype>* initializer_;
   void InitParams(); 
 };
