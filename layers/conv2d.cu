@@ -36,9 +36,9 @@ namespace ConvGPUKernels {
   }
 
   template <class Dtype>
-  __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int hs, int ws, int stride, PADDING padding) {
+  __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int hs, int ws, int stride, PADDING padding) {
     // find bi & o
-    bi = blockIdx.y/hs;
+    int bi = blockIdx.y/hs;
     int o = blockIdx.x/ws;
 
     int hi = (blockIdx.y % hs);
@@ -88,7 +88,7 @@ namespace ConvGPUKernels {
           sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
-    }
+    }	
     sum += b->at(0, 0, 0, o);
     top->at(bi, y_top, x_top, o) = sum;
   }
@@ -243,7 +243,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     dim3 blocksInGrid(ws*out_channels, hs*bs);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     // for(int b = 0; b < bs; b++) {
-    ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, 0, hs, ws, stride, padding);
+    ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
     // }
 /*
     size_t t_dims[4];
