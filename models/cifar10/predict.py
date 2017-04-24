@@ -8,7 +8,7 @@ import caffe
 
 net = caffe.Net("test.prototxt", "snapshots/cifar10_iter_1000.caffemodel", caffe.TEST)
 
-for i in range(9):
+for i in range(1):
   img = spmi.imread("../../datasets/cifar10/bmp_imgs/0000" + str(i+1) + ".bmp").astype(dtype=np.float32)
   img -= [128, 128, 128]
   img = img[:,:,::-1]
@@ -18,5 +18,5 @@ for i in range(9):
 
   net.forward()
 
-  print i, net.blobs['prob'].data[...].tolist()
+  print i, net.blobs['conv1'].data[...].tolist()
 
