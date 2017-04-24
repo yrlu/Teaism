@@ -5,8 +5,7 @@
 #include "basics/session.hpp"
 #include "initializers/const_initializer.cu"
 #include "layers/fc.cu"
-
-
+#include "utils/utils.cu"
 
 __global__ void init_bottom(Tensor<float> * bottom) {
   for(int b = 0; b < bottom->GetDims()[0]; b++) {
@@ -51,7 +50,10 @@ void test_fc_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
   
+  startTimer();  
   fc.Forward({bottom}, {top});
+  printf("fc layer forward: %3.4f ms \n", stopTimer()); 
+
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
@@ -89,7 +91,10 @@ void test_fc_cpu() {
     }
   }
 
+  startTimer();
   fc.Forward({bottom}, {top});
+  printf("conv layer forward: %3.4f ms \n", stopTimer()); 
+
   for(int b = 0; b < session->batch_size; b++) {
     for(int i = 0; i < out_channels; i++) {
       printf("%f ", top->at(b, 0, 0, i));

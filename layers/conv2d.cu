@@ -13,6 +13,7 @@
 #include "utils/helper_cuda.h"
 #include "utils/helper_string.h"
 #include "initializers/gaussian_kernel_initializer.cu"
+#include "utils/utils.cu"
 
 // TODO: implement CUDA kernel for backward()
 
@@ -21,19 +22,7 @@
 enum PADDING {SAME, VALID};
 
 namespace ConvGPUKernels {
-  __device__ inline unsigned GetIdx(const size_t * dims, const int* idx) {
-    unsigned out_idx = 0;
-    for(int i = 0; i < 3; i++) {
-      out_idx = out_idx*dims[i] + idx[i];
-    }
-    return out_idx;
-  }
-
-  __device__ inline unsigned GetIdx(const size_t * dims, const int idx0, const int idx1, const int idx2) {
-    int idx[3];
-    idx[0] = idx0; idx[1] = idx1; idx[2] = idx2;
-    return GetIdx(dims, idx);
-  }
+  
 
   template <class Dtype>
   __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int hs, int ws, int stride, PADDING padding) {

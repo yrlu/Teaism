@@ -3,7 +3,7 @@
 
 #include "initializers/const_initializer.cu"
 #include "basics/layer.hpp"
-
+#include "utils/utils.cu"
 
 #define BLOCKDIM 32
 
@@ -15,12 +15,25 @@ namespace FCGPUKernels {
     size_t out_channels = top->GetDims()[3];
     int bi = (blockDim.x * blockIdx.x) + threadIdx.x; // batch idx
     int o = (blockDim.y * blockIdx.y) + threadIdx.y;  // output idi
+    
+    // extern __shared__ Dtype s[];
+    // Dtype * w = s;
+    // const size_t * w_dims = W_->GetDims();
+    
+    // int idx = threadIdx.y * blockDim.x + threadIdx.x;
+    // while(idx < in_channels * out_channels && idx/blockDim.x < out_channels && idx % blockDim.x < in_channels) {
+    //   w[idx] = W_->at(0,0, idx/blockDim.x, idx % blockDim.x);
+    //   idx += blockDim.x;
+    // }
+    // __syncthreads();
+
     if (bi < 0 || bi >= n || o < 0 || o >= out_channels) {
       return;
     }
     Dtype sum = 0;
     for(int i = 0; i < in_channels; i++) {
-      sum +=  bottom->at(bi, 0, 0, i) * W_->at(0,0,o,i);
+      sum += bottom->at(bi, 0, 0, i) * W_->at(0,0,o,i);
+      // sum += bottom->at(bi, 0, 0, i) * w[GetIdx(w_dims, 0, o, i)];
     }
     sum += b_->at(0,0,0,o);
     top->at(bi,0,0,o) = sum;
@@ -67,6 +80,7 @@ public:
       }
     }
   }
+  
 
   void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
     assert(bottoms.size() == 1);
@@ -78,8 +92,8 @@ public:
       size_t batch_size = Session::GetSession()->batch_size;
       dim3 blocksInGrid(batch_size / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
       dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-
       FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock>>>(bottom, top, W_, b_);
+      // FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock, in_channels*out_channels*sizeof(Dtype)>>>(bottom, top, W_, b_);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
         for(int o = 0; o < out_channels; o++) {

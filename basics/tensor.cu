@@ -18,7 +18,7 @@ class Tensor {
 
 public:
 
-  __host__ __device__ unsigned GetIdx(const int* idx) const {
+  __host__ __device__ inline unsigned GetIdx(const int* idx) const {
     unsigned out_idx = 0;
     // for (int i = 3; i >= 0; i--)
     for(int i = 0; i < 4; i++)
@@ -48,32 +48,32 @@ public:
     data_array_ = data_array_ptr;
   }
 
-  __host__ __device__ Dtype& at(const int i0, const int i1, const int i2, const int i3) {
+  __host__ __device__ inline Dtype& at(const int i0, const int i1, const int i2, const int i3) {
     int idx[4] = {i0, i1, i2, i3};
     return at(idx);
   }
 
-  __host__ __device__ Dtype& at(const int* idx) {
+  __host__ __device__ inline Dtype& at(const int* idx) {
     assert(isValidIdx(idx));
     return data_array_[GetIdx(idx)];
   }
 
-  __host__ __device__ const Dtype atPadding(const int i0, const int i1, const int i2, const int i3) {
+  __host__ __device__ inline const Dtype atPadding(const int i0, const int i1, const int i2, const int i3) {
     int idx[4] = {i0, i1, i2, i3};
     return atPadding(idx);
   }
 
-  __host__ __device__ const Dtype atPadding(int* idx, Dtype default_val = 0.0) const {
+  __host__ __device__ inline const Dtype atPadding(int* idx, Dtype default_val = 0.0) const {
     if (!isValidIdx(idx)) return default_val;
     return data_array_[GetIdx(idx)];
   }
 
-  __host__ __device__ bool isValidIdx(const int i0, const int i1, const int i2, const int i3) {
+  __host__ __device__ inline bool isValidIdx(const int i0, const int i1, const int i2, const int i3) {
     int idx[4] = {i0, i1, i2, i3};
     return isValidIdx(idx);
   }
 
-  __host__ __device__ bool isValidIdx(const int* idx) const {
+  __host__ __device__ inline bool isValidIdx(const int* idx) const {
     for(int i = 0; i < 4; i++) {
       if(idx[i] < 0 || idx[i] >= dims_[i]) return false;
     }

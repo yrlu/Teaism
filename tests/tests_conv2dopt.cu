@@ -6,7 +6,7 @@
 #include <vector>
 #include "basics/session.hpp"
 #include "layers/conv2d.cu"
-#include "tmp/bitmap_image.hpp"
+#include "utils/utils.cu"
 
 /*
 void test_conv2d_cpu() {
@@ -111,25 +111,6 @@ void test_conv2d_gpu() {
   cudaFree(top);
 }
 */
-
-
-// used by startTimer() and stopTimer()
-cudaEvent_t start, stop;
-
-void startTimer() {
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  cudaEventRecord(start, 0);
-}
-
-/** Return elapsed time (in ms) since startTime() was called */
-float stopTimer() {
-  float time;
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&time, start, stop);
-  return time;
-}
 
 
 __global__ void init_bottom(Tensor<float> * bottom) {
