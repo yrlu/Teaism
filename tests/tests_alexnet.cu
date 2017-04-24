@@ -17,6 +17,7 @@
 #include "device_launch_parameters.h"
 #include "utils/helper_cuda.h"
 #include "utils/utils.cu"
+#include "utils/load_model.hpp"
 
 
 void test_alexnet_gpu() {
@@ -185,7 +186,62 @@ void test_alexnet_gpu() {
   show_mem(cudaStatus);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
-  
+ 
+
+  printf("Loading weights ...\n");
+
+  std::string model_path = "models/alexnet/model.txt";
+  std::ifstream file(model_path);
+
+  size_t conv1_w_dims[4] = {11,11,3,96};
+  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  load_to_conv<float>(conv1_w, file);
+
+  size_t conv1_b_dims[4] = {1,1,1,96};
+  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  load_to_bias<float>(conv1_b, file);
+
+  size_t conv2_w_dims[4] = {5,5,96,256};
+  Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
+  load_to_conv<float>(conv2_w, file);
+
+  size_t conv2_b_dims[4] = {1,1,1,256};
+  Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
+  load_to_bias<float>(conv2_b, file);
+
+  size_t conv3_w_dims[4] = {3,3,256,384};
+  Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
+  load_to_conv<float>(conv3_w, file);
+
+  size_t conv3_b_dims[4] = {1,1,1,384};
+  Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
+  load_to_bias<float>(conv3_b, file);
+
+  size_t conv4_w_dims[4] = {3,11,3,96};
+  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  load_to_conv<float>(conv1_w, file);
+
+  size_t conv1_b_dims[4] = {1,1,1,96};
+  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  load_to_bias<float>(conv1_b, file);
+
+  size_t conv1_w_dims[4] = {11,11,3,96};
+  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  load_to_conv<float>(conv1_w, file);
+
+  size_t conv1_b_dims[4] = {1,1,1,96};
+  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  load_to_bias<float>(conv1_b, file);
+
+  size_t fc8_w_dims[4] = {1,1,1000,4096};
+  Tensor<float>* fc8_w = Tensor<float>::CreateTensorCPU(fc8_w_dims);
+  load_to_fc(fc8_w, file);
+
+  size_t fc8_b_dims[4] = {1,1,1,1000};
+  Tensor<float>* fc8_b = Tensor<float>::CreateTensorCPU(fc8_b_dims);
+  load_to_bias(fc8_b, file);
+
+ 
 
   startTimer();
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
