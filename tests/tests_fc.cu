@@ -29,7 +29,7 @@ void test_fc_gpu() {
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
-  size_t in_channels = 32;
+  size_t in_channels = 64;
   size_t out_channels = 10;
 
   Session* session = Session::GetNewSession();
@@ -70,7 +70,7 @@ void test_fc_gpu() {
 void test_fc_cpu() {
   printf("Example code for fully connected layer on cpu\n");
 
-  size_t in_channels = 32;
+  size_t in_channels = 64;
   size_t out_channels = 10;
 
   Session* session = Session::GetNewSession();
