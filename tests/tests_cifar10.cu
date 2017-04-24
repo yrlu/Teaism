@@ -222,7 +222,7 @@ void test_lenet_gpu() {
 */
 
 
-  Tensor<double> * output_cpu = Tensor<double>::TensorGPUtoCPU(data_tops[0]);
+  Tensor<double> * output_cpu = Tensor<double>::TensorGPUtoCPU(conv1_top);
 //  Tensor<double> * fc4_cpu = Tensor<double>::TensorGPUtoCPU(fc4_top);
 
 
