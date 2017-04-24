@@ -129,8 +129,8 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
           for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride_, y_top += 1) {
             if (type_==MAX) {
               Dtype pooled_val=bottom->at(b, y, x, o);
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   Dtype val = bottom->at(b, i, j, o);
                   if (val > pooled_val) {
                     pooled_val = val;
@@ -140,8 +140,8 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
               top->at(b, y_top, x_top, o) = pooled_val;
             } else if(type_==MIN) {
               Dtype pooled_val=bottom->at(b, y, x, o);
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   Dtype val = bottom->at(b, i, j, o);
                   if (val < pooled_val) {
                     pooled_val = val;
@@ -151,12 +151,14 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
               top->at(b, y_top, x_top, o) = pooled_val;
             } else if(type_==AVERAGE) {
               Dtype pooled_val=0;
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              int cnt = 0;
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   pooled_val += bottom->at(b, i, j, o);
+                  cnt ++;
                 }
               }
-              top->at(b, y_top, x_top, o) = pooled_val/size_/size_;
+              top->at(b, y_top, x_top, o) = pooled_val/cnt;
             }
           }
         }

@@ -9,14 +9,14 @@
 
 void test_pooling_cpu() {
   printf("Example code for pooling layer cpu\n");
-  size_t h = 400;
-  size_t w = 400;
+  size_t h = 20;
+  size_t w = 20;
 
   Session* session = Session::GetNewSession();
   session->gpu = false;
  
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Pooling<float> * pooling_layer = new Pooling<float>(2, MAX, 2);
+  Pooling<float> * pooling_layer = new Pooling<float>(3, MAX, 2);
 
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
@@ -34,12 +34,14 @@ void test_pooling_cpu() {
   }
   pooling_layer->Forward({bottom}, {top});
 
-  bitmap_image img(w/2, h/2);
-  for (int i = 0; i < h/2; i++) {
-    for (int j = 0; j < w/2; j++) {
+  bitmap_image img(t_dims[1], t_dims[2]);
+  for (int i = 0; i < t_dims[1]; i++) {
+    for (int j = 0; j < t_dims[2]; j++) {
       unsigned val = (unsigned) top->at(0, i, j, 0);
       img.set_pixel(j, i, val, val, val);
-    }  
+      printf("%f ", top->at(0, i, j, 0));
+    }
+    printf("\n");
   }
   img.save_image(OUTPUT_BMP_PATH);
   delete pooling_layer;
@@ -82,7 +84,7 @@ void test_pooling_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
  
-  Pooling<float> * pooling_layer = new Pooling<float>(4, MAX, 2);
+  Pooling<float> * pooling_layer = new Pooling<float>(3, MAX, 2);
   const char* OUTPUT_BMP_PATH = "./tmp/test/pooling_out_gpu.bmp";
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -105,7 +107,7 @@ void test_pooling_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
  
-  show_top<<<1,1>>>(bottom);  
+  // show_top<<<1,1>>>(bottom);  
   pooling_layer->Forward({bottom}, {top});
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
