@@ -32,7 +32,7 @@ void test_alexnet_gpu() {
   size_t batch_size = 2;
 
 
-  Data<float> data_layer(batch_size, "tmp/test/img_med_list.txt");
+  Data<float> data_layer(batch_size, "models/alexnet/img_list.txt");
   size_t data_tops_dims0[4];
   size_t data_tops_dims1[4];
   data_layer.GetTopsDims({}, {data_tops_dims0, data_tops_dims1});
