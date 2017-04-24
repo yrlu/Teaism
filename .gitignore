@@ -3,4 +3,6 @@
 *.bin
 build
 .DS_Store
-tmp/tests/*
+tmp/test/*
+*.caffemodel
+*.txt
