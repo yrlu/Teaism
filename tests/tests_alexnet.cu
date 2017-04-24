@@ -187,7 +187,7 @@ void test_alexnet_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
  
-
+/*
   printf("Loading weights ...\n");
 
   std::string model_path = "models/alexnet/model.txt";
@@ -218,8 +218,8 @@ void test_alexnet_gpu() {
   load_to_bias<float>(conv3_b, file);
 
   size_t conv4_w_dims[4] = {3,11,3,96};
-  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
-  load_to_conv<float>(conv1_w, file);
+  Tensor<float>* conv4_w = Tensor<float>::CreateTensorCPU(conv4_w_dims);
+  load_to_conv<float>(conv4_w, file);
 
   size_t conv1_b_dims[4] = {1,1,1,96};
   Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
@@ -240,7 +240,7 @@ void test_alexnet_gpu() {
   size_t fc8_b_dims[4] = {1,1,1,1000};
   Tensor<float>* fc8_b = Tensor<float>::CreateTensorCPU(fc8_b_dims);
   load_to_bias(fc8_b, file);
-
+*/
  
 
   startTimer();

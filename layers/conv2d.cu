@@ -220,7 +220,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
 
   if (Session::GetSession()->gpu) {
     size_t t_dims[4];
-    Tensor<float>::GetTensorGPUDims(top, t_dims);
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
     size_t bs = Session::GetSession()->batch_size;
     size_t hei = t_dims[1];
     size_t wid = t_dims[2];
@@ -235,7 +235,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     // }
 /*
     size_t t_dims[4];
-    Tensor<float>::GetTensorGPUDims(top, t_dims);
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
     size_t bs = Session::GetSession()->batch_size;
     size_t hei = t_dims[1];
     size_t wid = t_dims[2];
@@ -255,7 +255,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     // old
   	/*
     size_t t_dims[4];
-    Tensor<float>::GetTensorGPUDims(top, t_dims);
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
     size_t bs = Session::GetSession()->batch_size;
     size_t hei = t_dims[1];
     size_t wid = t_dims[2];

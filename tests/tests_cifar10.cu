@@ -25,7 +25,7 @@ void test_lenet_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 10;
+  session->batch_size = 1;
   size_t batch_size = session->batch_size;
 
 
@@ -222,16 +222,22 @@ void test_lenet_gpu() {
 */
 
 
-  Tensor<double> * output_cpu = Tensor<double>::TensorGPUtoCPU(conv1.W_);
+  Tensor<double> * output_cpu = Tensor<double>::TensorGPUtoCPU(data_tops[0]);
 //  Tensor<double> * fc4_cpu = Tensor<double>::TensorGPUtoCPU(fc4_top);
 
 
   // printf("%f \n", sm_top->at(0,0,0,0));
-  for(int i = 0; i < output_cpu->GetDims()[0]; i++) {
-  	for(int j = 0; j < output_cpu->GetDims()[3]; j++) {
-  	  printf("%f ", output_cpu->at(i, 0, 0, j));
-  	}
-  	printf("\n");
+  for(int b = 0; b < output_cpu->GetDims()[0]; b++) {
+    for(int h = 0; h < output_cpu->GetDims()[1]; h++) {
+      for(int w = 0; w < output_cpu->GetDims()[2]; w++) {
+  	    for(int c = 0; c < output_cpu->GetDims()[3]; c++) {
+  	      printf("%f ", output_cpu->at(b, h, w, c));
+  	    }
+  	    printf("\n");
+      }
+      printf("\n");
+    }
+    printf("\n");
   }
 
 /*  for(int i = 0; i < fc4_top_dims[0]; i++) {
