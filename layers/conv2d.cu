@@ -137,7 +137,6 @@ namespace ConvGPUKernels {
     sum += b->at(0, 0, 0, o);
     top->at(bi, y_top, x_top, o) = sum;
   }
-
 }
 
 template <class Dtype>
