@@ -18,11 +18,11 @@ void load_to_conv(Tensor<Dtype>* t, std::ifstream &file) {
   std::istringstream iss(tmp_string);
   for (int o = 0; o < dims[3]; ++o) {
     for (int i = 0; i < dims[2]; ++i) {
-      for (int w = 0; w < dims[1]; ++w) {
-        for (int h = 0; h < dims[0]; ++h) {
+      for (int w = 0; w < dims[0]; ++w) {
+        for (int h = 0; h < dims[1]; ++h) {
           iss >> tmp_token;
           tmp = std::stof(tmp_token);
-          t->at(h,w,i,o) = tmp;
+          t->at(w,h,i,o) = tmp;
         }
       }
     }
