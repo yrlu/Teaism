@@ -45,9 +45,7 @@ namespace ConvGPUKernels {
     size_t kernel_height = W->GetDims()[0];
     size_t kernel_width = W->GetDims()[1];
 
-    if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
-      return;
-    }
+    
 
     extern __shared__ Dtype s[];
     Dtype * k = s;
@@ -66,6 +64,10 @@ namespace ConvGPUKernels {
       if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o) || !bottom->isValidIdx(bi, y + kernel_height/2, x + kernel_height/2, o)) {
         return;
       }
+    } else {
+	  if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
+		return;
+	  }
     }
 
     Dtype sum = 0.0;
@@ -115,7 +117,6 @@ namespace ConvGPUKernels {
     }
     __syncthreads();
 
-
     if (padding==VALID) {
       x = kernel_width/2 + x_top*stride;
       y = kernel_height/2 + y_top*stride;
@@ -129,8 +130,8 @@ namespace ConvGPUKernels {
       for(int j = 0; j < kernel_width; j++) {
         for(int c = 0; c < in_channels; c++) {
           // (n, hei, wid, channel),   // (hei, wid, input, output)
-          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W->at(i, j, c, o);
-          sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
+          sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W->at(i, j, c, o);
+          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
     }
@@ -292,11 +293,8 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
                   }
                 }
               }
-              int b_idx[4] = {0,0,0,o};
-              sum += b_->at(b_idx);
-              int t_idx[4] = {b, y_top, x_top, o};
-              
-              top->at(t_idx) = sum;
+              sum += b_->at(0,0,0,o);
+              top->at(b, y_top, x_top, o) = sum;
             }
           }
         } else if (padding==VALID) {
@@ -316,10 +314,8 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
                   }
                 }
               }
-              int b_idx[4] = {0,0,0,o};
-              sum += b_->at(b_idx);
-              int t_idx[4] = {b, y_top, x_top, o};        
-              top->at(t_idx) = sum;
+              sum += b_->at(0,0,0,o);
+              top->at(b, y_top, x_top, o) = sum;
             }
           }
         }

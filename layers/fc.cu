@@ -55,17 +55,6 @@ namespace FCGPUKernels {
     int bi = (blockDim.x * blockIdx.x) + threadIdx.x; // batch idx
     int o = (blockDim.y * blockIdx.y) + threadIdx.y;  // output idi
     
-    // extern __shared__ Dtype s[];
-    // Dtype * w = s;
-    // const size_t * w_dims = W_->GetDims();
-    
-    // int idx = threadIdx.y * blockDim.x + threadIdx.x;
-    // while(idx < in_channels * out_channels && idx/blockDim.x < out_channels && idx % blockDim.x < in_channels) {
-    //   w[idx] = W_->at(0,0, idx/blockDim.x, idx % blockDim.x);
-    //   idx += blockDim.x;
-    // }
-    // __syncthreads();
-  
     if (bi < 0 || bi >= n || o < 0 || o >= out_channels) {
       return;
     }
