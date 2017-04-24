@@ -3,7 +3,7 @@ layer {
   name: "data"
   type: "Input"
   top: "data"
-  input_param { shape: { dim: 1 dim: 3 dim: 227 dim: 227 } }
+  input_param { shape: { dim: 128 dim: 3 dim: 227 dim: 227 } }
 }
 layer {
   name: "conv1"
@@ -53,7 +53,7 @@ layer {
     num_output: 256
     pad: 2
     kernel_size: 5
-#    group: 2
+    group: 2
   }
 }
 layer {
@@ -110,7 +110,7 @@ layer {
     num_output: 384
     pad: 1
     kernel_size: 3
-#    group: 2
+    group: 2
   }
 }
 layer {
@@ -128,7 +128,7 @@ layer {
     num_output: 256
     pad: 1
     kernel_size: 3
-#    group: 2
+    group: 2
   }
 }
 layer {
