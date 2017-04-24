@@ -4,10 +4,53 @@
 #include "initializers/const_initializer.cu"
 #include "basics/layer.hpp"
 #include "utils/utils.cu"
+// #include <stdio.h>
 
 #define BLOCKDIM 32
 
 namespace FCGPUKernels {
+  template <class Dtype> 
+  __global__ void ForwardGPUShared(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_) {
+    size_t n = bottom->GetDims()[0];
+    size_t in_channels = bottom->GetDims()[3];
+    size_t out_channels = top->GetDims()[3];
+    int bi = (blockDim.x * blockIdx.x) + threadIdx.x; // batch idx
+    int o = (blockDim.y * blockIdx.y) + threadIdx.y;  // output idi
+      
+    if (bi < 0 || bi >= n || o < 0 || o >= out_channels) {
+      return;
+    }
+
+    extern __shared__ Dtype s[];
+
+    Dtype* in = s;
+    Dtype* w = &s[in_channels*BLOCKDIM];
+
+
+    // for(int j = 0; j < in_channels; j++) {
+      // in[threadIdx.x*in_channels + j] = bottom->at(blockDim.x * blockIdx.x + threadIdx.x, 0, 0, j);
+    // }
+      in[threadIdx.x*in_channels + threadIdx.y] = bottom->at(blockDim.x * blockIdx.x + threadIdx.x, 0, 0, threadIdx.y);
+    
+    // for(int j = 0; j < in_channels; j++) {
+      // w[threadIdx.y*in_channels + j] = W_->at(0,0, blockDim.y * blockIdx.y + threadIdx.y, j);
+    // }
+    for(int j = threadIdx.x; j < in_channels; j+= BLOCKDIM) {
+      w[threadIdx.y*in_channels + j] = W_->at(0,0, blockDim.y * blockIdx.y + threadIdx.y, j);
+    }
+    __syncthreads();
+
+    Dtype sum = 0;
+    for(int i = 0; i < in_channels; i++) {
+      sum += in[threadIdx.x*in_channels + i] * w[threadIdx.y*in_channels+i];
+      // sum += bottom->at(bi, 0, 0, i) * w[o*in_channels+i];
+      // sum += bottom->at(bi, 0, 0, i) * W_->at(0,0,o,i);
+      // sum += bottom->at(bi, 0, 0, i) * w[GetIdx(w_dims, 0, o, i)];
+    }
+    sum += b_->at(0,0,0,o);
+    top->at(bi,0,0,o) = sum;
+  }
+
   template <class Dtype>
   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_) {
     size_t n = bottom->GetDims()[0];
@@ -26,7 +69,7 @@ namespace FCGPUKernels {
     //   idx += blockDim.x;
     // }
     // __syncthreads();
-
+  
     if (bi < 0 || bi >= n || o < 0 || o >= out_channels) {
       return;
     }
@@ -80,7 +123,7 @@ public:
       }
     }
   }
-  
+
 
   void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) {
     assert(bottoms.size() == 1);
@@ -92,7 +135,12 @@ public:
       size_t batch_size = Session::GetSession()->batch_size;
       dim3 blocksInGrid(batch_size / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
       dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+
+      // if (in_channels + out_channels < 384) {
+        // FCGPUKernels::ForwardGPUShared<<<blocksInGrid,threadsPerBlock, 2*in_channels*BLOCKDIM*sizeof(Dtype)>>>(bottom, top, W_, b_);
+      // } else {
       FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock>>>(bottom, top, W_, b_);
+      // }
       // FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock, in_channels*out_channels*sizeof(Dtype)>>>(bottom, top, W_, b_);
     } else {
       for(int b = 0; b < bottom->GetDims()[0]; b++) {
@@ -134,7 +182,7 @@ private:
     if (initializer_!=NULL) {
       initializer_->Initialize(W_, b_, Session::GetSession()->gpu);
     } else {
-      ConstInitializer<float>(1.0, 1.0).Initialize(W_, b_, Session::GetSession()->gpu);
+      ConstInitializer<Dtype>(1.0, 1.0).Initialize(W_, b_, Session::GetSession()->gpu);
     }
   }
 };

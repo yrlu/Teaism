@@ -10,7 +10,7 @@
 __global__ void init_bottom(Tensor<float> * bottom) {
   for(int b = 0; b < bottom->GetDims()[0]; b++) {
     for(int i = 0; i < bottom->GetDims()[3]; i++) {
-      bottom->at(b, 0, 0, i) = 2;
+      bottom->at(b, 0, 0, i) = i+b;
     }
   }
 }
@@ -29,7 +29,7 @@ void test_fc_gpu() {
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
-  size_t in_channels = 64;
+  size_t in_channels = 32;
   size_t out_channels = 10;
 
   Session* session = Session::GetNewSession();
@@ -39,9 +39,9 @@ void test_fc_gpu() {
   ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> fc(in_channels, out_channels, &const_init);
 
-  size_t b_dims[4] = {session->batch_size, 1, 1, 64};
+  size_t b_dims[4] = {session->batch_size, 1, 1, in_channels};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
-  size_t t_dims[4] = {session->batch_size, 1, 1, 10};
+  size_t t_dims[4] = {session->batch_size, 1, 1, out_channels};
   Tensor<float>* top = Tensor<float>::CreateTensorGPU(t_dims);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -70,7 +70,7 @@ void test_fc_gpu() {
 void test_fc_cpu() {
   printf("Example code for fully connected layer on cpu\n");
 
-  size_t in_channels = 64;
+  size_t in_channels = 32;
   size_t out_channels = 10;
 
   Session* session = Session::GetNewSession();
@@ -80,14 +80,14 @@ void test_fc_cpu() {
   ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> fc(in_channels, out_channels, &const_init);
 
-  size_t b_dims[4] = {session->batch_size, 1, 1, 64};
+  size_t b_dims[4] = {session->batch_size, 1, 1, in_channels};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
-  size_t t_dims[4] = {session->batch_size, 1, 1, 10};
+  size_t t_dims[4] = {session->batch_size, 1, 1, out_channels};
   Tensor<float>* top = Tensor<float>::CreateTensorCPU(t_dims);
 
   for(int b = 0; b < session->batch_size; b++) {
     for(int i = 0; i < in_channels; i++) {
-      bottom->at(b, 0, 0, i) = 2;
+      bottom->at(b, 0, 0, i) = b+i;
     }
   }
 
