@@ -8,11 +8,11 @@ sys.path.insert(0, caffe_root + 'python')
 import caffe
 
 caffe.set_mode_cpu()
-net = caffe.Net("lenet.prototxt", "snapshots/lenet_iter_5000.caffemodel", caffe.TEST);
+net = caffe.Net("test.prototxt", "snapshots/cifar10_iter_1000.caffemodel", caffe.TEST);
 
 f_out = open('model.txt', 'w')
 
-layers = ['conv1','conv2','ip1', 'ip2']
+layers = ['conv1','conv2','conv3', 'fc4', 'fc5']
 for l in layers:
   print l, "weights: ", net.params[l][0].data.shape
   params = net.params[l][0].data.flatten().tolist()
