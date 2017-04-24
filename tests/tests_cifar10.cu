@@ -25,11 +25,11 @@ void test_lenet_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 64;
+  session->batch_size = 2;
   size_t batch_size = session->batch_size;
 
 
-  Data<float> data_layer(batch_size, "tmp/test/img_list.txt");
+  Data<float> data_layer(batch_size, "datasets/cifar10/train.txt");
   // vector<size_t*> data_tops_dims;
   size_t data_tops_dims0[4];
   size_t data_tops_dims1[4];
@@ -60,12 +60,12 @@ void test_lenet_gpu() {
   pool2.GetTopsDims({conv2_top_dims}, {pool2_top_dims});
   Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);
 
-  FC<float> fc3(800,500);
   size_t to_fc3_dims[4];
   to_fc3_dims[0] = pool2_top_dims[0];
   to_fc3_dims[1] = 1;
   to_fc3_dims[2] = 1;
   to_fc3_dims[3] = pool2_top_dims[1]*pool2_top_dims[2]*pool2_top_dims[3];
+  FC<float> fc3(to_fc3_dims[3],500);
   
   size_t fc3_top_dims[4];
 
@@ -93,7 +93,48 @@ void test_lenet_gpu() {
   show_mem(cudaStatus);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
+ 
+
+  printf("Loading weights ...\n");
+
+  std::string model_path = "models/cifar10/model.txt";
+  std::ifstream file(model_path);
+
+  size_t conv1_w_dims[4] = {5,5,3,20};
+  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  load_to_conv<float>(conv1_w, file);
+
+  size_t conv1_b_dims[4] = {1,1,1,20};
+  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  load_to_bias<float>(conv1_b, file);
+
+  size_t conv2_w_dims[4] = {5,5,20,50};
+  Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
+  load_to_conv<float>(conv2_w, file);
+
+  size_t conv2_b_dims[4] = {1,1,1,50};
+  Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
+  load_to_bias<float>(conv2_b, file);
+ 
+  size_t fc3_w_dims[4] = {1,1,500,1250};
+  Tensor<float>* fc3_w = Tensor<float>::CreateTensorCPU(fc3_w_dims);
+  load_to_fc<float>(fc3_w, file);
+
+  size_t fc3_b_dims[4] = {1,1,1,500};
+  Tensor<float>* fc3_b = Tensor<float>::CreateTensorCPU(fc3_b_dims);
+  load_to_bias<float>(fc3_b, file);
+
+  size_t fc4_w_dims[4] = {1,1,10,500};
+  Tensor<float>* fc4_w = Tensor<float>::CreateTensorCPU(fc4_w_dims);
+  load_to_fc<float>(fc4_w, file);
+
+  size_t fc4_b_dims[4] = {1,1,1,10};
+  Tensor<float>* fc4_b = Tensor<float>::CreateTensorCPU(fc4_b_dims);
+  load_to_bias<float>(fc4_b, file);
+
+
   
+
 
   startTimer();
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
@@ -117,6 +158,10 @@ void test_lenet_gpu() {
   softmax.Forward({fc4_top}, {sm_top});
   printf("softmax forward: %3.1f ms \n", stopTimer()); startTimer();
   show_mem(cudaStatus);
+
+
+
+
 
 
   startTimer();

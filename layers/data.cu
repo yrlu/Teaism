@@ -111,9 +111,9 @@ __host__ void Data<Dtype>::FetchBatchData(Tensor<Dtype>* top_i, Tensor<Dtype>* t
     top_l->at(i,0,0,0) = (Dtype) lab_list[i+begin_];
     for (size_t y = 0; y < img_h; ++y) {
       for (size_t x = 0; x < img_w; ++x) {
-        top_i->at(i,y,x,0) = (Dtype) img->red_channel(x,y) - mean_r_;
+        top_i->at(i,y,x,2) = (Dtype) img->red_channel(x,y) - mean_r_;
         top_i->at(i,y,x,1) = (Dtype) img->green_channel(x,y) - mean_g_;
-        top_i->at(i,y,x,2) = (Dtype) img->blue_channel(x,y) - mean_b_;
+        top_i->at(i,y,x,0) = (Dtype) img->blue_channel(x,y) - mean_b_;
       }
     }
     delete img;
