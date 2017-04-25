@@ -220,18 +220,18 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
   Tensor<Dtype> * top = tops[0];
 
   if (Session::GetSession()->gpu) {
-    // size_t t_dims[4];
-    // Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
-    // size_t bs = Session::GetSession()->batch_size;
-    // size_t hei = t_dims[1];
-    // size_t wid = t_dims[2];
+    size_t t_dims[4];
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
+    size_t bs = Session::GetSession()->batch_size;
+    size_t hei = t_dims[1];
+    size_t wid = t_dims[2];
 
-    // size_t hs = hei/BLOCKDIM + 1;
-    // size_t ws = wid/BLOCKDIM + 1;
+    size_t hs = hei/BLOCKDIM + 1;
+    size_t ws = wid/BLOCKDIM + 1;
 
-    // dim3 blocksInGrid(ws*out_channels, hs*bs);
-    // dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    // ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
+    dim3 blocksInGrid(ws*out_channels, hs*bs);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
    
    /*
     size_t t_dims[4];
@@ -253,7 +253,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
 
 
     // old
-  	
+  	/*
     size_t t_dims[4];
     Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
     size_t bs = Session::GetSession()->batch_size;
@@ -272,7 +272,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
         ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
         // ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, 0, 0, stride, padding);
       }
-    }
+    }*/
   } else {
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
