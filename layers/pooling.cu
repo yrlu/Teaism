@@ -20,6 +20,9 @@ namespace PoolingGPUKernels {
     int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
     int x = x_top*stride;
     int y = y_top*stride;
+
+    int hei = bottom->GetDims()[1];
+    int wid = bottom->GetDims()[2];
     
     if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
       return;
@@ -27,8 +30,8 @@ namespace PoolingGPUKernels {
 
     if (type==MAX) {
       Dtype pooled_val=bottom->at(bi, y, x, o);
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           Dtype val = bottom->at(bi, i, j, o);
           if (val > pooled_val) {
             pooled_val = val;
@@ -38,8 +41,8 @@ namespace PoolingGPUKernels {
       top->at(bi, y_top, x_top, o) = pooled_val;
     } else if(type==MIN) {
       Dtype pooled_val=bottom->at(bi, y, x, o);
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           Dtype val = bottom->at(bi, i, j, o);
           if (val < pooled_val) {
             pooled_val = val;
@@ -49,17 +52,19 @@ namespace PoolingGPUKernels {
       top->at(bi, y_top, x_top, o) = pooled_val;
     } else if(type==AVERAGE) {
       Dtype pooled_val=0;
-      for(int i = y; i < y + size; i++) {
-        for(int j = x; j < x + size; j++) {
+      int cnt = 0;
+      for(int i = y; i < y + size && i < hei; i++) {
+        for(int j = x; j < x + size && j < wid; j++) {
           pooled_val += bottom->at(bi, i, j, o);
+          cnt += 1;
         }
       }
-      top->at(bi, y_top, x_top, o) = pooled_val/size/size;
+      top->at(bi, y_top, x_top, o) = pooled_val/cnt;
     }
   }
 
   template <class Dtype>
-  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, size_t size, POOLING_TYPE type) {
+  __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top, size_t size, POOLING_TYPE type, size_t stride) {
     size_t n = bottom->GetDims()[0];
     size_t hei = top->GetDims()[1];
     size_t wid = top->GetDims()[2];
@@ -69,7 +74,7 @@ namespace PoolingGPUKernels {
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     for (int b = 0; b < n; b++) {
       for (int o = 0; o < out_channels; o++) {
-        PoolingGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type);
+        PoolingGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o, size, type, stride);
       }
     }
   }
@@ -78,7 +83,7 @@ namespace PoolingGPUKernels {
 template <class Dtype>
 class Pooling: public Layer<Dtype> {
 public:
-  Pooling(size_t size=2, POOLING_TYPE type=MIN, stride=1):size_(size), type_(type), stride_(stride) {}
+  Pooling(size_t size=2, POOLING_TYPE type=MIN, size_t stride=1):size_(size), type_(type), stride_(stride) {}
   ~Pooling() {}
 
   void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
@@ -124,8 +129,8 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
           for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride_, y_top += 1) {
             if (type_==MAX) {
               Dtype pooled_val=bottom->at(b, y, x, o);
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   Dtype val = bottom->at(b, i, j, o);
                   if (val > pooled_val) {
                     pooled_val = val;
@@ -135,8 +140,8 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
               top->at(b, y_top, x_top, o) = pooled_val;
             } else if(type_==MIN) {
               Dtype pooled_val=bottom->at(b, y, x, o);
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   Dtype val = bottom->at(b, i, j, o);
                   if (val < pooled_val) {
                     pooled_val = val;
@@ -146,12 +151,14 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
               top->at(b, y_top, x_top, o) = pooled_val;
             } else if(type_==AVERAGE) {
               Dtype pooled_val=0;
-              for(int i = y; i < y + size_; i++) {
-                for(int j = x; j < x + size_; j++) {
+              int cnt = 0;
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
                   pooled_val += bottom->at(b, i, j, o);
+                  cnt ++;
                 }
               }
-              top->at(b, y_top, x_top, o) = pooled_val/size_/size_;
+              top->at(b, y_top, x_top, o) = pooled_val/cnt;
             }
           }
         }

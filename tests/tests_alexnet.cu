@@ -48,7 +48,7 @@ void test_alexnet_gpu() {
   Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
   printf("conv1: (%d,%d,%d,%d)\n",conv1_top_dims[0],conv1_top_dims[1],conv1_top_dims[2],conv1_top_dims[3]);
 
-  Pooling<float> pool1(2);
+  Pooling<float> pool1(2,MAX,2);
   size_t pool1_top_dims[4];
   pool1.GetTopsDims({conv1_top_dims}, {pool1_top_dims});
   Tensor<float> * pool1_top = Tensor<float>::CreateTensorGPU(pool1_top_dims);
@@ -72,7 +72,7 @@ void test_alexnet_gpu() {
   Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
   printf("conv2: (%d,%d,%d,%d)\n",conv2_top_dims[0],conv2_top_dims[1],conv2_top_dims[2],conv2_top_dims[3]);
 
-  Pooling<float> pool2(2);
+  Pooling<float> pool2(2, MAX, 2);
   size_t pool2_top_dims[4];
   pool2.GetTopsDims({conv2_top_dims}, {pool2_top_dims});
   Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);
@@ -120,7 +120,7 @@ void test_alexnet_gpu() {
   Tensor<float> * conv5_top = Tensor<float>::CreateTensorGPU(conv5_top_dims);
   printf("conv5: (%d,%d,%d,%d)\n",conv5_top_dims[0],conv5_top_dims[1],conv5_top_dims[2],conv5_top_dims[3]);
 
-  Pooling<float> pool5(2);
+  Pooling<float> pool5(2, MAX, 2);
   size_t pool5_top_dims[4];
   pool5.GetTopsDims({conv5_top_dims}, {pool5_top_dims});
   Tensor<float> * pool5_top = Tensor<float>::CreateTensorGPU(pool5_top_dims);
