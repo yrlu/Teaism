@@ -12,8 +12,12 @@ img = spmi.imread("cat.bmp").astype(dtype=np.float32)
 img -= [128, 128, 128]
 img = img.transpose([2,0,1])
 
-net.blobs['data'].data[...] = img
+img_in = np.empty([128, 3, 227, 227])
+for i in range(128):
+  img_in[i] = img
+
+net.blobs['data'].data[...] = img_in
 
 net.forward()
 
-print net.blobs['prob'].data[...]
+#print net.blobs['prob'].data[...]

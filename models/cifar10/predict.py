@@ -18,5 +18,8 @@ for i in range(1):
 
   net.forward()
 
-  print i, net.blobs['conv1'].data[...].tolist()
+  print net.blobs['prob'].data[...].tolist()
+  print net.blobs['prob'].data.shape
+#  print net.params['conv1'][0].data
+#  print net.params['conv1'][0].data.shape
 
