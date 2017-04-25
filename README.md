@@ -13,7 +13,6 @@ A minimalistic CUDA-based convolutional neural network library.
 ## Files
 ```
 .
-├── CMakeLists.txt
 ├── Makefile
 ├── README.md
 ├── basics
@@ -26,7 +25,7 @@ A minimalistic CUDA-based convolutional neural network library.
 │   └── gaussian_kernel_initializer.cu
 ├── layers
 │   ├── conv2d.cu
-│   ├── conv2d1.cu
+│   ├── conv2d_old.cu
 │   ├── conv2dopt.cu
 │   ├── cross_entropy_loss.cu
 │   ├── data.cu
@@ -36,13 +35,10 @@ A minimalistic CUDA-based convolutional neural network library.
 │   ├── pooling.cu
 │   ├── relu.cu
 │   └── softmax.cu
-├── logo.png
-├── main.cu
-├── networks
-│   └── lenet.hpp
 ├── perf
 │   └── tf_lenet.py
 ├── tests
+│   ├── demo_cifar10.cu
 │   ├── tests_alexnet.cu
 │   ├── tests_cifar10.cu
 │   ├── tests_const_initializer.cu
