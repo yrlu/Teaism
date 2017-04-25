@@ -6,7 +6,7 @@
 #include "layers/softmax.cu"
 #include "layers/cross_entropy_loss.cu"
 #include "layers/pooling.cu"
-#include "layers/conv2d1.cu"
+#include "layers/conv2d.cu"
 #include "layers/relu.cu"
 #include "layers/fc.cu"
 #include "tmp/bitmap_image.hpp"

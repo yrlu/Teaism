@@ -22,107 +22,121 @@
 enum PADDING {SAME, VALID};
 
 namespace ConvGPUKernels {
+  
 
-    template <class Dtype>
-  __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int hs, int ws, int stride, PADDING padding) {
+  template <class Dtype>
+  __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int hs, int ws, int stride, PADDING padding) {
+    // find bi & o
     int bi = blockIdx.y/hs;
     int o = blockIdx.x/ws;
 
-    int hi = blockIdx.y % hs;
-    int wi = blockIdx.x % ws;
+    int hi = (blockIdx.y % hs);
+    // int hi = blockIdx.y;
+    int wi = (blockIdx.x % ws);
 
-    int y_top = hi * BLOCKDIM + threadIdx.y;
-    int x_top = wi * BLOCKDIM + threadIdx.x;
+    int y_top = hi * blockDim.y + threadIdx.y;
+    int x_top = wi * blockDim.x + threadIdx.x;
 
-    if(!top->isValidIdx(bi, y_top, x_top, o)) return;
+    int x = x_top * stride;
+    int y = y_top * stride;
 
     size_t in_channels = bottom->GetDims()[3];
-    size_t kernel_height = W_->GetDims()[0];
-    size_t kernel_width = W_->GetDims()[1];
+
+    size_t kernel_height = W->GetDims()[0];
+    size_t kernel_width = W->GetDims()[1];
+
     
-    int y = y_top * stride + kernel_height/2*(padding==VALID);
-    int x = x_top * stride + kernel_width/2*(padding==VALID);
 
     extern __shared__ Dtype s[];
     Dtype * k = s;
-    const size_t * w_dims = W_->GetDims();
+    const size_t * w_dims = W->GetDims();
     if(threadIdx.x < kernel_width && threadIdx.y < kernel_height) {
       for(int c = 0; c < in_channels; c++) {
-        k[GetIdx(w_dims, threadIdx.y, threadIdx.x, c)] = W_->at(threadIdx.y, threadIdx.x, c, o);
+        k[GetIdx(w_dims, threadIdx.y, threadIdx.x, c)] = W->at(threadIdx.y, threadIdx.x, c, o);
       }
     }
     __syncthreads();
 
 
+    if (padding==VALID) {
+      x = kernel_width/2 + x_top*stride;
+      y = kernel_height/2 + y_top*stride;
+      if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o) || !bottom->isValidIdx(bi, y + kernel_height/2, x + kernel_height/2, o)) {
+        return;
+      }
+    } else {
+	  if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
+		return;
+	  }
+    }
+
     Dtype sum = 0.0;
     for(int i = 0; i < kernel_height; i++) {
       for(int j = 0; j < kernel_width; j++) {
         for(int c = 0; c < in_channels; c++) {
-          // (n, hei, wid, out_channelsnnel),   // (hei, wid, input, output)
-          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W_->at(i, j, c, o);
+          // (n, hei, wid, channel),   // (hei, wid, input, output)
+          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W->at(i, j, c, o);
           sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
-    }
-    sum += b_->at(0,0,0,o);
+    }	
+    sum += b->at(0, 0, 0, o);
     top->at(bi, y_top, x_top, o) = sum;
   }
 
-  template <class Dtype>
-  __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int stride, PADDING padding) {
-    size_t bs = bottom->GetDims()[0];
-    size_t kernel_height = W_->GetDims()[0];
-    size_t kernel_width = W_->GetDims()[1];    
-    size_t in_channels = bottom->GetDims()[3];
-    size_t out_channels = top->GetDims()[3];
 
-    int b = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int o = (blockDim.y * blockIdx.y) + threadIdx.y;
-    if(b<0 || b>=bs || o<0 || o>=out_channels) {
+  template <class Dtype>
+  __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W, Tensor<Dtype> * b, int bi, int oi, int stride, PADDING padding) {
+    // bi is the index of the tensor
+    // o is the output channel
+    int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
+    // int o = (blockDim.z * blockIdx.z) + threadIdx.z;
+    int o = oi;
+
+    size_t kernel_height = W->GetDims()[0];
+    size_t kernel_width = W->GetDims()[1];
+    int x = x_top*stride;
+    int y = y_top*stride;
+    
+    size_t in_channels = bottom->GetDims()[3];   
+    // size_t bs = bottom->GetDims()[0];
+
+    // if(bi < 0 || bi >= bs) return;
+
+    if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
       return;
     }
-    
-    if(padding==SAME) {
-      for(int x = 0, x_top = 0; x < bottom->GetDims()[2]; x += stride, x_top += 1) {
-        for(int y = 0, y_top = 0; y < bottom->GetDims()[1]; y += stride, y_top += 1) {
-          int idx[4] = {b, y, x, o};
-          Dtype sum = 0.0;
-          for(int c = 0; c < in_channels; c++) {
-            for(int i = 0; i < kernel_height; i++) {
-              for(int j = 0; j < kernel_width; j++) {
-                // (n, hei, wid, out_channelsnnel),   // (hei, wid, input, output)
-                int b_idx[4] = {b, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c};
-                int t_idx[4] = {i, j, c, o};
-                sum += bottom->atPadding(b_idx) * W_->at(t_idx);
-              }
-            }
-          }
-          sum += b_->at(0,0,0,o);
-          top->at(b, y_top, x_top, o) = sum;
-        }
+    // extern __shared__ Dtype s[];
+    // Dtype * k = s;
+    // const size_t * w_dims = W->GetDims();
+    // if(threadIdx.x < kernel_width && threadIdx.y < kernel_height) {
+    //   for(int c = 0; c < in_channels; c++) {
+    //     k[GetIdx(w_dims, threadIdx.y, threadIdx.x, c)] = W->at(threadIdx.y, threadIdx.x, c, o);
+    //   }
+    // }
+    // __syncthreads();
+
+    if (padding==VALID) {
+      x = kernel_width/2 + x_top*stride;
+      y = kernel_height/2 + y_top*stride;
+      if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o) || !bottom->isValidIdx(bi, y + kernel_height/2, x + kernel_height/2, o)) {
+        return;
       }
-    } else if (padding==VALID) {
-      for(int x = kernel_width/2, x_top = 0; x < bottom->GetDims()[2] - kernel_width/2; x += stride, x_top += 1) {
-        for(int y = kernel_height/2, y_top = 0; y < bottom->GetDims()[1] - kernel_height/2; y += stride, y_top += 1) {
-          // batch idx b, output layer o, pixel (x, y)
-          // top->at({b, y, x, o}) = 
-          int idx[4] = {b, y, x, o};
-          Dtype sum = 0.0;
-          for(int c = 0; c < in_channels; c++) {
-            for(int i = 0; i < kernel_height; i++) {
-              for(int j = 0; j < kernel_width; j++) {
-                // (n, hei, wid, channel),   // (hei, wid, input, output)
-                int b_idx[4] = {idx[0], idx[1]+i-int(kernel_height/2), idx[2]+j-int(kernel_width/2), c};
-                int t_idx[4] = {i, j, c, idx[3]};
-                sum += bottom->atPadding(b_idx) * W_->at(t_idx);
-              }
-            }
-          }
-          sum += b_->at(0,0,0,o);
-          top->at(b, y_top, x_top, o) = sum;
+    }
+
+    Dtype sum = 0.0;
+    for(int i = 0; i < kernel_height; i++) {
+      for(int j = 0; j < kernel_width; j++) {
+        for(int c = 0; c < in_channels; c++) {
+          // (n, hei, wid, channel),   // (hei, wid, input, output)
+          sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W->at(i, j, c, o);
+          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
     }
+    sum += b->at(0, 0, 0, o);
+    top->at(bi, y_top, x_top, o) = sum;
   }
 }
 
@@ -218,13 +232,47 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     dim3 blocksInGrid(ws*out_channels, hs*bs);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
-    // ConvGPUKernels::ForwardGPUKernelSAME<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, hs, ws, stride);
    
-    
-    // size_t bs = Session::GetSession()->batch_size;
-    // dim3 blocksInGrid(bs / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
-    // dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    // ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, stride, padding);
+   /*
+    size_t t_dims[4];
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
+    size_t bs = Session::GetSession()->batch_size;
+    size_t hei = t_dims[1];
+    size_t wid = t_dims[2];
+
+    size_t hs = hei/BLOCKDIM + 1;
+    size_t ws = wid/BLOCKDIM + 1;
+
+    dim3 blocksInGrid(ws*out_channels, hs*bs);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+
+    ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
+*/
+
+
+
+
+    // old
+  	/*
+    size_t t_dims[4];
+    Tensor<Dtype>::GetTensorGPUDims(top, t_dims);
+    size_t bs = Session::GetSession()->batch_size;
+    size_t hei = t_dims[1];
+    size_t wid = t_dims[2];
+    // dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM * 4 + 1, out_channels/4 + 1);
+    // dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM/4, 4);
+    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    // dims3 blocksInGrid(wid*hei*out_channels*bs/BLOCKDIM/BLOCKDIM+1);
+    // dims3 threadsPerBlock(BLOCKDIM*BLOCKDIM);
+    for (int b = 0; b < bs; b++) {
+      for (int o = 0; o < out_channels; o++) {
+//        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)+(BLOCKDIM+kernel_height)*(BLOCKDIM+kernel_width)*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
+        // ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, b, o, stride, padding);
+        ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, b, o, stride, padding);
+        // ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, 0, 0, stride, padding);
+      }
+    }*/
   } else {
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
