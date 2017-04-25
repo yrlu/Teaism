@@ -148,7 +148,7 @@ void test_alexnet_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
  
-/* 
+ 
   Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
   printf("conv1: (%d,%d,%d,%d)\n",conv1_top_dims[0],conv1_top_dims[1],conv1_top_dims[2],conv1_top_dims[3]);
 
@@ -289,7 +289,7 @@ void test_alexnet_gpu() {
   cel.Forward({sm_top, data_tops[1]}, {cel_top});
   printf("finished forward: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
-*/
+
 
 /*
   Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
