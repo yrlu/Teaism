@@ -296,7 +296,7 @@ void test_alexnet_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 128;
+  session->batch_size = 16;
 
   size_t batch_size = session->batch_size;
 
@@ -462,7 +462,7 @@ void test_alexnet_gpu() {
   Tensor<float> * relu5_top = Tensor<float>::CreateTensorGPU(relu5_top_dims);
   printf("relu5: (%d,%d,%d,%d)\n",relu5_top_dims[0],relu5_top_dims[1],relu5_top_dims[2],relu5_top_dims[3]);
 
-/*
+
   Tensor<float> * fc6_top = Tensor<float>::CreateTensorGPU(fc6_top_dims);
   Tensor<float> * relu6_top = Tensor<float>::CreateTensorGPU(relu6_top_dims);
   Tensor<float> * drop6_top = Tensor<float>::CreateTensorGPU(drop6_top_dims);
@@ -561,7 +561,7 @@ void test_alexnet_gpu() {
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
-*/
+
   show_mem(cudaStatus);
 }
 
