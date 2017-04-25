@@ -248,11 +248,8 @@ void demo_cifar10_gpu() {
           else if (c == 9) { printf("Truck "); }
           printf("probability: %1.4f \n", out->at(b,h,w,c));
         }
-      printf("\n");
       }
-    printf("\n");
     }
-    printf("\n");
   }
 
 
