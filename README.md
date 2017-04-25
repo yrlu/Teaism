@@ -1,4 +1,7 @@
-## Teaism
+<!-- ![Teaism](logo.png "Teaism") -->
+
+<img src="logo.png" width="650">
+<!-- <img src="logo.png" height="42" width="42"> -->
 
 A minimalistic convolutional neural network library for CUDA-based embedded and mobile devices.
 
