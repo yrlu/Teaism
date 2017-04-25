@@ -201,9 +201,21 @@ void demo_cifar10_gpu() {
   printf("relu3 forward: %3.1f ms \n", relu3_t); startTimer();
   // flatten the tensor
   size_t relu3_top_dims_reshaped[4] = {relu3_top_dims[0], relu3_top_dims[3], relu3_top_dims[1], relu3_top_dims[2]};
-
-  Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
-  fc4.Forward({relu3_top}, {fc4_top});
+  Tensor<float> * reshaped_relu3_top_cpu = Tensor<float>::CreateTensorCPU(relu3_top_dims_reshaped);
+  Tensor<float> * relu3_top_cpu = Tensor<float>::TensorGPUtoCPU(relu3_top);
+  for(int b = 0; b < relu3_top_dims_reshaped[0]; b++) {
+    for(int c = 0; c < relu3_top_dims_reshaped[1]; c++) {
+      for(int h = 0; h < relu3_top_dims_reshaped[2]; h++) {
+        for(int w = 0; w < relu3_top_dims_reshaped[3]; w++) {
+          reshaped_relu3_top_cpu->at(b, c, h, w) = relu3_top_cpu->at(b, h, w, c);
+        }
+      }
+    }
+  }
+  Tensor<float> * reshaped_relu3_top = Tensor<float>::TensorCPUtoGPU(reshaped_relu3_top_cpu);
+  // flatten the tensor
+  Tensor<float>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
+  fc4.Forward({reshaped_relu3_top}, {fc4_top});
   float fc4_t = stopTimer();
   printf("fc4 forward: %3.1f ms \n", fc4_t); startTimer();
   fc5.Forward({fc4_top}, {fc5_top});
@@ -219,13 +231,22 @@ void demo_cifar10_gpu() {
 
 
   printf("Prediction: \n");
-  Tensor<float>* out = Tensor<float>::TensorGPUtoCPU(conv1_top);
+  Tensor<float>* out = Tensor<float>::TensorGPUtoCPU(sm_top);
   for (int b = 0; b < out->GetDims()[0]; b++) {
     for (int h = 0; h < out->GetDims()[1]; h++) {
       for (int w = 0; w < out->GetDims()[2]; w++) {
         for (int c = 0; c < out->GetDims()[3]; c++) {
-  //        printf("%dth class probability: %1.4f \n", c, out->at(b,h,w,c));
-          printf("%f ", out->at(b,h,w,c));
+          if (c == 0) { printf("Airplane "); }
+          else if (c == 1) { printf("Automobile "); } 
+          else if (c == 2) { printf("Bird "); }
+          else if (c == 3) { printf("Cat "); }
+          else if (c == 4) { printf("Deer "); }
+          else if (c == 5) { printf("Dog "); }
+          else if (c == 6) { printf("Frog "); }
+          else if (c == 7) { printf("Horse "); }
+          else if (c == 8) { printf("Ship "); }
+          else if (c == 9) { printf("Truck "); }
+          printf("probability: %1.4f \n", out->at(b,h,w,c));
         }
       printf("\n");
       }

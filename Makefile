@@ -31,8 +31,8 @@ make_tests:
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lrn.cu -o tests_lrn.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_alexnet.cu -o tests_alexnet.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) models/load_model.cu -o load_model.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cifar10.cu -o tests_cifar10.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cifar10.cu -o tests_cifar10.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 
 clean:
 	rm *.o
