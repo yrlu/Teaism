@@ -88,7 +88,7 @@ void test_alexnet_cpu() {
 
   Conv2D<float> conv5(3,3,384,256,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv5_top_dims[4];
-  conv4.GetTopsDims({relu4_top_dims}, {conv5_top_dims});
+  conv5.GetTopsDims({relu4_top_dims}, {conv5_top_dims});
 
   Pooling<float> pool5(2, MAX, 2);
   size_t pool5_top_dims[4];
@@ -360,7 +360,7 @@ void test_alexnet_gpu() {
 
   Conv2D<float> conv5(3,3,384,256,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv5_top_dims[4];
-  conv4.GetTopsDims({relu4_top_dims}, {conv5_top_dims});
+  conv5.GetTopsDims({relu4_top_dims}, {conv5_top_dims});
 
   Pooling<float> pool5(2, MAX, 2);
   size_t pool5_top_dims[4];
@@ -569,6 +569,6 @@ void test_alexnet_gpu() {
 
 
 int main() {
-  test_alexnet_cpu();
-  //test_alexnet_gpu();
+//  test_alexnet_cpu();
+  test_alexnet_gpu();
 }
