@@ -3,7 +3,7 @@
 <img src="logo.png" width="700">
 <!-- <img src="logo.png" height="42" width="42"> -->
 
-A minimalistic convolutional neural network library for CUDA-based embedded and mobile devices.
+A minimalistic CUDA-based convolutional neural network library.
 
 ## Dependencies
 
