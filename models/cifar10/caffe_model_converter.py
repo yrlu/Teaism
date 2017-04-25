@@ -8,7 +8,7 @@ sys.path.insert(0, caffe_root + 'python')
 import caffe
 
 caffe.set_mode_cpu()
-net = caffe.Net("test.prototxt", "snapshots/cifar10_iter_1000.caffemodel", caffe.TEST);
+net = caffe.Net("test.prototxt", "snapshots/cifar10_iter_20000.caffemodel", caffe.TEST);
 
 f_out = open('model.txt', 'w')
 

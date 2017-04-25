@@ -59,7 +59,7 @@ void test_lenet_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
 
-  size_t batch_size = 2;
+  size_t batch_size = 1;
 
 
   Data<float> data_layer(batch_size, "tmp/test/img_list.txt");
@@ -208,7 +208,7 @@ void test_lenet_gpu() {
   show_mem(cudaStatus);
 
 
-/*
+
   Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
   Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
 
@@ -221,8 +221,8 @@ void test_lenet_gpu() {
   	printf("\n");
   }
 
-*//*  for(int i = 0; i < fc4_top_dims[0]; i++) {
-  	for(int j = 0; j < fc4_top_dims[3]; j++) {
+/*  for(int i = 0; i < fc4_top_dims[0]; i++) {
+	for(int j = 0; j < fc4_top_dims[3]; j++) {
   	  printf("%f ", fc4_cpu->at(i, 0, 0, j));
   	}
   	printf("\n");
