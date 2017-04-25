@@ -84,7 +84,6 @@ namespace ConvGPUKernels {
       for(int x = 0, x_top = 0; /*x < bottom->GetDims()[2]*/ x_top < top->GetDims()[2]; x += stride, x_top += 1) {
         for(int y = 0, y_top = 0; /*y < bottom->GetDims()[1]*/ y_top < top->GetDims()[1]; y += stride, y_top += 1) {
           int idx[4] = {b, y, x, o};
-//          printf("%d %d %d %d \n", b, y, x, o);
           Dtype sum = 0.0;
           for(int c = 0; c < in_channels; c++) {
             for(int i = 0; i < kernel_height; i++) {
@@ -217,9 +216,8 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     dim3 blocksInGrid(ws*out_channels, hs*bs);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock, kernel_height*kernel_width*in_channels*sizeof(Dtype)>>>(bottom, top, W_, b_, hs, ws, stride, padding);
-    // ConvGPUKernels::ForwardGPUKernelSAME<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, hs, ws, stride);
-    */
-
+    // ConvGPUKernels::ForwardGPUKernel2<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, hs, ws, stride, padding);
+    */  
     size_t bs = Session::GetSession()->batch_size;
     dim3 blocksInGrid(bs / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
