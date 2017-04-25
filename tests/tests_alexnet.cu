@@ -28,9 +28,9 @@ void test_alexnet_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 2;
+  session->batch_size = 128;
 
-  size_t batch_size = 2;
+  size_t batch_size = session->batch_size;
 
 
   Data<float> data_layer(batch_size, "tmp/test/img_med_list.txt");
@@ -45,92 +45,62 @@ void test_alexnet_gpu() {
   Conv2D<float> conv1(11,11,3,96,4, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv1_top_dims[4];
   conv1.GetTopsDims({data_tops_dims0}, {conv1_top_dims});
-  Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
-  printf("conv1: (%d,%d,%d,%d)\n",conv1_top_dims[0],conv1_top_dims[1],conv1_top_dims[2],conv1_top_dims[3]);
 
   Pooling<float> pool1(2,MAX,2);
   size_t pool1_top_dims[4];
   pool1.GetTopsDims({conv1_top_dims}, {pool1_top_dims});
-  Tensor<float> * pool1_top = Tensor<float>::CreateTensorGPU(pool1_top_dims);
-  printf("pool1: (%d,%d,%d,%d)\n",pool1_top_dims[0],pool1_top_dims[1],pool1_top_dims[2],pool1_top_dims[3]);
   
   Relu<float> relu1;
   size_t relu1_top_dims[4];
   relu1.GetTopsDims({pool1_top_dims}, {relu1_top_dims});
-  Tensor<float> * relu1_top = Tensor<float>::CreateTensorGPU(relu1_top_dims);
-  printf("relu1: (%d,%d,%d,%d)\n",relu1_top_dims[0],relu1_top_dims[1],relu1_top_dims[2],relu1_top_dims[3]);
 
   LRN<float> norm1;
   size_t norm1_top_dims[4];
   norm1.GetTopsDims({relu1_top_dims}, {norm1_top_dims});
-  Tensor<float> * norm1_top = Tensor<float>::CreateTensorGPU(norm1_top_dims);
-  printf("norm1: (%d,%d,%d,%d)\n",norm1_top_dims[0],norm1_top_dims[1],norm1_top_dims[2],norm1_top_dims[3]);
 
   Conv2D<float> conv2(5,5,96,256,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv2_top_dims[4];
   conv2.GetTopsDims({norm1_top_dims}, {conv2_top_dims});
-  Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
-  printf("conv2: (%d,%d,%d,%d)\n",conv2_top_dims[0],conv2_top_dims[1],conv2_top_dims[2],conv2_top_dims[3]);
 
   Pooling<float> pool2(2, MAX, 2);
   size_t pool2_top_dims[4];
   pool2.GetTopsDims({conv2_top_dims}, {pool2_top_dims});
-  Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);
-  printf("pool2: (%d,%d,%d,%d)\n",pool2_top_dims[0],pool2_top_dims[1],pool2_top_dims[2],pool2_top_dims[3]);
 
   Relu<float> relu2;
   size_t relu2_top_dims[4];
   relu2.GetTopsDims({pool2_top_dims}, {relu2_top_dims});
-  Tensor<float> * relu2_top = Tensor<float>::CreateTensorGPU(relu2_top_dims);
-  printf("relu2: (%d,%d,%d,%d)\n",relu2_top_dims[0],relu2_top_dims[1],relu2_top_dims[2],relu2_top_dims[3]);
 
   LRN<float> norm2;
   size_t norm2_top_dims[4];
   norm2.GetTopsDims({relu2_top_dims}, {norm2_top_dims});
-  Tensor<float> * norm2_top = Tensor<float>::CreateTensorGPU(norm2_top_dims);
-  printf("norm2: (%d,%d,%d,%d)\n",norm2_top_dims[0],norm2_top_dims[1],norm2_top_dims[2],norm2_top_dims[3]);
 
   Conv2D<float> conv3(3,3,256,384,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv3_top_dims[4];
   conv3.GetTopsDims({norm2_top_dims}, {conv3_top_dims});
-  Tensor<float> * conv3_top = Tensor<float>::CreateTensorGPU(conv3_top_dims);
-  printf("conv3: (%d,%d,%d,%d)\n",conv3_top_dims[0],conv3_top_dims[1],conv3_top_dims[2],conv3_top_dims[3]);
 
   Relu<float> relu3;
   size_t relu3_top_dims[4];
   relu2.GetTopsDims({conv3_top_dims}, {relu3_top_dims});
-  Tensor<float> * relu3_top = Tensor<float>::CreateTensorGPU(relu3_top_dims);
-  printf("relu3: (%d,%d,%d,%d)\n",relu3_top_dims[0],relu3_top_dims[1],relu3_top_dims[2],relu3_top_dims[3]);
 
   Conv2D<float> conv4(3,3,384,384,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv4_top_dims[4];
   conv4.GetTopsDims({relu3_top_dims}, {conv4_top_dims});
-  Tensor<float> * conv4_top = Tensor<float>::CreateTensorGPU(conv4_top_dims);
-  printf("conv4: (%d,%d,%d,%d)\n",conv4_top_dims[0],conv4_top_dims[1],conv4_top_dims[2],conv4_top_dims[3]);
 
   Relu<float> relu4;
   size_t relu4_top_dims[4];
   relu4.GetTopsDims({conv4_top_dims}, {relu4_top_dims});
-  Tensor<float> * relu4_top = Tensor<float>::CreateTensorGPU(relu4_top_dims);
-  printf("relu4: (%d,%d,%d,%d)\n",relu4_top_dims[0],relu4_top_dims[1],relu4_top_dims[2],relu4_top_dims[3]);
 
   Conv2D<float> conv5(3,3,384,256,1, new GaussianKernelInitializer<float>(0.1), SAME);
   size_t conv5_top_dims[4];
   conv4.GetTopsDims({relu4_top_dims}, {conv5_top_dims});
-  Tensor<float> * conv5_top = Tensor<float>::CreateTensorGPU(conv5_top_dims);
-  printf("conv5: (%d,%d,%d,%d)\n",conv5_top_dims[0],conv5_top_dims[1],conv5_top_dims[2],conv5_top_dims[3]);
 
   Pooling<float> pool5(2, MAX, 2);
   size_t pool5_top_dims[4];
   pool5.GetTopsDims({conv5_top_dims}, {pool5_top_dims});
-  Tensor<float> * pool5_top = Tensor<float>::CreateTensorGPU(pool5_top_dims);
-  printf("pool5: (%d,%d,%d,%d)\n",pool5_top_dims[0],pool5_top_dims[1],pool5_top_dims[2],pool5_top_dims[3]);
 
   Relu<float> relu5;
   size_t relu5_top_dims[4];
   relu5.GetTopsDims({pool5_top_dims}, {relu5_top_dims});
-  Tensor<float> * relu5_top = Tensor<float>::CreateTensorGPU(relu5_top_dims);
-  printf("relu5: (%d,%d,%d,%d)\n",relu5_top_dims[0],relu5_top_dims[1],relu5_top_dims[2],relu5_top_dims[3]);
 
   FC<float> fc6(relu5_top_dims[1]*relu5_top_dims[2]*relu5_top_dims[3],4096);
   size_t to_fc6_dims[4];
@@ -140,108 +110,102 @@ void test_alexnet_gpu() {
   to_fc6_dims[3] = relu5_top_dims[1]*relu5_top_dims[2]*relu5_top_dims[3];
   size_t fc6_top_dims[4];
   fc6.GetTopsDims({to_fc6_dims}, {fc6_top_dims});
-  Tensor<float> * fc6_top = Tensor<float>::CreateTensorGPU(fc6_top_dims);
 
   Relu<float> relu6;
   size_t relu6_top_dims[4];
   relu6.GetTopsDims({fc6_top_dims}, {relu6_top_dims});
-  Tensor<float> * relu6_top = Tensor<float>::CreateTensorGPU(relu6_top_dims);
 
   Dropout<float> drop6;
   size_t drop6_top_dims[4];
   drop6.GetTopsDims({relu6_top_dims}, {drop6_top_dims});
-  Tensor<float> * drop6_top = Tensor<float>::CreateTensorGPU(drop6_top_dims);
 
   FC<float> fc7(4096,4096);
   size_t fc7_top_dims[4];
   fc7.GetTopsDims({drop6_top_dims}, {fc7_top_dims});
-  Tensor<float> * fc7_top = Tensor<float>::CreateTensorGPU(fc7_top_dims);
 
   Relu<float> relu7;
   size_t relu7_top_dims[4];
   relu7.GetTopsDims({fc7_top_dims}, {relu7_top_dims});
-  Tensor<float> * relu7_top = Tensor<float>::CreateTensorGPU(relu7_top_dims);
 
   Dropout<float> drop7;
   size_t drop7_top_dims[4];
   drop7.GetTopsDims({relu7_top_dims}, {drop7_top_dims});
-  Tensor<float> * drop7_top = Tensor<float>::CreateTensorGPU(drop7_top_dims);
 
   FC<float> fc8(4096,1000);
   size_t fc8_top_dims[4];
   fc8.GetTopsDims({drop7_top_dims}, {fc8_top_dims});
-  Tensor<float> * fc8_top = Tensor<float>::CreateTensorGPU(fc8_top_dims);
 
   Softmax<float> softmax;
   size_t sm_top_dims[4];
   softmax.GetTopsDims({fc8_top_dims}, {sm_top_dims});
-  Tensor<float> * sm_top = Tensor<float>::CreateTensorGPU(sm_top_dims);
 
   CrossEntropyLoss<float> cel;
   size_t cel_top_dims[4];
   cel.GetTopsDims({sm_top_dims, data_tops_dims1}, {cel_top_dims});
-  Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(cel_top_dims);
 
   printf("network finished setup: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
  
-/*
-  printf("Loading weights ...\n");
+/* 
+  Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
+  printf("conv1: (%d,%d,%d,%d)\n",conv1_top_dims[0],conv1_top_dims[1],conv1_top_dims[2],conv1_top_dims[3]);
 
-  std::string model_path = "models/alexnet/model.txt";
-  std::ifstream file(model_path);
+  Tensor<float> * pool1_top = Tensor<float>::CreateTensorGPU(pool1_top_dims);
+  printf("pool1: (%d,%d,%d,%d)\n",pool1_top_dims[0],pool1_top_dims[1],pool1_top_dims[2],pool1_top_dims[3]);
 
-  size_t conv1_w_dims[4] = {11,11,3,96};
-  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
-  load_to_conv<float>(conv1_w, file);
+  Tensor<float> * relu1_top = Tensor<float>::CreateTensorGPU(relu1_top_dims);
+  printf("relu1: (%d,%d,%d,%d)\n",relu1_top_dims[0],relu1_top_dims[1],relu1_top_dims[2],relu1_top_dims[3]);
 
-  size_t conv1_b_dims[4] = {1,1,1,96};
-  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
-  load_to_bias<float>(conv1_b, file);
+  Tensor<float> * norm1_top = Tensor<float>::CreateTensorGPU(norm1_top_dims);
+  printf("norm1: (%d,%d,%d,%d)\n",norm1_top_dims[0],norm1_top_dims[1],norm1_top_dims[2],norm1_top_dims[3]);
 
-  size_t conv2_w_dims[4] = {5,5,96,256};
-  Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
-  load_to_conv<float>(conv2_w, file);
+  Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
+  printf("conv2: (%d,%d,%d,%d)\n",conv2_top_dims[0],conv2_top_dims[1],conv2_top_dims[2],conv2_top_dims[3]);
 
-  size_t conv2_b_dims[4] = {1,1,1,256};
-  Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
-  load_to_bias<float>(conv2_b, file);
+  Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);
+  printf("pool2: (%d,%d,%d,%d)\n",pool2_top_dims[0],pool2_top_dims[1],pool2_top_dims[2],pool2_top_dims[3]);
 
-  size_t conv3_w_dims[4] = {3,3,256,384};
-  Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
-  load_to_conv<float>(conv3_w, file);
+  Tensor<float> * relu2_top = Tensor<float>::CreateTensorGPU(relu2_top_dims);
+  printf("relu2: (%d,%d,%d,%d)\n",relu2_top_dims[0],relu2_top_dims[1],relu2_top_dims[2],relu2_top_dims[3]);
 
-  size_t conv3_b_dims[4] = {1,1,1,384};
-  Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
-  load_to_bias<float>(conv3_b, file);
+  Tensor<float> * norm2_top = Tensor<float>::CreateTensorGPU(norm2_top_dims);
+  printf("norm2: (%d,%d,%d,%d)\n",norm2_top_dims[0],norm2_top_dims[1],norm2_top_dims[2],norm2_top_dims[3]);
 
-  size_t conv4_w_dims[4] = {3,11,3,96};
-  Tensor<float>* conv4_w = Tensor<float>::CreateTensorCPU(conv4_w_dims);
-  load_to_conv<float>(conv4_w, file);
+  Tensor<float> * conv3_top = Tensor<float>::CreateTensorGPU(conv3_top_dims);
+  printf("conv3: (%d,%d,%d,%d)\n",conv3_top_dims[0],conv3_top_dims[1],conv3_top_dims[2],conv3_top_dims[3]);
 
-  size_t conv1_b_dims[4] = {1,1,1,96};
-  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
-  load_to_bias<float>(conv1_b, file);
+  Tensor<float> * relu3_top = Tensor<float>::CreateTensorGPU(relu3_top_dims);
+  printf("relu3: (%d,%d,%d,%d)\n",relu3_top_dims[0],relu3_top_dims[1],relu3_top_dims[2],relu3_top_dims[3]);
 
-  size_t conv1_w_dims[4] = {11,11,3,96};
-  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
-  load_to_conv<float>(conv1_w, file);
+  Tensor<float> * conv4_top = Tensor<float>::CreateTensorGPU(conv4_top_dims);
+  printf("conv4: (%d,%d,%d,%d)\n",conv4_top_dims[0],conv4_top_dims[1],conv4_top_dims[2],conv4_top_dims[3]);
 
-  size_t conv1_b_dims[4] = {1,1,1,96};
-  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
-  load_to_bias<float>(conv1_b, file);
+  Tensor<float> * relu4_top = Tensor<float>::CreateTensorGPU(relu4_top_dims);
+  printf("relu4: (%d,%d,%d,%d)\n",relu4_top_dims[0],relu4_top_dims[1],relu4_top_dims[2],relu4_top_dims[3]);
 
-  size_t fc8_w_dims[4] = {1,1,1000,4096};
-  Tensor<float>* fc8_w = Tensor<float>::CreateTensorCPU(fc8_w_dims);
-  load_to_fc(fc8_w, file);
+  Tensor<float> * conv5_top = Tensor<float>::CreateTensorGPU(conv5_top_dims);
+  printf("conv5: (%d,%d,%d,%d)\n",conv5_top_dims[0],conv5_top_dims[1],conv5_top_dims[2],conv5_top_dims[3]);
 
-  size_t fc8_b_dims[4] = {1,1,1,1000};
-  Tensor<float>* fc8_b = Tensor<float>::CreateTensorCPU(fc8_b_dims);
-  load_to_bias(fc8_b, file);
-*/
- 
+  Tensor<float> * pool5_top = Tensor<float>::CreateTensorGPU(pool5_top_dims);
+  printf("pool5: (%d,%d,%d,%d)\n",pool5_top_dims[0],pool5_top_dims[1],pool5_top_dims[2],pool5_top_dims[3]);
+
+  Tensor<float> * relu5_top = Tensor<float>::CreateTensorGPU(relu5_top_dims);
+  printf("relu5: (%d,%d,%d,%d)\n",relu5_top_dims[0],relu5_top_dims[1],relu5_top_dims[2],relu5_top_dims[3]);
+
+  Tensor<float> * fc6_top = Tensor<float>::CreateTensorGPU(fc6_top_dims);
+  Tensor<float> * relu6_top = Tensor<float>::CreateTensorGPU(relu6_top_dims);
+  Tensor<float> * drop6_top = Tensor<float>::CreateTensorGPU(drop6_top_dims);
+  Tensor<float> * fc7_top = Tensor<float>::CreateTensorGPU(fc7_top_dims);
+  Tensor<float> * relu7_top = Tensor<float>::CreateTensorGPU(relu7_top_dims);
+  Tensor<float> * drop7_top = Tensor<float>::CreateTensorGPU(drop7_top_dims);
+  Tensor<float> * fc8_top = Tensor<float>::CreateTensorGPU(fc8_top_dims);
+  Tensor<float> * sm_top = Tensor<float>::CreateTensorGPU(sm_top_dims);
+  Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(cel_top_dims);
+
+
+
 
   startTimer();
   data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
@@ -325,7 +289,7 @@ void test_alexnet_gpu() {
   cel.Forward({sm_top, data_tops[1]}, {cel_top});
   printf("finished forward: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
-
+*/
 
 /*
   Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
