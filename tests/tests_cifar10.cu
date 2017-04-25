@@ -464,9 +464,23 @@ void test_lenet_gpu() {
   printf("pool3 forward: %3.1f ms \n", stopTimer()); startTimer();
   relu3.Forward({pool3_top}, {relu3_top});
   printf("relu3 forward: %3.1f ms \n", stopTimer()); startTimer();
+  
+  size_t relu3_top_dims_reshaped[4] = {relu3_top_dims[0], relu3_top_dims[3], relu3_top_dims[1], relu3_top_dims[2]};
+  Tensor<float> * reshaped_relu3_top_cpu = Tensor<float>::CreateTensorCPU(relu3_top_dims_reshaped);
+  Tensor<float> * relu3_top_cpu = Tensor<float>::TensorGPUtoCPU(relu3_top);
+  for(int b = 0; b < relu3_top_dims_reshaped[0]; b++) {
+    for(int c = 0; c < relu3_top_dims_reshaped[1]; c++) {
+      for(int h = 0; h < relu3_top_dims_reshaped[2]; h++) {
+        for(int w = 0; w < relu3_top_dims_reshaped[3]; w++) {
+          reshaped_relu3_top_cpu->at(b, c, h, w) = relu3_top_cpu->at(b, h, w, c);
+        }
+      }
+    }
+  }
+  Tensor<float> * reshaped_relu3_top = Tensor<float>::TensorCPUtoGPU(reshaped_relu3_top_cpu);
   // flatten the tensor
-  Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
-  fc4.Forward({relu3_top}, {fc4_top});
+  Tensor<float>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
+  fc4.Forward({reshaped_relu3_top}, {fc4_top});
   printf("fc4 forward: %3.1f ms \n", stopTimer()); startTimer();
   fc5.Forward({fc4_top}, {fc5_top});
   printf("fc5 forward: %3.1f ms \n", stopTimer()); startTimer();
@@ -503,10 +517,11 @@ void test_lenet_gpu() {
   // Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(conv1.W_);
 //  Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
   // print_W(output_cpu);
-  Tensor<float> * conv_top = Tensor<float>::TensorGPUtoCPU(conv3_top);
-  print_conv_top(conv_top);
+  // Tensor<float> * conv_top = Tensor<float>::TensorGPUtoCPU(conv3_top);
+  // print_conv_top(conv_top);
   // print_conv_top_gpu<<<1,1>>>(conv1_top);
-
+  Tensor<float> * fc_top = Tensor<float>::TensorGPUtoCPU(sm_top);
+  print_fc(fc_top);
 /*
   // printf("%f \n", sm_top->at(0,0,0,0));
   for(int b = 0; b < output_cpu->GetDims()[0]; b++) {
