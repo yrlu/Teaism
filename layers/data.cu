@@ -69,7 +69,6 @@ Data<Dtype>::Data(unsigned batch_size, char img_list_path[], Dtype mean_r, Dtype
   num_data_ = lab_list.size();
   assert(num_data_ > 0);
   assert(num_data_ >= batch_size);
-  printf("%s\n", img_list[0]);
   std::cout << img_list[0] << std::endl;
   bitmap_image img(img_list[0]);
   img_h = img.height();

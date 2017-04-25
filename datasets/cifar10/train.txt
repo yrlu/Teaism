@@ -1,10 +1,1 @@
 datasets/cifar10/bmp_imgs/00001.bmp 6
-datasets/cifar10/bmp_imgs/00002.bmp 9
-datasets/cifar10/bmp_imgs/00003.bmp 9
-datasets/cifar10/bmp_imgs/00004.bmp 4
-datasets/cifar10/bmp_imgs/00005.bmp 1
-datasets/cifar10/bmp_imgs/00006.bmp 1
-datasets/cifar10/bmp_imgs/00007.bmp 2
-datasets/cifar10/bmp_imgs/00008.bmp 7
-datasets/cifar10/bmp_imgs/00009.bmp 8
-datasets/cifar10/bmp_imgs/00010.bmp 3

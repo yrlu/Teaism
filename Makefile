@@ -9,8 +9,6 @@ GCC_OPTS=-std=c++11 -w
 all: make_tests
 
 
-main:
-	$(NVCC) $(GCC_OPTS) main.cu -o main.o -I.
 
 make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
@@ -31,9 +29,10 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_dropout.cu -o tests_dropout.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
 	#$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lrn.cu -o tests_lrn.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_alexnet.cu -o tests_alexnet.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_alexnet.cu -o tests_alexnet.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) models/load_model.cu -o load_model.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cifar10.cu -o tests_cifar10.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cifar10.cu -o tests_cifar10.o -I.
+#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 
 clean:
 	rm *.o

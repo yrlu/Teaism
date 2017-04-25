@@ -570,6 +570,6 @@ void test_alexnet_gpu() {
 
 
 int main() {
-//  test_alexnet_cpu();
-  test_alexnet_gpu();
+  test_alexnet_cpu();
+//  test_alexnet_gpu();
 }
