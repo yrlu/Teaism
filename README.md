@@ -65,3 +65,11 @@ A minimalistic CUDA-based convolutional neural network library.
     ├── load_model.hpp
     └── utils.cu
 ```
+
+## Directory Description
+- basics/:  Major header files, e.g., session.hpp, layer.hpp, tensor.cu, etc.
+- layers/:  All the layer implementation.
+- tests/:  All test cases. It is recommended to browse demo_cifar10.cu, tests_alexnet.cu, and tests_cifar10.cu to learn how to use this library.
+- initializers/:  Parameter initialization for convolutional and fully connected layers.
+- utils/:  Some utility functions.
+- models/:  Scripts for training models in Caffe and importing trained models.
