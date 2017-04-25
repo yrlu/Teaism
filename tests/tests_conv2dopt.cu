@@ -148,7 +148,7 @@ void test_conv2d_gpu() {
 
   size_t kernel = 15;
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> conv_layer = Conv2D<float>(5,5,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
+  Conv2D<float> conv_layer = Conv2D<float>(kernel,kernel,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
 
   size_t b_dims[4] = {session->batch_size, 14, 14, 32};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
