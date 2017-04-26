@@ -9,40 +9,6 @@
 #define BLOCKDIM 32
 
 namespace ReluGPUKernels {
-  template <class Dtype>
-  __global__ void ForwardGPUKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top, int bi, int o) {
-    // bi is the index of the tensor
-    // o is the output channel
-    int x_top = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int y_top = (blockDim.y * blockIdx.y) + threadIdx.y;
-    int x = x_top;
-    int y = y_top;
-    if (!bottom->isValidIdx(bi, y, x, o) || !top->isValidIdx(bi, y_top, x_top, o)) {
-      return;
-    }
-    Dtype val = bottom->at(bi, y, x, o);
-    top->at(bi, y_top, x_top, o) = (val >= 0 ? val : 0);
-  }
-
-  template <class Dtype>
-  __global__ void ForwardGPU2(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
-    size_t n = bottom->GetDims()[0];
-    size_t hei = top->GetDims()[1];
-    size_t wid = top->GetDims()[2]; 
-    size_t out_channels = top->GetDims()[3];
-
-    int b = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int o = (blockDim.y * blockIdx.y) + threadIdx.y;  
-    if(b < 0 || b >= n || o < 0 || o >= out_channels) {
-      return;
-    }
-
-    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-
-    ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
-  }
-  
   template<class Dtype>
   __global__ void ForwardGPU3(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -56,23 +22,6 @@ namespace ReluGPUKernels {
   __global__ void ForwardGPU(Tensor<Dtype> * bottom, Tensor<Dtype> * top) {
     size_t size = bottom->size();    
     ReluGPUKernels::ForwardGPU3<Dtype><<<size/(BLOCKDIM*BLOCKDIM) + 1, BLOCKDIM*BLOCKDIM>>>(bottom, top);
-/*
-    size_t n = bottom->GetDims()[0];
-    //size_t hei = top->GetDims()[1];
-    //size_t wid = top->GetDims()[2];
-    size_t out_channels = top->GetDims()[3];
-    dim3 blocksInGrid(n / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
-    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    ReluGPUKernels::ForwardGPU2<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top);
-    /*
-    dim3 blocksInGrid(wid / BLOCKDIM + 1, hei / BLOCKDIM + 1);
-    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-    
-    for (int b = 0; b < n; b++) {
-      for (int o = 0; o < out_channels; o++) {
-        ReluGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, b, o);
-      }
-    }*/
   }
 }
 
