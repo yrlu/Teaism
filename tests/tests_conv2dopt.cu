@@ -7,6 +7,33 @@
 #include "basics/session.hpp"
 #include "layers/conv2d.cu"
 #include "utils/utils.cu"
+#include "utils/bitmap_image.hpp"
+
+
+
+__global__ void init_bottom(Tensor<float> * bottom) {
+  for(int b = 0; b < bottom->GetDims()[0]; b++) {
+    for(int c = 0; c < bottom->GetDims()[1]; c++) {
+      for(int i = 0; i < bottom->GetDims()[2]; i++) {
+        for(int j = 0; j < bottom->GetDims()[3]; j++) {
+          int b_idx[4] = {b, c, i, j};
+          bottom->at(b_idx) = (float) ((i+j+c) % 255);
+        }
+      }
+    }
+  }
+}
+
+__global__ void show_top(Tensor<float>* top) {
+  size_t h = top->GetDims()[1];
+  size_t w = top->GetDims()[2];
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      printf("%f ", top->at(0, i, j, 0));
+    }
+    printf("\n");
+  }
+}
 
 
 void test_conv2d_cpu() {
@@ -45,7 +72,7 @@ void test_conv2d_cpu() {
   delete conv_layer;
 }
 
-
+/*
 void test_conv2d_gpu() {
   printf("Example code for conv2d gpu\n");
   cudaError_t cudaStatus = cudaSetDevice(0);
@@ -109,33 +136,9 @@ void test_conv2d_gpu() {
   delete top_cpu;
   cudaFree(bottom);
   cudaFree(top);
-}
+}*/
 
 
-
-__global__ void init_bottom(Tensor<float> * bottom) {
-  for(int b = 0; b < bottom->GetDims()[0]; b++) {
-    for(int c = 0; c < bottom->GetDims()[1]; c++) {
-      for(int i = 0; i < bottom->GetDims()[2]; i++) {
-        for(int j = 0; j < bottom->GetDims()[3]; j++) {
-          int b_idx[4] = {b, c, i, j};
-          bottom->at(b_idx) = (float) ((i+j+c) % 255);
-        }
-      }    
-    }
-  }
-}
-
-__global__ void show_top(Tensor<float>* top) {
-  size_t h = top->GetDims()[1];
-  size_t w = top->GetDims()[2];
-  for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
-      printf("%f ", top->at(0, i, j, 0));
-    }
-    printf("\n");
-  }
-}
 
 void test_conv2d_gpu() {
   printf("Example code for conv2d gpu\n");

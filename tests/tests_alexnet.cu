@@ -11,7 +11,6 @@
 #include "layers/dropout.cu"
 #include "layers/lrn.cu"
 #include "layers/fc.cu"
-#include "tmp/bitmap_image.hpp"
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"

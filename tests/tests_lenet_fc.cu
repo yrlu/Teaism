@@ -9,7 +9,7 @@
 #include "layers/conv2d.cu"
 #include "layers/relu.cu"
 #include "layers/fc.cu"
-#include "tmp/bitmap_image.hpp"
+#include "utils/bitmap_image.hpp"
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -46,7 +46,7 @@ void test_lenet_gpu() {
   assert(conv1_top_dims[2] == 28);
   assert(conv1_top_dims[3] == 32);
 
-  Pooling<float> pool1(2);
+  Pooling<float> pool1(2, MAX, 2);
   size_t pool1_top_dims[4];
   pool1.GetTopsDims({conv1_top_dims}, {pool1_top_dims});
   Tensor<float> * pool1_top = Tensor<float>::CreateTensorGPU(pool1_top_dims);
@@ -75,7 +75,7 @@ void test_lenet_gpu() {
   assert(conv2_top_dims[2] == 14);
   assert(conv2_top_dims[3] == 64);  
 
-  Pooling<float> pool2(2);
+  Pooling<float> pool2(2, MAX, 2);
   size_t pool2_top_dims[4];
   pool2.GetTopsDims({conv2_top_dims}, {pool2_top_dims});
   Tensor<float> * pool2_top = Tensor<float>::CreateTensorGPU(pool2_top_dims);

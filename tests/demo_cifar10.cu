@@ -9,7 +9,7 @@
 #include "layers/conv2d.cu"
 #include "layers/relu.cu"
 #include "layers/fc.cu"
-#include "tmp/bitmap_image.hpp"
+#include "utils/bitmap_image.hpp"
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"

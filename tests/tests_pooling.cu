@@ -4,7 +4,7 @@
 #include <cmath>
 #include "basics/session.hpp"
 #include "layers/pooling.cu"
-#include "tmp/bitmap_image.hpp"
+#include "utils/bitmap_image.hpp"
 
 
 void test_pooling_cpu() {
