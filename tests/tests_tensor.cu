@@ -91,7 +91,6 @@ void test_tensor_cpu() {
   printf("-- Example usage of tensor on cpu --\n");
   size_t dims[4] = {1,3,3,1};
   Tensor<float> * tensor_cpu = Tensor<float>::CreateTensorCPU(dims);
-//  Tensor<float>::AllocateDataArrayCPU(tensor_cpu);
 
   for(int i = 0; i < tensor_cpu->size(); i++) {
     tensor_cpu->GetDataPtr()[i] = i;
@@ -173,7 +172,6 @@ void test_dims() {
 
 
 int main(void) {
-  // tensor
   checkCudaErrors(cudaStatus);
   test_tensor_gpu();
   // test_tensor_gpu_to_cpu();
@@ -181,7 +179,7 @@ int main(void) {
   checkCudaErrors(cudaStatus);
   cudaStatus = cudaDeviceSynchronize();
   checkCudaErrors(cudaStatus);
-//  test_tensor_cpu();  
+//  test_tensor_cpu(); 
   test_reshape_gpu();
   test_reshape_cpu();
   test_indices();

@@ -511,43 +511,13 @@ void test_lenet_gpu() {
   show_mem(cudaStatus);
 */
 
-  // print_W_gpu<<<1,1>>>(conv1.W_);
-  // print_W(conv1_w);
-
-  // Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(conv1.W_);
-//  Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
-  // print_W(output_cpu);
-  // Tensor<float> * conv_top = Tensor<float>::TensorGPUtoCPU(conv3_top);
-  // print_conv_top(conv_top);
-  // print_conv_top_gpu<<<1,1>>>(conv1_top);
   Tensor<float> * fc_top = Tensor<float>::TensorGPUtoCPU(sm_top);
   print_fc(fc_top);
-/*
-  // printf("%f \n", sm_top->at(0,0,0,0));
-  for(int b = 0; b < output_cpu->GetDims()[0]; b++) {
-    for(int h = 0; h < output_cpu->GetDims()[1]; h++) {
-      for(int w = 0; w < output_cpu->GetDims()[2]; w++) {
-  	    for(int c = 0; c < output_cpu->GetDims()[3]; c++) {
-  	      printf("%f ", output_cpu->at(b, h, w, c));
-  	    }
-  	    printf("\n");
-      }
-      printf("\n");
-    }
-    printf("\n");
-  }
-*/
-/*  for(int i = 0; i < fc4_top_dims[0]; i++) {
-  	for(int j = 0; j < fc4_top_dims[3]; j++) {
-  	  printf("%f ", fc4_cpu->at(i, 0, 0, j));
-  	}
-  	printf("\n");
-  }
-*/
 
 
-  // cudaStatus = cudaGetLastError();
-  // checkCudaErrors(cudaStatus);
+
+  cudaStatus = cudaGetLastError();
+  checkCudaErrors(cudaStatus);
 
 }
 

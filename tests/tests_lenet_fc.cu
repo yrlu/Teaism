@@ -184,28 +184,6 @@ void test_lenet_gpu() {
   printf("finished forward: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
 
-
-/*
-  Tensor<float> * output_cpu = Tensor<float>::TensorGPUtoCPU(sm_top);
-  Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
-
-
-  // printf("%f \n", sm_top->at(0,0,0,0));
-  for(int i = 0; i < sm_top_dims[0]; i++) {
-  	for(int j = 0; j < sm_top_dims[3]; j++) {
-  	  printf("%f ", output_cpu->at(i, 0, 0, j));
-  	}
-  	printf("\n");
-  }
-
-*//*  for(int i = 0; i < fc4_top_dims[0]; i++) {
-  	for(int j = 0; j < fc4_top_dims[3]; j++) {
-  	  printf("%f ", fc4_cpu->at(i, 0, 0, j));
-  	}
-  	printf("\n");
-  }
-*/
-
   printf("%d %d %d %d \n", fc4_top_dims[0], fc4_top_dims[1], fc4_top_dims[2], fc4_top_dims[3]);
   printf("%d %d %d %d \n", data_tops_dims1[0], data_tops_dims1[1], data_tops_dims1[2], data_tops_dims1[3]);
   printf("%d %d %d %d \n", cel_top_dims[0], cel_top_dims[1], cel_top_dims[2], cel_top_dims[3]);

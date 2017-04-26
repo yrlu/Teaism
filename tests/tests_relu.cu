@@ -17,7 +17,6 @@ void test_relu_cpu() {
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
   Relu<float> * relu = new Relu<float>();
 
-  // const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
   size_t b_dims[4] = {1, h, w, 1};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
   size_t t_dims[4] = {1, h, w, 1};

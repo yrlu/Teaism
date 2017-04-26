@@ -41,7 +41,7 @@ void startTimer() {
 	cudaEventRecord(start, 0);
 }
 
-/** Return elapsed time (in ms) since startTime() was called */
+// Return elapsed time (in ms) since startTime() was called
 float stopTimer() {
 	float time;
 	cudaEventRecord(stop, 0);
@@ -213,24 +213,12 @@ void test_lenet_gpu() {
   Tensor<float> * fc4_cpu = Tensor<float>::TensorGPUtoCPU(fc4_top);
 
 
-  // printf("%f \n", sm_top->at(0,0,0,0));
   for(int i = 0; i < sm_top_dims[0]; i++) {
   	for(int j = 0; j < sm_top_dims[3]; j++) {
   	  printf("%f ", output_cpu->at(i, 0, 0, j));
   	}
   	printf("\n");
   }
-
-/*  for(int i = 0; i < fc4_top_dims[0]; i++) {
-	for(int j = 0; j < fc4_top_dims[3]; j++) {
-  	  printf("%f ", fc4_cpu->at(i, 0, 0, j));
-  	}
-  	printf("\n");
-  }
-*/
-
-
-
 
   printf("%d %d %d %d \n", fc4_top_dims[0], fc4_top_dims[1], fc4_top_dims[2], fc4_top_dims[3]);
   printf("%d %d %d %d \n", data_tops_dims1[0], data_tops_dims1[1], data_tops_dims1[2], data_tops_dims1[3]);

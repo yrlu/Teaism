@@ -8,7 +8,7 @@
 #include "layers/conv2d.cu"
 #include "utils/utils.cu"
 
-/*
+
 void test_conv2d_cpu() {
   printf("Example code for conv2d cpu\n");
   size_t h = 400;
@@ -110,7 +110,7 @@ void test_conv2d_gpu() {
   cudaFree(bottom);
   cudaFree(top);
 }
-*/
+
 
 
 __global__ void init_bottom(Tensor<float> * bottom) {
