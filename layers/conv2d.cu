@@ -31,7 +31,10 @@ public:
   ~Conv2D();
 
   void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops);
-
+  void Backward(const std::vector<Tensor<Dtype>*> &tops,
+                        const std::vector<Tensor<Dtype>*> &tops_diff,
+                        const std::vector<Tensor<Dtype>*> &bottoms,
+                        const std::vector<Tensor<Dtype>*> &bottoms_diff);
   void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
                   const std::vector<size_t*> &tops_dims);
 
@@ -43,9 +46,14 @@ public:
   const PADDING padding;
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
+  Tensor<Dtype>* W_flipped_;
+  Tensor<Dtype>* W_diff_;
+  Tensor<Dtype>* b_diff_;
 private:
   const Initializer<Dtype>* initializer_;
-  void InitParams(); 
+  void InitParams();
+  void InitDiffs();
+  void FlipWeights();
 };
 
 
@@ -56,7 +64,7 @@ Conv2D<Dtype>::Conv2D(size_t kernel_height, size_t kernel_width, size_t in_chann
       kernel_height(kernel_height), kernel_width(kernel_width),
       in_channels(in_channels), out_channels(out_channels), 
       stride(stride), initializer_(initializer),
-      padding(_padding) {
+      padding(_padding), W_flipped_(NULL) {
   size_t w_dims[4] = {kernel_height, kernel_width, in_channels, out_channels};
   size_t b_dims[4] = {1, 1, 1, out_channels};
   if (Session::GetSession()->gpu) {
@@ -77,18 +85,42 @@ Conv2D<Dtype>::~Conv2D() {
       cudaFree(W_);
       W_ = NULL;
     }
+    if (W_flipped_ != NULL) {
+      cudaFree(W_flipped_);
+      W_flipped_ = NULL;
+    }
     if (b_ != NULL) {
       cudaFree(b_);
       b_ = NULL;
+    }
+    if (W_diff_ != NULL) {
+      cudaFree(W_diff_);
+      W_diff_ = NULL;
+    }
+    if (b_diff_ != NULL) {
+      cudaFree(b_diff_);
+      b_diff_ = NULL;
     }
   } else {
     if(W_ != NULL) {
       delete W_;
       W_ = NULL;
     }
+    if(W_flipped_ != NULL) { 
+      delete W_flipped_;
+      W_flipped_ = NULL;
+    }
     if(b_ != NULL) {
       delete b_;
       b_ = NULL;
+    }
+    if(W_diff_ != NULL) {
+      delete W_diff_;
+      W_diff_ = NULL;
+    }
+    if(b_diff_ != NULL) {
+      delete b_diff_; 
+      b_diff_ = NULL;
     }
   }
 }
@@ -104,53 +136,24 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
     ComputationsGPU::ConvolutionGPU(bottom, top, W_, b_, stride, padding);
   } else {
     ComputationsCPU::ConvolutionCPU(bottom, top, W_, b_, stride, padding);
-    /*
-    for(int b = 0; b < bottom->GetDims()[0]; b++) {
-      for(int o = 0; o < out_channels; o++) {
-        if(padding==SAME) {
-          for(int x = 0, x_top = 0; x_top < top->GetDims()[2]; x += stride, x_top += 1) {
-            for(int y = 0, y_top = 0; y_top < top->GetDims()[1]; y += stride, y_top += 1) {
-              // batch idx b, output layer o, pixel (x, y)
-              Dtype sum = 0.0;
-              for(int c = 0; c < in_channels; c++) {
-                for(int i = 0; i < kernel_height; i++) {
-                  for(int j = 0; j < kernel_width; j++) {
-                    // (n, hei, wid, channel),   // (hei, wid, input, output)
-                    int b_idx[4] = {b, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c};
-                    int t_idx[4] = {i, j, c, o};
-                    sum += bottom->atPadding(b_idx) * W_->at(t_idx);
-                  }
-                }
-              }
-              sum += b_->at(0,0,0,o);
-              top->at(b, y_top, x_top, o) = sum;
-            }
-          }
-        } else if (padding==VALID) {
-          for(int x = kernel_width/2, x_top = 0; x_top < top->GetDims()[2]; x += stride, x_top += 1) {
-            for(int y = kernel_height/2, y_top = 0; y_top < top->GetDims()[1]; y += stride, y_top += 1) {
-              // batch idx b, output layer o, pixel (x, y)
-              Dtype sum = 0.0;
-              for(int c = 0; c < in_channels; c++) {
-                for(int i = 0; i < kernel_height; i++) {
-                  for(int j = 0; j < kernel_width; j++) {
-                    // (n, hei, wid, channel),   // (hei, wid, input, output)
-                    int b_idx[4] = {b, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c};
-                    int t_idx[4] = {i, j, c, o};
-                    sum += bottom->atPadding(b_idx) * W_->at(t_idx);
-                  }
-                }
-              }
-              sum += b_->at(0,0,0,o);
-              top->at(b, y_top, x_top, o) = sum;
-            }
-          }
-        }
-      }
-    }*/
   }
 }
 
+template<class Dtype>
+void Backward(const std::vector<Tensor<Dtype>*> &tops,
+              const std::vector<Tensor<Dtype>*> &tops_diff,
+              const std::vector<Tensor<Dtype>*> &bottoms,
+              const std::vector<Tensor<Dtype>*> &bottoms_diff) {
+  assert(bottoms.size() == 1); 
+  assert(bottoms_diff.size() == 1);
+  assert(tops.size() == 1);
+  assert(tops_diff.size() == 1);
+  if(Session::GetSession()->gpu) {
+    
+  } else {
+    
+  }
+}
 
 
 template<class Dtype>
@@ -173,6 +176,49 @@ void Conv2D<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims,
   }
 }
 
+template<class Dtype> 
+__global__ void FlipKernel(Tensor<Dtype> * W_, Tensor<Dtype> * W_flipped_) {
+  size_t kernel_height = W_->GetDims()[0];
+  size_t kernel_width = W_->GetDims()[1];
+  size_t in_channels = W_->GetDims()[2];
+  size_t out_channels = W_->GetDims()[3];
+  for(int h = 0; h < kernel_height; h++) {
+    for(int w = 0; w < kernel_width; w++) {
+      for(int i = 0; i < in_channels; i++) {
+        for(int o = 0; o < out_channels; o++) {
+          W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
+        }
+      }
+    }
+  }
+}
+
+template<class Dtype>
+void Conv2D<Dtype>::FlipWeights() {
+  if(Session::GetSession()->gpu) {
+    if(W_flipped_ == NULL) {
+      size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
+      W_flipped_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
+    }
+    FlipKernel<Dtype><<<1,1>>>FlipKernel(W_, W_flipped_);
+  } else {
+    if(W_flipped_ == NULL) {
+      size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
+      W_flipped_ = Tensor<Dtype>::CreateTensorCPU(w_dims);
+    }
+
+    for(int h = 0; h < kernel_height; h++) {
+      for(int w = 0; w < kernel_width; w++) {
+        for(int i = 0; i < in_channels; i++) {
+          for(int o = 0; o < out_channels; o++) {
+            W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
+          }
+        }
+      }
+    }
+  }
+}
+
 
 template<class Dtype>
 void Conv2D<Dtype>::InitParams() {
@@ -182,6 +228,24 @@ void Conv2D<Dtype>::InitParams() {
     GaussianKernelInitializer<Dtype>((Dtype)(kernel_width+kernel_height)/2).Initialize(W_, b_, Session::GetSession()->gpu);
   }
 }
+
+// TODO!!!
+template<class Dtype>
+void Conv2D<Dtype>::InitDiffs() {
+  if(Session::GetSession()->gpu) {
+    if(W_diff_ == NULL) {
+      size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
+      W_flipped_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
+    }
+    FlipKernel<Dtype><<<1,1>>>FlipKernel(W_, W_flipped_);
+  } else {
+    if(W_flipped_ == NULL) {
+      size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
+      W_flipped_ = Tensor<Dtype>::CreateTensorCPU(w_dims);
+    }
+  }
+}
+
 
 
 #endif  // CONV2D_LAYER_CUH_
