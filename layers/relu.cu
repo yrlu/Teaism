@@ -33,6 +33,11 @@ public:
 
   void Forward(const std::vector<Tensor<Dtype>*> &bottoms, 
                const std::vector<Tensor<Dtype>*> &tops);
+
+  void Backward(const std::vector<Tensor<Dtype>*> &tops, 
+                const std::vector<Tensor<Dtype>*> &tops_diff,
+                const std::vector<Tensor<Dtype>*> &bottoms,
+                const std::vector<Tensor<Dtype>*> &bottoms_diff,)
 };
 
 template<class Dtype>
@@ -71,5 +76,18 @@ void Relu<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms,
     }
   }
 }
+
+template <class Dtype>
+void Relu<Dtype>::Backward(const std::vector<TensorDtype>*> &tops,
+                           const std::vector<TensorDtype>*> &tops_diff,
+                           const std::vector<TensorDtype>*> &bottoms,
+                           const std::vector<TensorDtype>*> &bottoms_diff) {
+
+
+
+
+
+}
+
 
 #endif 
