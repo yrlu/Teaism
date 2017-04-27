@@ -14,7 +14,7 @@ public:
   virtual void Backward(const std::vector<Tensor<Dtype>*> &tops,
                 const std::vector<Tensor<Dtype>*> &tops_diff,
                 const std::vector<Tensor<Dtype>*> &bottoms,
-                const std::vector<Tensor<Dtype>*> &bottoms_diff,) = 0;
+                const std::vector<Tensor<Dtype>*> &bottoms_diff) = 0;
 
   virtual void GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) = 0;
 };

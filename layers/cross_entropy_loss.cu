@@ -46,8 +46,9 @@ public:
 
   ~CrossEntropyLoss() {}
 
-  void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
-  // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
+  void Forward(const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
+  void Backward(const std::vector<Tensor<Dtype>*>& , const std::vector<Tensor<Dtype>*>&,
+                const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
 
   void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &);
 
@@ -86,6 +87,18 @@ void CrossEntropyLoss<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms
     tops[0]->at(0,0,0,0) = loss / batch_size;
   }
 }
+
+template <class Dtype>
+void CrossEntroyLoss<Dtype>::Backward (const std::vector<Tensor<Dtype>*>& top, 
+                                       const std::vector<Tensor<Dtype>*>& top_diff,
+                                       const std::vector<Tensor<Dtype>*>&, bottom,
+                                       const std::vector<Tensor<Dtype>*>& bottom_diff) {
+
+
+
+}
+
+
 
 template <class Dtype>
 void CrossEntropyLoss<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
