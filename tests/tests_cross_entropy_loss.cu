@@ -4,59 +4,83 @@
 #include <vector>
 #include <assert.h>
 
-__global__ void initial_bottom(Tensor<float>* bottom_0, Tensor<float>* bottom_1) {
-  const size_t* dims =  bottom_0->GetDims();
+__global__ void initial_bottoms(Tensor<float>* bottoms_0, Tensor<float>* bottoms_1) {
+  const size_t* dims =  bottoms_0->GetDims();
   printf("(%d, %d)\n", int(dims[0]), int(dims[3]));
   for (int i = 0; i < int(dims[0]); ++i) {
     for (int j = 0; j < int(dims[3]); ++j) {
-      bottom_0->at(i,0,0,j) = (float) (i + j + 1) / (int(dims[0]) + int(dims[3])+2);
-      printf("(%d, %d): %f\n", i, j, bottom_0->at(i,0,0,j));
+      bottoms_0->at(i,0,0,j) = (float) (i + j + 1) / (int(dims[0]) + int(dims[3])+2);
+      printf("(%d, %d): %f\n", i, j, bottoms_0->at(i,0,0,j));
     }
   }
-  bottom_1->at(0,0,0,0) = 1;
-  bottom_1->at(1,0,0,0) = 2;
+  bottoms_1->at(0,0,0,0) = 1;
+  bottoms_1->at(1,0,0,0) = 2;
 }
 
-__global__ void show_top(Tensor<float>* top) {
-  printf("Printing top data\n");
-  printf("(%d, %d): %f\n", 0, 0, top->at(0,0,0,0));
+__global__ void show_tops(Tensor<float>* tops) {
+  printf("Printing tops data\n");
+  printf("(%d, %d): %f\n", 0, 0, tops->at(0,0,0,0));
 }
 
 void test_cross_entropy_loss_cpu() {
   printf("Begin test cross-entropy loss layer CPU\n");
+
+  int b = 2;
+  int c = 3;
+
   Session* session = Session::GetNewSession();
   session->gpu = false;
+  session->batch_size = b;
 
-  size_t dims[4] = {2, 1, 1, 3};
-  std::vector<Tensor<float>*> bottom;
-  bottom.push_back(Tensor<float>::CreateTensorCPU(dims));
 
-  printf("(%d, %d)\n", bottom[0]->GetDims()[0], bottom[0]->GetDims()[3]);
+  size_t dims[4] = {b, 1, 1, c};
+  std::vector<Tensor<float>*> bottoms;
+  bottoms.push_back(Tensor<float>::CreateTensorCPU(dims));
+
+  printf("(%d, %d)\n", bottoms[0]->GetDims()[0], bottoms[0]->GetDims()[3]);
   for (size_t i = 0; i < dims[0]; ++i) {
     for (size_t j = 0; j < dims[3]; ++j) {
-      bottom[0]->at(i,0,0,j) = (float) (i + j + 1) / (dims[0] + dims[3]+2);
-      printf("(%d, %d): %f\n", i, j, bottom[0]->at(i,0,0,j));
+      bottoms[0]->at(i,0,0,j) = (float) (i + j + 1) / (dims[0] + dims[3]+2);
+      printf("(%d, %d): %f\n", i, j, bottoms[0]->at(i,0,0,j));
     }
   }
 
-  size_t dims_l[4] = {2, 1, 1, 1};
-  bottom.push_back(Tensor<float>::CreateTensorCPU(dims_l));
-  bottom[1]->at(0,0,0,0) = 1;
-  bottom[1]->at(1,0,0,0) = 2;
+  size_t dims_l[4] = {b, 1, 1, 1};
+  bottoms.push_back(Tensor<float>::CreateTensorCPU(dims_l));
+  bottoms[1]->at(0,0,0,0) = 1;
+  bottoms[1]->at(1,0,0,0) = 2;
 
   size_t dims_t[4] = {1, 1, 1, 1};
-  std::vector<Tensor<float>*> top;
-  top.push_back(Tensor<float>::CreateTensorCPU(dims_t));
+  std::vector<Tensor<float>*> tops;
+  tops.push_back(Tensor<float>::CreateTensorCPU(dims_t));
 
   CrossEntropyLoss<float> cross_entropy_loss_layer;
-  cross_entropy_loss_layer.Forward(bottom, top);
+  cross_entropy_loss_layer.Forward(bottoms, tops);
   
-  printf("Printing top data\n");
+  printf("Printing tops data\n");
   for (size_t i = 0; i < dims_t[0]; ++i) {
     for (size_t j = 0; j < dims_t[3]; ++j) {
-      printf("(%d, %d): %f\n", i, j, top[0]->at(i,0,0,j));
+      printf("(%d, %d): %f\n", i, j, tops[0]->at(i,0,0,j));
     }
   }
+
+
+  std::vector<Tensor<float>*> bottoms_diff;
+  bottoms_diff.push_back(Tensor<float>::CreateTensorCPU(dims));
+  bottoms_diff.push_back(Tensor<float>::CreateTensorCPU(dims_l));
+
+  cross_entropy_loss_layer.Backward(tops, tops, bottoms, bottoms_diff);
+
+  printf("Printing bottoms diff\n");
+  for (size_t i = 0; i < dims[0]; ++i) {
+    for (size_t j = 0; j < dims[3]; ++j) {
+      printf("(%d, %d): %f\n", i, j, bottoms_diff[0]->at(i,0,0,j));
+    }
+  }
+
+
+  delete bottoms[0], bottoms[1], tops[0], bottoms_diff[0], bottoms_diff[1];
+
 }
 
 void test_cross_entropy_loss_gpu() {
@@ -69,14 +93,14 @@ void test_cross_entropy_loss_gpu() {
   checkCudaErrors(cudaStatus);
 
   size_t dims[4] = {2, 1, 1, 3};
-  std::vector<Tensor<float>*> bottom;
-  bottom.push_back(Tensor<float>::CreateTensorGPU(dims));
+  std::vector<Tensor<float>*> bottoms;
+  bottoms.push_back(Tensor<float>::CreateTensorGPU(dims));
 
   size_t dims_l[4] = {2, 1, 1, 1};
-  bottom.push_back(Tensor<float>::CreateTensorGPU(dims_l));
+  bottoms.push_back(Tensor<float>::CreateTensorGPU(dims_l));
 
 
-  initial_bottom<<<1,1>>>(bottom[0], bottom[1]);
+  initial_bottoms<<<1,1>>>(bottoms[0], bottoms[1]);
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -84,18 +108,18 @@ void test_cross_entropy_loss_gpu() {
   checkCudaErrors(cudaStatus);
 
   size_t dims_t[4] = {1, 1, 1, 1};
-  std::vector<Tensor<float>*> top;
-  top.push_back(Tensor<float>::CreateTensorGPU(dims_t));
+  std::vector<Tensor<float>*> tops;
+  tops.push_back(Tensor<float>::CreateTensorGPU(dims_t));
 
   CrossEntropyLoss<float> cross_entropy_loss_layer;
-  cross_entropy_loss_layer.Forward(bottom, top);
+  cross_entropy_loss_layer.Forward(bottoms, tops);
  
   printf("Done GPU forward.\n");
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
-  show_top<<<1,1>>>(top[0]);
+  show_tops<<<1,1>>>(tops[0]);
 
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
@@ -107,5 +131,5 @@ void test_cross_entropy_loss_gpu() {
 
 int main() {
   test_cross_entropy_loss_cpu();
-  test_cross_entropy_loss_gpu();
+  //test_cross_entropy_loss_gpu();
 }

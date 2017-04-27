@@ -46,8 +46,9 @@ public:
 
   ~CrossEntropyLoss() {}
 
-  void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
-  // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
+  void Forward(const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
+  void Backward(const std::vector<Tensor<Dtype>*>& , const std::vector<Tensor<Dtype>*>&,
+                const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
 
   void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &);
 
@@ -86,6 +87,41 @@ void CrossEntropyLoss<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms
     tops[0]->at(0,0,0,0) = loss / batch_size;
   }
 }
+
+template <class Dtype>
+void CrossEntropyLoss<Dtype>::Backward (const std::vector<Tensor<Dtype>*>& tops, 
+                                       const std::vector<Tensor<Dtype>*>& tops_diff,
+                                       const std::vector<Tensor<Dtype>*>& bottoms,
+                                       const std::vector<Tensor<Dtype>*>& bottoms_diff) {
+  assert(tops.size() == 1);
+  assert(tops_diff.size() == 1);
+  assert(bottoms.size() == 2);
+  assert(bottoms_diff.size() == 2);
+
+  Tensor<Dtype>* top = tops[0];
+  Tensor<Dtype>* top_diff = tops_diff[0];
+  Tensor<Dtype>* bottom_0 = bottoms[0];
+  Tensor<Dtype>* bottom_1 = bottoms[1];
+  Tensor<Dtype>* bottom_diff_0 = bottoms_diff[0];
+  // Not backpropagate to labels
+
+  Session* S = Session::GetSession();
+  int batch_size = S->batch_size;
+  if (S->gpu) {
+    ;
+  } else {
+    for (int i = 0; i < batch_size; ++i) {
+      for (int j = 0; j < bottom_0->GetDims()[3]; ++j) {
+        bottom_diff_0->at(i,0,0,j) = 0;
+      }
+      Dtype label = bottom_1->at(i,0,0,0);
+      Dtype p = bottom_0->at(i,0,0,label);
+      bottom_diff_0->at(i,0,0,label) = top_diff->at(0,0,0,0)/(p+0.0001);
+    }
+  }
+}
+
+
 
 template <class Dtype>
 void CrossEntropyLoss<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {

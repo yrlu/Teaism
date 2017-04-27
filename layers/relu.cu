@@ -23,6 +23,22 @@ namespace ReluGPUKernels {
     size_t size = bottom->size();    
     ReluGPUKernels::ForwardGPU3<Dtype><<<size/(BLOCKDIM*BLOCKDIM) + 1, BLOCKDIM*BLOCKDIM>>>(bottom, top);
   }
+  template <class Dtype>
+  __global__ void BackwardGPU(Tensor<Dtype>* top, Tensor<Dtype>* top_diff,
+                              Tensor<Dtype>* bottom, Tensor<Dtype>* bottom_diff) {
+    int batch_idx = threadIdx.x;
+    for (int h = 0; h < top->GetDims()[1]; ++h) {
+      for (int w = 0; w < top->GetDims()[2]; ++w) {
+        for (int c = 0; c < top->GetDims()[3]; ++c) {
+          if (bottom->at(batch_idx,h,w,c) <= 0) {
+            bottom_diff->at(batch_idx,h,w,c) = 0;
+          } else {
+            bottom_diff->at(batch_idx,h,w,c) = top_diff->at(batch_idx,h,w,c);
+          }
+        }
+      }
+    }
+  }
 }
 
 template <class Dtype>
@@ -37,7 +53,8 @@ public:
   void Backward(const std::vector<Tensor<Dtype>*> &tops, 
                 const std::vector<Tensor<Dtype>*> &tops_diff,
                 const std::vector<Tensor<Dtype>*> &bottoms,
-                const std::vector<Tensor<Dtype>*> &bottoms_diff,)
+                const std::vector<Tensor<Dtype>*> &bottoms_diff);
+
 };
 
 template<class Dtype>
@@ -78,14 +95,40 @@ void Relu<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms,
 }
 
 template <class Dtype>
-void Relu<Dtype>::Backward(const std::vector<TensorDtype>*> &tops,
-                           const std::vector<TensorDtype>*> &tops_diff,
-                           const std::vector<TensorDtype>*> &bottoms,
-                           const std::vector<TensorDtype>*> &bottoms_diff) {
+void Relu<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
+                           const std::vector<Tensor<Dtype>*> &tops_diff,
+                           const std::vector<Tensor<Dtype>*> &bottoms,
+                           const std::vector<Tensor<Dtype>*> &bottoms_diff) {
 
+  assert(tops.size() == 1);
+  assert(tops_diff.size() == 1);
+  assert(bottoms.size() == 1);
+  assert(bottoms_diff.size() == 1);
 
+  Tensor<Dtype>* top = tops[0];
+  Tensor<Dtype>* top_diff = tops_diff[0];
+  Tensor<Dtype>* bottom = bottoms[0];
+  Tensor<Dtype>* bottom_diff = bottoms_diff[0];
 
-
+  Session* S = Session::GetSession();
+  int batch_size = S->batch_size;
+  if (S->gpu) {
+    ReluGPUKernels::BackwardGPU<Dtype><<<1,batch_size>>>(top, top_diff, bottom, bottom_diff);
+  } else {
+    for (int b = 0; b < top->GetDims()[0]; ++b) {
+      for (int h = 0; h < top->GetDims()[1]; ++h) {
+        for (int w = 0; w < top->GetDims()[2]; ++w) {
+          for (int c = 0; c < top->GetDims()[3]; ++c) {
+            if (bottom->at(b,h,w,c) <= 0) { 
+              bottom_diff->at(b,h,w,c) = 0;
+            } else {
+              bottom_diff->at(b,h,w,c) = top_diff->at(b,h,w,c);
+            }
+          }
+        }
+      }
+    }
+  }
 
 }
 
