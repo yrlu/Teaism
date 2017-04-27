@@ -8,7 +8,8 @@ GCC_OPTS=-std=c++11 -w
 
 all: make_tests
 
-
+s:
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
 
 make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
