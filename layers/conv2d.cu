@@ -101,8 +101,10 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
   Tensor<Dtype> * top = tops[0];
 
   if (Session::GetSession()->gpu) {
-    ConvolutionGPU(bottom, top, W_, b_, stride, padding);
+    ComputationsGPU::ConvolutionGPU(bottom, top, W_, b_, stride, padding);
   } else {
+    ComputationsCPU::ConvolutionCPU(bottom, top, W_, b_, stride, padding);
+    /*
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
         if(padding==SAME) {
@@ -145,7 +147,7 @@ void Conv2D<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const st
           }
         }
       }
-    }
+    }*/
   }
 }
 

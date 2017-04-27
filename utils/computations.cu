@@ -111,6 +111,7 @@ namespace ConvGPUKernels {
   }
 }
 
+namespace ComputationsGPU {
 
 template<class Dtype>
 __host__ void ConvolutionGPU(Tensor<Dtype> * in, Tensor<Dtype> * out, Tensor<Dtype> * W_, Tensor<Dtype> * b_, const size_t stride, PADDING padding) {
@@ -146,6 +147,72 @@ __host__ void ConvolutionGPU(Tensor<Dtype> * in, Tensor<Dtype> * out, Tensor<Dty
   ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, stride, padding);
   */
 }
+
+}
+
+
+
+
+
+// CPU functions
+namespace ComputationsCPU {
+
+  template<class Dtype>
+  __host__ void ConvolutionCPU(Tensor<Dtype> * in, Tensor<Dtype> * out, Tensor<Dtype> * W_, Tensor<Dtype> * b_, const size_t stride, PADDING padding) {
+    size_t in_channels = in->GetDims()[3];
+    size_t out_channels = out->GetDims()[3];
+    size_t kernel_height = W_->GetDims()[0];
+    size_t kernel_width = W_->GetDims()[1];   
+
+    for(int b = 0; b < in->GetDims()[0]; b++) {
+      for(int o = 0; o < out_channels; o++) {
+        if(padding==SAME) {
+          for(int x = 0, x_top = 0; x_top < out->GetDims()[2]; x += stride, x_top += 1) {
+            for(int y = 0, y_top = 0; y_top < out->GetDims()[1]; y += stride, y_top += 1) {
+              // batch idx b, output layer o, pixel (x, y)
+              Dtype sum = 0.0;
+              for(int c = 0; c < in_channels; c++) {
+                for(int i = 0; i < kernel_height; i++) {
+                  for(int j = 0; j < kernel_width; j++) {
+                    // (n, hei, wid, channel),   // (hei, wid, input, output)
+                    int b_idx[4] = {b, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c};
+                    int t_idx[4] = {i, j, c, o};
+                    sum += in->atPadding(b_idx) * W_->at(t_idx);
+                  }
+                }
+              }
+              sum += b_->at(0,0,0,o);
+              out->at(b, y_top, x_top, o) = sum;
+            }
+          }
+        } else if (padding==VALID) {
+          for(int x = kernel_width/2, x_top = 0; x_top < out->GetDims()[2]; x += stride, x_top += 1) {
+            for(int y = kernel_height/2, y_top = 0; y_top < out->GetDims()[1]; y += stride, y_top += 1) {
+              // batch idx b, output layer o, pixel (x, y)
+              Dtype sum = 0.0;
+              for(int c = 0; c < in_channels; c++) {
+                for(int i = 0; i < kernel_height; i++) {
+                  for(int j = 0; j < kernel_width; j++) {
+                    // (n, hei, wid, channel),   // (hei, wid, input, output)
+                    int b_idx[4] = {b, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c};
+                    int t_idx[4] = {i, j, c, o};
+                    sum += in->atPadding(b_idx) * W_->at(t_idx);
+                  }
+                }
+              }
+              sum += b_->at(0,0,0,o);
+              out->at(b, y_top, x_top, o) = sum;
+            }
+          }
+        }
+      }
+    } 
+  } 
+
+
+}
+
+
 
 
 
