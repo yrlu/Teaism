@@ -84,6 +84,12 @@ public:
     return len_;
   }
 
+  __host__ __device__ void ResetVals(Dtype default_val = 0.0) {
+    for (size_t i = 0; i < len_; ++i) {
+      data_array_[i] = default_val;
+    }
+  }
+
   __host__ static Tensor<Dtype>* CreateTensorGPU(size_t* dims, bool allocate_memory = true);
   __host__ static Tensor<Dtype>* CreateTensorCPU(size_t* dims, bool allocate_memory = true);
   __host__ static Tensor<Dtype> * TensorGPUtoCPU(Tensor<Dtype> * tensor_gpu);

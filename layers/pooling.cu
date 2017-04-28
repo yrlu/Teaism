@@ -78,18 +78,51 @@ namespace PoolingGPUKernels {
       }
     }
   }
+
+  template <class Dtype>
+  __global__ void BackwardGPU(Tensor<Dtype>* top, Tensor<Dtype>* top_diff,
+                              Tensor<Dtype>* bottom, Tensor<Dtype>* bottom_diff,
+                              size_t size_, size_t stride_, POOLING_TYPE type_) {
+    int batch_idx = threadIdx.x;
+    bottom_diff->ResetVals(0);
+    for(int o = 0; o < bottom->GetDims()[3]; o++) {
+      for(int x = 0, x_top = 0; x < bottom->GetDims()[2] && x_top < top->GetDims()[2]; x += stride_, x_top += 1) {
+        for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride_, y_top += 1) {
+          int arg_idx[4] = {batch_idx, y, x, o};
+          Dtype pooled_val = bottom->at(batch_idx, y, x, o);
+          if (type_==MAX) {
+            for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+              for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
+                Dtype val = bottom->at(batch_idx, i, j, o);
+                if (val > pooled_val) {
+                  pooled_val = val;
+                  arg_idx[0] = batch_idx;  arg_idx[1] = i;  arg_idx[2] = j;  arg_idx[3] = o;
+                }
+              }
+            }
+            bottom_diff->at(arg_idx) = top_diff->at(batch_idx, y_top, x_top, o);
+          }
+        }
+      }
+    }
+
+  }
+
 }
 
 template <class Dtype>
 class Pooling: public Layer<Dtype> {
 public:
-  Pooling(size_t size=2, POOLING_TYPE type=MIN, size_t stride=1):size_(size), type_(type), stride_(stride) {}
+  Pooling(size_t size=2, POOLING_TYPE type=MAX, size_t stride=1):size_(size), type_(type), stride_(stride) {}
   ~Pooling() {}
 
   void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
                   const std::vector<size_t*> &tops_dims);
 
   void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops);
+
+  void Backward(const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&,
+                const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
 
 private:
   size_t size_;
@@ -166,5 +199,53 @@ void Pooling<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
     }
   }
 }
+
+template <class Dtype>
+void Pooling<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
+                              const std::vector<Tensor<Dtype>*> &tops_diff,
+                              const std::vector<Tensor<Dtype>*> &bottoms,
+                              const std::vector<Tensor<Dtype>*> &bottoms_diff) {
+  assert(tops.size() == 1);
+  assert(tops_diff.size() == 1);
+  assert(bottoms.size() == 1);
+  assert(bottoms_diff.size() == 1);
+
+  Tensor<Dtype>* top = tops[0];
+  Tensor<Dtype>* top_diff = tops_diff[0];
+  Tensor<Dtype>* bottom = bottoms[0];
+  Tensor<Dtype>* bottom_diff = bottoms_diff[0];
+
+  Session* S = Session::GetSession();
+  int batch_size = S->batch_size;
+  if (S->gpu) {
+    PoolingGPUKernels::BackwardGPU<Dtype><<<1,batch_size>>> 
+      (top, top_diff, bottom, bottom_diff, size_, stride_, type_);
+  } else {
+    bottom_diff->ResetVals(0);
+    for(int b = 0; b < bottom->GetDims()[0]; b++) {
+      for(int o = 0; o < bottom->GetDims()[3]; o++) {
+        for(int x = 0, x_top = 0; x < bottom->GetDims()[2] && x_top < top->GetDims()[2]; x += stride_, x_top += 1) {
+          for(int y = 0, y_top = 0; y < bottom->GetDims()[1] && y_top < top->GetDims()[1]; y += stride_, y_top += 1) {
+            int arg_idx[4] = {b, y, x, o};
+            Dtype pooled_val = bottom->at(b, y, x, o);
+            if (type_==MAX) {
+              for(int i = y; i < y + size_ && i < bottom->GetDims()[1]; i++) {
+                for(int j = x; j < x + size_ && j < bottom->GetDims()[2]; j++) {
+                  Dtype val = bottom->at(b, i, j, o);
+                  if (val > pooled_val) {
+                    pooled_val = val;
+                    arg_idx[0] = b;  arg_idx[1] = i;  arg_idx[2] = j;  arg_idx[3] = o;
+                  }
+                }
+              }
+              bottom_diff->at(arg_idx) = top_diff->at(b, y_top, x_top, o);
+            }
+          }
+        }
+      } 
+    }  
+  }
+}
+
 
 #endif // POOLING_LAYER_CUH_
