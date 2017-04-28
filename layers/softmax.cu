@@ -50,6 +50,25 @@ namespace SoftmaxGPUKernels {
     SoftmaxGPUKernels::ForwardGPUKernel<Dtype> <<<1,bottom->GetDims()[0]>>>(bottom, top);
   }
 
+  template <class Dtype>
+  __global__ void BackwardGPU(Tensor<Dtype>* top, Tensor<Dtype>* top_diff,
+                              Tensor<Dtype>* bottom, Tensor<Dtype>* bottom_diff) {
+    int batch_idx = threadIdx.x;
+    int nchannels = top->GetDims()[3];
+    for (int i = 0; i < nchannels; ++i) {
+      bottom_diff->at(batch_idx,0,0,i) = 0;
+      for (int j = 0; j < nchannels; ++j) {
+        if (i==j) {
+          bottom_diff->at(batch_idx,0,0,i) += 
+            top->at(batch_idx,0,0,i) * (1-top->at(batch_idx,0,0,j)) * top_diff->at(batch_idx,0,0,j);
+        } else {
+          bottom_diff->at(batch_idx,0,0,i) -= 
+            top->at(batch_idx,0,0,i) * top->at(batch_idx,0,0,j) * top_diff->at(batch_idx,0,0,j);
+        }
+      }
+    }
+  }
+
 }
 
 template <class Dtype>
@@ -59,9 +78,10 @@ public:
 
   ~Softmax() {}
 
-  void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
+  void Forward(const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
 
-  // void Backward(Tensor& bottom, Tensor& top, Tensor& gradient) {}
+  void Backward(const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&,
+                const std::vector<Tensor<Dtype>*>&, const std::vector<Tensor<Dtype>*>&);
 
   void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &); 
 
@@ -107,6 +127,44 @@ void Softmax<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
     }
   }
 }
+
+template <class Dtype>
+void Softmax<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops, 
+                              const std::vector<Tensor<Dtype>*> &tops_diff,
+                              const std::vector<Tensor<Dtype>*> &bottoms,
+                              const std::vector<Tensor<Dtype>*> &bottoms_diff) {
+  assert(tops.size() == 1);
+  assert(tops_diff.size() == 1);
+  assert(bottoms.size() == 1);
+  assert(bottoms_diff.size() == 1);
+
+  Tensor<Dtype>* top = tops[0];
+  Tensor<Dtype>* top_diff = tops_diff[0];
+  Tensor<Dtype>* bottom = bottoms[0];
+  Tensor<Dtype>* bottom_diff = bottoms_diff[0];
+
+  Session* S = Session::GetSession();
+  int batch_size = S->batch_size;
+  if (S->gpu) {
+    SoftmaxGPUKernels::BackwardGPU<Dtype><<<1,batch_size>>>(top,top_diff,bottom,bottom_diff);
+  } else {
+    for (int b = 0; b < batch_size; ++b) {
+      int nchannels = top->GetDims()[3];
+      for (int i = 0; i < nchannels; ++i) {
+        bottom_diff->at(b,0,0,i) = 0;
+        for (int j = 0; j < nchannels; ++j) {
+          if (i==j) {
+            bottom_diff->at(b,0,0,i) += top->at(b,0,0,i) * (1-top->at(b,0,0,j)) * top_diff->at(b,0,0,j);
+          } else {
+            bottom_diff->at(b,0,0,i) -= top->at(b,0,0,i) * top->at(b,0,0,j) * top_diff->at(b,0,0,j);
+          }
+        }
+      }
+    }
+  }
+
+}
+
 
 template <class Dtype>
 void Softmax<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
