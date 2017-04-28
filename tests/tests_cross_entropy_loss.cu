@@ -22,6 +22,17 @@ __global__ void show_tops(Tensor<float>* tops) {
   printf("(%d, %d): %f\n", 0, 0, tops->at(0,0,0,0));
 }
 
+__global__ void show_bottom_diff(Tensor<float>* bottom_diff) {
+  printf("Printing bottom diff\n");
+  const size_t* dims = bottom_diff->GetDims();
+  for (int i = 0; i < int(dims[0]); ++i) {
+    for (int j = 0; j < int(dims[3]); ++j) {
+      printf("(%d, %d): %f\n", i, j, bottom_diff->at(i,0,0,j));
+    }
+  }
+}
+
+
 void test_cross_entropy_loss_cpu() {
   printf("Begin test cross-entropy loss layer CPU\n");
 
@@ -85,27 +96,25 @@ void test_cross_entropy_loss_cpu() {
 
 void test_cross_entropy_loss_gpu() {
   printf("Begin test cross entropy loss layer GPU\n");
+  int b = 2;
+  int c = 3;
   Session* session = Session::GetNewSession();
   session->gpu = true;
+  session->batch_size = b;
 
 
   cudaError_t cudaStatus = cudaSetDevice(0);
   checkCudaErrors(cudaStatus);
 
-  size_t dims[4] = {2, 1, 1, 3};
+  size_t dims[4] = {b, 1, 1, c};
   std::vector<Tensor<float>*> bottoms;
   bottoms.push_back(Tensor<float>::CreateTensorGPU(dims));
 
-  size_t dims_l[4] = {2, 1, 1, 1};
+  size_t dims_l[4] = {b, 1, 1, 1};
   bottoms.push_back(Tensor<float>::CreateTensorGPU(dims_l));
 
 
   initial_bottoms<<<1,1>>>(bottoms[0], bottoms[1]);
-
-  cudaStatus = cudaGetLastError();
-  checkCudaErrors(cudaStatus);
-  cudaStatus = cudaDeviceSynchronize();
-  checkCudaErrors(cudaStatus);
 
   size_t dims_t[4] = {1, 1, 1, 1};
   std::vector<Tensor<float>*> tops;
@@ -116,20 +125,29 @@ void test_cross_entropy_loss_gpu() {
  
   printf("Done GPU forward.\n");
 
-  cudaStatus = cudaGetLastError();
-  checkCudaErrors(cudaStatus);
 
   show_tops<<<1,1>>>(tops[0]);
 
-  cudaStatus = cudaGetLastError();
-  checkCudaErrors(cudaStatus);
+  std::vector<Tensor<float>*> bottoms_diff;
+  bottoms_diff.push_back(Tensor<float>::CreateTensorGPU(dims));
+  bottoms_diff.push_back(Tensor<float>::CreateTensorGPU(dims_l));
 
-  cudaStatus = cudaDeviceSynchronize();
-  checkCudaErrors(cudaStatus);
+  cross_entropy_loss_layer.Backward(tops, tops, bottoms, bottoms_diff);
+
+  printf("Done GPU backward.\n");
+
+  show_bottom_diff<<<1,1>>>(bottoms_diff[0]);
+
+  cudaFree(bottoms[0]);
+  cudaFree(bottoms[1]);
+  cudaFree(tops[0]);
+  cudaFree(bottoms_diff[0]);
+  cudaFree(bottoms_diff[1]);
+
 }
 
 
 int main() {
   test_cross_entropy_loss_cpu();
-  //test_cross_entropy_loss_gpu();
+  test_cross_entropy_loss_gpu();
 }

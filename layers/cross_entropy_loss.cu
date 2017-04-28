@@ -37,6 +37,21 @@ namespace CrossEntropyGPUKernels {
     top->at(0,0,0,0) = loss / batch_size;
   }
 
+  template <class Dtype>
+  __global__ void BackwardGPU (Tensor<Dtype>* top,
+                               Tensor<Dtype>* top_diff,
+                               Tensor<Dtype>* bottom_0,
+                               Tensor<Dtype>* bottom_1,
+                               Tensor<Dtype>* bottom_diff_0) {
+    int batch_idx = threadIdx.x;
+    for (int j = 0; j < bottom_0->GetDims()[3]; ++j) {
+      bottom_diff_0->at(batch_idx,0,0,j) = 0;
+    }
+    Dtype label = bottom_1->at(batch_idx,0,0,0);
+    Dtype p = bottom_0->at(batch_idx,0,0,label);
+    bottom_diff_0->at(batch_idx,0,0,label) = top_diff->at(0,0,0,0)/(p+0.0001);
+  }
+
 }
 
 template <class Dtype>
@@ -108,7 +123,7 @@ void CrossEntropyLoss<Dtype>::Backward (const std::vector<Tensor<Dtype>*>& tops,
   Session* S = Session::GetSession();
   int batch_size = S->batch_size;
   if (S->gpu) {
-    ;
+    CrossEntropyGPUKernels::BackwardGPU<Dtype><<<1,batch_size>>>(top,top_diff,bottom_0,bottom_1,bottom_diff_0);
   } else {
     for (int i = 0; i < batch_size; ++i) {
       for (int j = 0; j < bottom_0->GetDims()[3]; ++j) {
