@@ -10,6 +10,18 @@
 #include "utils/bitmap_image.hpp"
 
 
+__global__ void init_as_ones(Tensor<float> * tensor_gpu) {
+  for(int b = 0; b < tensor_gpu->GetDims()[0]; b++) { 
+    for(int c = 0; c < tensor_gpu->GetDims()[1]; c++) { 
+      for(int i = 0; i < tensor_gpu->GetDims()[2]; i++) { 
+        for(int j = 0; j < tensor_gpu->GetDims()[3]; j++) {
+          int b_idx[4] = {b, c, i, j};
+          tensor_gpu->at(b_idx) = (float) ((i+j+c) % 255);
+        }
+      }
+    }
+  }
+}
 
 __global__ void init_bottom(Tensor<float> * bottom) {
   for(int b = 0; b < bottom->GetDims()[0]; b++) {
@@ -23,6 +35,7 @@ __global__ void init_bottom(Tensor<float> * bottom) {
     }
   }
 }
+
 
 __global__ void show_top(Tensor<float>* top) {
   size_t h = top->GetDims()[1];
@@ -81,11 +94,11 @@ void test_conv2d_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 64;
+  session->batch_size = 16;
 
-  size_t kernel = 15;
+  size_t kernel = 5;
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> conv_layer = Conv2D<float>(kernel,kernel,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
+  Conv2D<float> conv_layer = Conv2D<float>(kernel,kernel,32,64,1, new GaussianKernelInitializer<float>(kernel), SAME);
 
   size_t b_dims[4] = {session->batch_size, 14, 14, 32};
   Tensor<float>* bottom = Tensor<float>::CreateTensorGPU(b_dims);
@@ -106,21 +119,26 @@ void test_conv2d_gpu() {
   show_top<<<1,1>>>(top);
 
 
-  printf("testing backward\n:");
+  printf("testing backward\n");
   Tensor<float> * top_diff = Tensor<float>::CreateTensorGPU(t_dims);
   Tensor<float> * bottom_diff = Tensor<float>::CreateTensorGPU(b_dims);
+  checkCudaErrors(cudaGetLastError());
 
-  init_bottom<<<1, 1>>>(top_diff);
+  init_as_ones<<<1, 1>>>(top_diff);
+  checkCudaErrors(cudaGetLastError());
   conv_layer.Backward({top}, {top_diff}, {bottom}, {bottom_diff});
+  checkCudaErrors(cudaGetLastError());
   show_top<<<1,1>>>(bottom_diff);
+  checkCudaErrors(cudaGetLastError());
  
 
-
+  cudaFree(top_diff);
+  cudaFree(bottom_diff);
   cudaFree(top);
   cudaFree(bottom);
+  
   checkCudaErrors(cudaGetLastError());
 }
-
 int main() {
   test_conv2d_cpu();
   test_conv2d_gpu();

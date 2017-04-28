@@ -172,9 +172,14 @@ __global__ void FlipKernel(Tensor<Dtype> * W_, Tensor<Dtype> * W_flipped_) {
       for(int i = 0; i < in_channels; i++) {
         for(int o = 0; o < out_channels; o++) {
           W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
+          // printf("%f ", W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i));
+          printf("%f ", W_->at(h, w, i, o));
         }
+        printf("\n");
       }
+        printf("\n");
     }
+        printf("\n");
   }
 }
 
@@ -185,7 +190,7 @@ void Conv2D<Dtype>::FlipWeights() {
       size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
       W_flipped_ = Tensor<Dtype>::CreateTensorGPU(w_dims);
     }
-    FlipKernel<Dtype><<<1,1>>>FlipKernel(W_, W_flipped_);
+    FlipKernel<Dtype><<<1,1>>>(W_, W_flipped_);
   } else {
     if(W_flipped_ == NULL) {
       size_t w_dims[4] = {kernel_height, kernel_width, out_channels, in_channels};
@@ -238,7 +243,41 @@ void Conv2D<Dtype>::InitDiffs() {
 }
 
 template<class Dtype>
-void Backward(const std::vector<Tensor<Dtype>*> &tops,
+__global__ void ComputeWDiffKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top_diff, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_diff_, const size_t stride, PADDING padding) {
+  int b = (blockDim.x * blockIdx.x) + threadIdx.x;
+  int i = (blockDim.y * blockIdx.y) + threadIdx.y;
+  int o = (blockDim.z * blockIdx.z) + threadIdx.z;
+  
+  
+  size_t bh = bottoms[0]->GetDims()[1];
+  size_t bw = bottoms[0]->GetDims()[2];
+  size_t th = tops_diff[0]->GetDims()[1];
+  size_t tw = tops_diff[0]->GetDims()[1];
+  
+          for(int h = 0; h < kernel_height; h++) {
+            for(int w = 0; w < kernel_width; w++) {
+              Dtype sum = 0;
+              if(padding == SAME) {
+                for(int thi = 0; thi < th; thi++) {
+                  for(int twi = 0; twi < tw; twi++) {
+                    sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                  }
+                }
+              } else if(padding == VALID) {
+                for(int thi = 0; thi < th; thi++) {
+                  for(int twi = 0; twi < tw; twi++) {
+                    sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                  }
+                }
+              }
+              W_diff_->at(h, w, i, o) = sum;
+            }
+          }
+
+}
+
+template<class Dtype>
+void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
               const std::vector<Tensor<Dtype>*> &tops_diff,
               const std::vector<Tensor<Dtype>*> &bottoms,
               const std::vector<Tensor<Dtype>*> &bottoms_diff) {
@@ -249,9 +288,47 @@ void Backward(const std::vector<Tensor<Dtype>*> &tops,
   InitDiffs();
   FlipWeights();
   if(Session::GetSession()->gpu) {
-    ComputationsGPU::ConvolutionGPU(tops_diff[0], bottoms_diff[0], W_flipped_, NULL, stride, padding);
+    ComputationsGPU::ConvolutionGPU(tops_diff[0], bottoms_diff[0], W_flipped_, (Tensor<Dtype>*)NULL, stride, padding);
+    // assumes stride = 1
+        
+    size_t batch_size = Session::GetSession()->batch_size;
+    dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/8+1, out_channels/4+1);
+    dim3 threadsPerBlock(BLOCKDIM, 8, 4);
+    ComputeWDiffKernel<<<blocksInGrid, threadsPerBlock>>>(bottoms[0], tops_diff[0], W_diff_, b_diff_, stride, padding);
   } else {
-    ComputationsCPU::ConvolutionCPU(tops_diff[0], bottoms_diff[0], W_flipped_, NULL, stride, padding);
+    ComputationsCPU::ConvolutionCPU(tops_diff[0], bottoms_diff[0], W_flipped_, (Tensor<Dtype>*)NULL, stride, padding);
+    // assumes stride = 1
+    size_t batch_size = bottoms[0]->GetDims()[0];
+    size_t bh = bottoms[0]->GetDims()[1];
+    size_t bw = bottoms[0]->GetDims()[2];
+    size_t th = tops[0]->GetDims()[1];
+    size_t tw = tops[0]->GetDims()[1];
+    
+    for(int b = 0; b < batch_size; b++) {
+      for(int i = 0; i < in_channels; i++) {
+        for(int o = 0; o < out_channels; o++) {
+          for(int h = 0; h < kernel_height; h++) {
+            for(int w = 0; w < kernel_width; w++) {
+              Dtype sum = 0;
+              if(padding == SAME) {
+                for(int thi = 0; thi < th; thi++) {
+                  for(int twi = 0; twi < tw; twi++) {
+                    sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                  }
+                }
+              } else if(padding == VALID) {
+                for(int thi = 0; thi < th; thi++) {
+                  for(int twi = 0; twi < tw; twi++) {
+                    sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                  }
+                }
+              }
+              W_diff_->at(h, w, i, o) = sum;
+            }
+          }
+        }
+      }
+    }
   }
 }
 
