@@ -49,7 +49,9 @@ namespace ConvGPUKernels {
         }
       }
     }
-    sum += b_->at(0,0,0,o);
+    if(b_!=NULL) {
+      sum += b_->at(0,0,0,o);
+    }
     top->at(bi, y_top, x_top, o) = sum;
   }
 
@@ -82,7 +84,9 @@ namespace ConvGPUKernels {
               }
             }
           }
-          sum += b_->at(0,0,0,o);
+          if(b_!=NULL) {
+            sum += b_->at(0,0,0,o);
+          }
           top->at(b, y_top, x_top, o) = sum;
         }
       }
@@ -103,7 +107,9 @@ namespace ConvGPUKernels {
               }
             }
           }
-          sum += b_->at(0,0,0,o);
+          if (b_ != NULL) {
+            sum += b_->at(0,0,0,o);
+          }
           top->at(b, y_top, x_top, o) = sum;
         }
       }
@@ -181,7 +187,9 @@ namespace ComputationsCPU {
                   }
                 }
               }
-              sum += b_->at(0,0,0,o);
+              if(b_ != NULL) {
+                sum += b_->at(0,0,0,o);
+              }
               out->at(b, y_top, x_top, o) = sum;
             }
           }
@@ -200,7 +208,9 @@ namespace ComputationsCPU {
                   }
                 }
               }
-              sum += b_->at(0,0,0,o);
+              if(b_ != NULL) {
+                sum += b_->at(0,0,0,o);
+              } 
               out->at(b, y_top, x_top, o) = sum;
             }
           }
