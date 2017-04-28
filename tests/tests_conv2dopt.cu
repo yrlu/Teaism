@@ -51,29 +51,59 @@ __global__ void show_top(Tensor<float>* top) {
 
 void test_conv2d_cpu() {
   printf("Example code for conv2d cpu\n");
-  size_t h = 400;
-  size_t w = 400;
+  size_t h = 10;
+  size_t w = 10;
 
   Session* session = Session::GetNewSession();
-  session->gpu = false;
- 
+  session->gpu = false; 
+  size_t batch_size = 16;
+  session->batch_size = batch_size;
+  size_t kernel = 5;
+  size_t in_ch = 4;
+  size_t out_ch = 32;
   // inputs: filter_height, filter_width, in_channels, out_channels, stride
-  Conv2D<float> * conv_layer = new Conv2D<float>(15,15,1,1,2,new GaussianKernelInitializer<float>(15));
-  const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
+  Conv2D<float> * conv_layer = new Conv2D<float>(kernel,kernel,in_ch,out_ch,1,new GaussianKernelInitializer<float>(kernel));
+  //  const char* OUTPUT_BMP_PATH = "./tmp/test/out.bmp";
 
-  size_t b_dims[4] = {1, h, w, 1};
+  size_t b_dims[4] = {batch_size, h, w, in_ch};
   Tensor<float>* bottom = Tensor<float>::CreateTensorCPU(b_dims);
-  size_t t_dims[4] = {1, h/2, w/2, 1};
+  size_t t_dims[4] = {batch_size, h, w, out_ch};
   Tensor<float>* top = Tensor<float>::CreateTensorCPU(t_dims);
-
-  for(int i = 0; i < h; i++) {
-  	for(int j = 0; j < w; j++) {
-  	  int b_idx[4] = {0, i, j, 0};
+  
+  for(int b = 0; b < batch_size; b++) {
+    for(int i = 0; i < h; i++) {
+      for(int j = 0; j < w; j++) {
+        for(int ch = 0; ch < in_ch; ch++) {
+  	  int b_idx[4] = {b, i, j, ch};
   	  bottom->at(b_idx) = (float) ((i+j) % 255);
   	}
+      }
+    }
   }
   conv_layer->Forward({bottom}, {top});
+  
+  Tensor<float> * top_diff = Tensor<float>::CreateTensorCPU(t_dims);
+  Tensor<float> * bottom_diff = Tensor<float>::CreateTensorCPU(b_dims);
 
+  for(int b = 0; b < top_diff->GetDims()[0]; b++) {
+    for(int c = 0; c < top_diff->GetDims()[1]; c++) {
+      for(int i = 0; i < top_diff->GetDims()[2]; i++) {
+        for(int j = 0; j < top_diff->GetDims()[3]; j++) {
+          int b_idx[4] = {b, c, i, j};
+          top_diff->at(b_idx) = (float) ((i+j+c) % 255);
+        }
+      }
+    }
+  }
+  conv_layer->Backward({top}, {top_diff}, {bottom}, {bottom_diff});
+  for (int i = 0; i < bottom_diff->GetDims()[1]; i++) {
+    for (int j = 0; j < bottom_diff->GetDims()[2]; j++) {
+      printf("%f ", bottom_diff->at(0, i, j, 0));
+    }
+    printf("\n");
+  }
+
+  /*
   bitmap_image img(w/2, h/2);
   for (int i = 0; i < h/2; i++) {
     for (int j = 0; j < w/2; j++) {
@@ -82,6 +112,11 @@ void test_conv2d_cpu() {
     }
   }
   img.save_image(OUTPUT_BMP_PATH);
+  */
+  delete bottom;
+  delete top;
+  delete bottom_diff;
+  delete top_diff;
   delete conv_layer;
 }
 
@@ -130,7 +165,7 @@ void test_conv2d_gpu() {
   checkCudaErrors(cudaGetLastError());
   show_top<<<1,1>>>(bottom_diff);
   checkCudaErrors(cudaGetLastError());
- 
+   
 
   cudaFree(top_diff);
   cudaFree(bottom_diff);

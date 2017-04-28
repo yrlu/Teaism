@@ -173,13 +173,13 @@ __global__ void FlipKernel(Tensor<Dtype> * W_, Tensor<Dtype> * W_flipped_) {
         for(int o = 0; o < out_channels; o++) {
           W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
           // printf("%f ", W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i));
-          printf("%f ", W_->at(h, w, i, o));
+          //printf("%f ", W_->at(h, w, i, o));
         }
-        printf("\n");
+        //printf("\n");
       }
-        printf("\n");
+        //printf("\n");
     }
-        printf("\n");
+        //printf("\n");
   }
 }
 
@@ -247,26 +247,32 @@ __global__ void ComputeWDiffKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top_d
   int b = (blockDim.x * blockIdx.x) + threadIdx.x;
   int i = (blockDim.y * blockIdx.y) + threadIdx.y;
   int o = (blockDim.z * blockIdx.z) + threadIdx.z;
+    
+  size_t batch_size = bottom->GetDims()[0];
+  size_t bh = bottom->GetDims()[1];
+  size_t bw = bottom->GetDims()[2];
+  size_t th = top_diff->GetDims()[1];
+  size_t tw = top_diff->GetDims()[2];
+  size_t in_ch = bottom->GetDims()[3];
+  size_t out_ch = top_diff->GetDims()[3];
+
+  if(b<0||b>=batch_size||i < 0||i >= in_ch || o < 0 || o >= out_ch) return;
   
-  
-  size_t bh = bottoms[0]->GetDims()[1];
-  size_t bw = bottoms[0]->GetDims()[2];
-  size_t th = tops_diff[0]->GetDims()[1];
-  size_t tw = tops_diff[0]->GetDims()[2];
-  
+  size_t kernel_height = W_diff_->GetDims()[0];
+  size_t kernel_width = W_diff_->GetDims()[1]; 
   for(int h = 0; h < kernel_height; h++) {
     for(int w = 0; w < kernel_width; w++) {
       Dtype sum = 0;
       if(padding == SAME) {
         for(int thi = 0; thi < th; thi++) {
           for(int twi = 0; twi < tw; twi++) {
-            sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
+            sum += bottom->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * top_diff->at(b, thi, twi, o);
           }
         }
       } else if(padding == VALID) {
         for(int thi = 0; thi < th; thi++) {
           for(int twi = 0; twi < tw; twi++) {
-            sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
+            sum += bottom->atPadding(b, h+thi, w+twi, i) * top_diff->at(b, thi, twi, o);
           }
         }
       }
@@ -312,13 +318,13 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
               if(padding == SAME) {
                 for(int thi = 0; thi < th; thi++) {
                   for(int twi = 0; twi < tw; twi++) {
-                    sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                    sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi,o);
                   }
                 }
               } else if(padding == VALID) {
                 for(int thi = 0; thi < th; thi++) {
                   for(int twi = 0; twi < tw; twi++) {
-                    sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
+                    sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, o);
                   }
                 }
               }
