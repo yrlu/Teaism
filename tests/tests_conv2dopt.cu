@@ -104,6 +104,18 @@ void test_conv2d_gpu() {
   printf("conv layer forward: %3.4f ms \n", stopTimer()); 
 
   show_top<<<1,1>>>(top);
+
+
+  printf("testing backward\n:");
+  Tensor<float> * top_diff = Tensor<float>::CreateTensorGPU(t_dims);
+  Tensor<float> * bottom_diff = Tensor<float>::CreateTensorGPU(b_dims);
+
+  init_bottom<<<1, 1>>>(top_diff);
+  conv_layer.Backward({top}, {top_diff}, {bottom}, {bottom_diff});
+  show_top<<<1,1>>>(bottom_diff);
+ 
+
+
   cudaFree(top);
   cudaFree(bottom);
   checkCudaErrors(cudaGetLastError());
