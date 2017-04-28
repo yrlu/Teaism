@@ -10,6 +10,7 @@ all: make_tests
 
 s:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
 
 make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.

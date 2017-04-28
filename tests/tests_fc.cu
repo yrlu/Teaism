@@ -77,6 +77,7 @@ void test_fc_cpu() {
   session->gpu = false;
   session->batch_size = 64;
 
+
   ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> fc(in_channels, out_channels, &const_init);
 
@@ -94,11 +95,28 @@ void test_fc_cpu() {
   startTimer();
   fc.Forward({bottom}, {top});
   printf("conv layer forward: %3.4f ms \n", stopTimer()); 
-
   for(int b = 0; b < session->batch_size; b++) {
     for(int i = 0; i < out_channels; i++) {
       printf("%f ", top->at(b, 0, 0, i));
     }
+    printf("\n");
+  }
+
+  Tensor<float>* bottom_diff = Tensor<float>::CreateTensorCPU(b_dims);
+  Tensor<float>* top_diff = Tensor<float>::CreateTensorCPU(t_dims);
+
+  for(int b = 0; b < session->batch_size; b++) {
+    for(int o = 0; o < out_channels; o++) {
+      top_diff->at(b, 0, 0, o) = (b+o)/2; 
+    } 
+  }
+
+  fc.Backward({top}, {top_diff}, {bottom}, {bottom_diff});
+  
+  for(int b = 0; b < session->batch_size; b++) {
+    for(int i = 0; i < in_channels; i++) {
+      printf("%f ", bottom_diff->at(b, 0, 0, i)); 
+    } 
     printf("\n");
   }
 
@@ -110,5 +128,5 @@ void test_fc_cpu() {
 
 int main() {
   test_fc_cpu();
-  test_fc_gpu();
+//  test_fc_gpu();
 }

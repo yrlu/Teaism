@@ -172,14 +172,9 @@ __global__ void FlipKernel(Tensor<Dtype> * W_, Tensor<Dtype> * W_flipped_) {
       for(int i = 0; i < in_channels; i++) {
         for(int o = 0; o < out_channels; o++) {
           W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
-          // printf("%f ", W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i));
-          //printf("%f ", W_->at(h, w, i, o));
         }
-        //printf("\n");
       }
-        //printf("\n");
     }
-        //printf("\n");
   }
 }
 
