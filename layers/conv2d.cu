@@ -252,28 +252,27 @@ __global__ void ComputeWDiffKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top_d
   size_t bh = bottoms[0]->GetDims()[1];
   size_t bw = bottoms[0]->GetDims()[2];
   size_t th = tops_diff[0]->GetDims()[1];
-  size_t tw = tops_diff[0]->GetDims()[1];
+  size_t tw = tops_diff[0]->GetDims()[2];
   
-          for(int h = 0; h < kernel_height; h++) {
-            for(int w = 0; w < kernel_width; w++) {
-              Dtype sum = 0;
-              if(padding == SAME) {
-                for(int thi = 0; thi < th; thi++) {
-                  for(int twi = 0; twi < tw; twi++) {
-                    sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
-                  }
-                }
-              } else if(padding == VALID) {
-                for(int thi = 0; thi < th; thi++) {
-                  for(int twi = 0; twi < tw; twi++) {
-                    sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
-                  }
-                }
-              }
-              W_diff_->at(h, w, i, o) = sum;
-            }
+  for(int h = 0; h < kernel_height; h++) {
+    for(int w = 0; w < kernel_width; w++) {
+      Dtype sum = 0;
+      if(padding == SAME) {
+        for(int thi = 0; thi < th; thi++) {
+          for(int twi = 0; twi < tw; twi++) {
+            sum += bottoms[0]->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * tops_diff[0]->at(b, thi, twi, i);
           }
-
+        }
+      } else if(padding == VALID) {
+        for(int thi = 0; thi < th; thi++) {
+          for(int twi = 0; twi < tw; twi++) {
+            sum += bottoms[0]->atPadding(b, h+thi, w+twi, i) * tops_diff[0]->at(b, thi, twi, i);
+          }
+        }
+      }
+      W_diff_->at(h, w, i, o) = sum;
+    }
+  }
 }
 
 template<class Dtype>
@@ -302,7 +301,7 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
     size_t bh = bottoms[0]->GetDims()[1];
     size_t bw = bottoms[0]->GetDims()[2];
     size_t th = tops[0]->GetDims()[1];
-    size_t tw = tops[0]->GetDims()[1];
+    size_t tw = tops[0]->GetDims()[2];
     
     for(int b = 0; b < batch_size; b++) {
       for(int i = 0; i < in_channels; i++) {
