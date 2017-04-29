@@ -216,7 +216,7 @@ void FC<Dtype>::InitParams() {
 }
 
 template <class Dtype>
-FC<Dtype>::FC(size_t in_channels, size_t out_channels, Initializer<Dtype>* initializer = NULL):
+FC<Dtype>::FC(size_t in_channels, size_t out_channels, Initializer<Dtype>* initializer):
     in_channels(in_channels), out_channels(out_channels), initializer_(initializer), W_diff_(NULL), b_diff_(NULL) {
   size_t w_dims[4] = {1, 1, out_channels, in_channels};
   size_t b_dims[4] = {1, 1, 1, out_channels};
@@ -231,6 +231,7 @@ FC<Dtype>::FC(size_t in_channels, size_t out_channels, Initializer<Dtype>* initi
 }
 
 
+template<class Dtype>
 FC<Dtype>::~FC() {
   if (Session::GetSession()->gpu) {
     if (W_!= NULL) {
