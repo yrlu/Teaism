@@ -218,10 +218,63 @@ void FC<Dtype>::InitDiffs() {
   }
 }
 
+namespace FCKernels { 
 
-__global__ ComputeBottomDiffKernelFC(const Tensor<Dtype>* top_diff, const Tensor<Dtype> * bottom_diff, const Tensor<Dtype> * W_) {
+template<class Dtype>
+__global__ void ComputeBottomDiffs(Tensor<Dtype>* top_diff, Tensor<Dtype> * bottom_diff, Tensor<Dtype> * W_) {
+  int b = (blockDim.x * blockIdx.x) + threadIdx.x;
+  int i = (blockDim.y * blockIdx.y) + threadIdx.y;
+  
+  size_t batch_size = bottom_diff->GetDims()[0];
+  size_t in_channels = bottom_diff->GetDims()[3];
+  size_t out_channels = top_diff->GetDims()[3];
+
+  if(b < 0 || b >= batch_size || i < 0 || i >= in_channels) return;
+  
+  Dtype sum = 0;
+  for(int o = 0; o < out_channels; o++) {
+    sum += W_->at(0,0,o,i) * top_diff->at(b,0,0,o);
+  }
+  bottom_diff->at(b,0,0,i) = sum;
+}
+
+template<class Dtype>
+__global__ void ComputeWDiffs(Tensor<Dtype>* bottom, Tensor<Dtype> * top_diff, Tensor<Dtype> * W_diff_) {
+  int i = (blockDim.x * blockIdx.x) + threadIdx.x;
+  int o = (blockDim.y * blockIdx.y) + threadIdx.y;
+  
+  size_t batch_size = bottom->GetDims()[0];
+  size_t in_channels = bottom->GetDims()[3];
+  size_t out_channels = top_diff->GetDims()[3];
+
+  if(i < 0 || i >= in_channels || o < 0 || o >= out_channels) return;
+
+  Dtype sum_w = 0;
+  for(int b = 0; b < batch_size; b++) {
+    sum_w += bottom->at(b, 0, 0, i)*top_diff->at(b, 0, 0, o);
+  }
+  W_diff_->at(0,0,o,i) = sum_w;
+}
+
+template<class Dtype>
+__global__ void ComputeBDiffs(Tensor<Dtype> * top_diff, Tensor<Dtype>* b_diff_) {
+  int o = (blockDim.x * blockIdx.x) + threadIdx.x;
+  
+  size_t batch_size = top_diff->GetDims()[0];
+  size_t out_ch = top_diff->GetDims()[3];
+
+  if(o < 0 || o >= out_ch) return;
+
+  Dtype sum_b = 0;
+  for(int b = 0; b < batch_size; b++) {
+    sum_b += top_diff->at(b, 0, 0, o);
+  }
+  b_diff_->at(0,0,0,o) = sum_b;
+}
 
 }
+
+
 
 
 
@@ -242,12 +295,14 @@ void FC<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
   Tensor<Dtype>* bottom_diff = bottoms_diff[0];
   
   if(Session::GetSession()->gpu) {
-    dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/8+1, out_channels/4+1);
-    dim3 threadsPerBlock(BLOCKDIM, 8, 4);
-    ComputeBottomDiffKernelFC<<<blocksInGrid, threadsPerBlock>>>(top_diff, bottom_diff, W_);
+    dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/BLOCKDIM+1);
+    dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+    FCKernels::ComputeBottomDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(top_diff, bottom_diff, W_);
+    blocksInGrid = dim3(in_channels/BLOCKDIM+1, out_channels/BLOCKDIM+1);
+    FCKernels::ComputeWDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top_diff, W_diff_);
+    FCKernels::ComputeBDiffs<Dtype><<<out_channels/BLOCKDIM/BLOCKDIM, BLOCKDIM*BLOCKDIM>>>(top_diff, b_diff_);
   } else { 
     // compute bottom diffs
-    
     for(int i = 0; i < in_channels; i++) {
       for(int b = 0; b < batch_size; b++) {
         Dtype sum = 0;

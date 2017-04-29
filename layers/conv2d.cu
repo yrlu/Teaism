@@ -19,7 +19,6 @@
 
 #define BLOCKDIM 32
 
-// enum PADDING {SAME, VALID};
 
 template <class Dtype>
 class Conv2D: public Layer<Dtype> {

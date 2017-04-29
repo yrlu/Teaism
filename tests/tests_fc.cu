@@ -60,7 +60,19 @@ void test_fc_gpu() {
   show_top<<<1,1>>>(top);
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
+   
+
+  Tensor<float>* bottom_diff = Tensor<float>::CreateTensorGPU(b_dims);
+  Tensor<float>* top_diff = Tensor<float>::CreateTensorGPU(t_dims);
+
+  init_bottom<<<1, 1>>>(top_diff);
+  startTimer();
+  fc.Backward({top}, {top_diff}, {bottom}, {bottom_diff});
+  printf("fc layer backward: %3.4f ms \n", stopTimer());
+  show_top<<<1,1>>>(bottom_diff);
   
+  cudaFree(top_diff);
+  cudaFree(bottom_diff);
   cudaFree(bottom);
   cudaFree(top);
 }
@@ -127,6 +139,6 @@ void test_fc_cpu() {
 
 
 int main() {
-  test_fc_cpu();
-//  test_fc_gpu();
+//  test_fc_cpu();
+  test_fc_gpu();
 }
