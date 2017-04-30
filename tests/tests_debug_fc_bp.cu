@@ -19,6 +19,17 @@
 #include "utils/utils.cu"
 
 
+__global__ void show_fc_tensor_gpu(Tensor<float> * fc_tensor_gpu) {
+  for(int b = 0; b < fc_tensor_gpu->GetDims()[0]; b++) {
+    for(int i = 0; i < fc_tensor_gpu->GetDims()[3]; i++) {
+      printf("%f ", fc_tensor_gpu->at(b, 0, 0, i));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+
 void show_fc_tensor_cpu(Tensor<float> * fc_tensor_cpu) {
   for(int b = 0; b < fc_tensor_cpu->GetDims()[0]; b++) {
     for(int i = 0; i < fc_tensor_cpu->GetDims()[3]; i++) {
@@ -30,12 +41,29 @@ void show_fc_tensor_cpu(Tensor<float> * fc_tensor_cpu) {
 }
 
 
+__global__ void show_fc_w_gpu(Tensor<float> * fc_w_gpu) {
+  for(int i = 0; i < fc_w_gpu->GetDims()[3]; i++) {
+    for(int o = 0; o < fc_w_gpu->GetDims()[2]; o++) {
+      printf("%f ", fc_w_gpu->at(0,0,o,i));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
 void show_fc_w_cpu(Tensor<float> * fc_w_cpu) {
   for(int i = 0; i < fc_w_cpu->GetDims()[3]; i++) {
     for(int o = 0; o < fc_w_cpu->GetDims()[2]; o++) {
       printf("%f ", fc_w_cpu->at(0,0,o,i));
     }
     printf("\n");
+  }
+  printf("\n");
+}
+
+__global__ void show_fc_b_gpu(Tensor<float> * fc_b_gpu) {
+  for(int o = 0; o < fc_b_gpu->GetDims()[3]; o++) {
+    printf("%f ", fc_b_gpu->at(0,0,0,o));
   }
   printf("\n");
 }
@@ -266,11 +294,162 @@ void test_fc_bp_cpu2() {
   delete h1_tensor_diff;
   delete out_tensor;
   delete out_tensor_diff;
+  delete softmax_out_tensor;
+}
+
+__global__ void calc_out_diff(Tensor<float> * out_tensor_diff, Tensor<float> * out_tensor, Tensor<float> * y_out) {
+  for(int b = 0; b < batch_size; b++) {
+    for(int i = 0; i < out_nodes; i++) {
+      out_tensor_diff->at(b,0,0,i) = y_out->at(b,0,0,i) - out_tensor->at(b,0,0,i);
+    }
+  }
 }
 
 
+__global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * y_out) {
+
+  std::vector<std::vector<float>> x_train = {{0,1},{0,0},{1,0},{1,1}};
+  std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
+
+  in_tensor->at(0, 0, 0, 0) = 0;
+  in_tensor->at(0, 0, 0, 1) = 1;
+
+  y_out->at(0,0,0,0) = 0;
+  y_out->at(0,0,0,1) = 1;
+  y_out->at(0,0,0,2) = 0;
+
+
+  in_tensor->at(1, 0, 0, 0) = 0;
+  in_tensor->at(1, 0, 0, 1) = 0;
+
+  y_out->at(1,0,0,0) = 0;
+  y_out->at(1,0,0,1) = 0;
+  y_out->at(1,0,0,2) = 1;
+
+
+  in_tensor->at(2, 0, 0, 0) = 1;
+  in_tensor->at(2, 0, 0, 1) = 0;
+
+  y_out->at(2,0,0,0) = 0;
+  y_out->at(2,0,0,1) = 1;
+  y_out->at(2,0,0,2) = 0;
+
+
+  in_tensor->at(3, 0, 0, 0) = 1;
+  in_tensor->at(3, 0, 0, 1) = 1;
+
+  y_out->at(3,0,0,0) = 1;
+  y_out->at(3,0,0,1) = 0;
+  y_out->at(3,0,0,2) = 0;
+}
+
+void test_fc_bp_gpu() {
+  // The example shows counting how many ones in the input:
+  // {0,0} -> {0,0,1}
+  // {0,1} -> {0,1,0}
+  // {1,0} -> {0,1,0}
+  // {1,1} -> {1,0,0}
+  
+  Session * session = Session::GetNewSession();
+  session->gpu = true;
+  size_t batch_size = 4;
+  session->batch_size = batch_size;
+  size_t in_nodes = 2;
+  size_t h1_nodes = 3;
+  size_t out_nodes = 3;
+
+  ConstInitializer<float> const_init(2.0, 1.0);
+  FC<float> h1(in_nodes, h1_nodes, &const_init);
+  FC<float> out(h1_nodes, out_nodes, &const_init);
+  Softmax<float> softmax_layer;
+
+  size_t in_dims[4] = {batch_size, 1, 1, in_nodes};
+  size_t h1_dims[4];
+  h1.GetTopsDims({in_dims}, {h1_dims});
+  size_t out_dims[4];
+  out.GetTopsDims({h1_dims}, {out_dims});
+  size_t softmax_out_dims[4];
+  softmax_layer.GetTopsDims({out_dims}, {softmax_out_dims});
+
+  Tensor<float>* in_tensor = Tensor<float>::CreateTensorGPU(in_dims);
+  Tensor<float>* in_tensor_diff = Tensor<float>::CreateTensorGPU(in_dims);
+
+  Tensor<float>* h1_tensor = Tensor<float>::CreateTensorGPU(h1_dims);
+  Tensor<float>* h1_tensor_diff = Tensor<float>::CreateTensorGPU(h1_dims);
+
+  Tensor<float>* out_tensor = Tensor<float>::CreateTensorGPU(out_dims);
+  Tensor<float>* out_tensor_diff = Tensor<float>::CreateTensorGPU(out_dims);
+  Tensor<float>* softmax_out_tensor = Tensor<float>::CreateTensorGPU(softmax_out_dims);
+
+  Tensor<float>* y_out = Tensor<float>::CreateTensorGPU(out_dims);
+
+  std::vector<std::vector<float>> x_train = {{0,1},{0,0},{1,0},{1,1}};
+  std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
+
+  prepare_training_data<<<1,1>>>(in_tensor, y_out);
+
+  for(int iter = 0; iter < 2000; iter++) {
+    
+    printf("\n-----iteration %d-------\n", iter);
+    // printf("input: %f %f \n", x_train[iter%x_train.size()][0], x_train[iter%x_train.size()][1]);
+
+    h1.Forward({in_tensor}, {h1_tensor});
+    out.Forward({h1_tensor}, {out_tensor});
+    softmax_layer.Forward({out_tensor}, {softmax_out_tensor});
+
+    calc_out_diff(out_tensor_diff, out_tensor, y_out);
+
+    out.Backward({out_tensor}, {out_tensor_diff}, {h1_tensor}, {h1_tensor_diff});
+    h1.Backward({h1_tensor}, {h1_tensor_diff}, {in_tensor}, {in_tensor_diff});
+
+    printf("out activations\n");
+    show_fc_tensor_gpu(softmax_out_tensor);
+
+    /*  
+    printf("h1 activations\n");
+    show_fc_tensor_gpu<<<1,1>>>(h1_tensor);
+    
+    printf("out activation diffs\n");
+    show_fc_tensor_gpu<<<1,1>>>(out_tensor_diff);
+    printf("h1 activations diffs\n");
+    show_fc_tensor_gpu<<<1,1>>>(h1_tensor_diff);
+    printf("in activations diffs\n");
+    show_fc_tensor_gpu<<<1,1>>>(in_tensor_diff);
+
+    printf("out W diffs\n");
+    show_fc_w_gpu<<<1,1>>>(out.W_diff_);
+    printf("out b diffs\n");
+    show_fc_b_gpu<<<1,1>>>(out.b_diff_);
+
+    printf("h1 W diffs\n");
+    show_fc_w_gpu<<<1,1>>>(h1.W_diff_);
+    printf("h1 b diffs\n");
+    show_fc_b_gpu<<<1,1>>>(h1.b_diff_);
+    */
+
+    // float mse = 0;
+    // for(int b = 0; b < batch_size; b++) {
+    //   mse += (out_tensor_diff->at(b,0,0,0)*out_tensor_diff->at(b,0,0,0) + out_tensor_diff->at(b,0,0,1)*out_tensor_diff->at(b,0,0,1) + out_tensor_diff->at(b,0,0,2)*out_tensor_diff->at(b,0,0,2))/3;
+    // }
+    // mse /= batch_size;
+    // printf("mse: %f \n", mse);
+    out.UpdateWb(0.01);
+    h1.UpdateWb(0.01);
+  }
+
+
+  delete in_tensor;
+  delete in_tensor_diff;
+  delete h1_tensor;
+  delete h1_tensor_diff;
+  delete out_tensor;
+  delete out_tensor_diff;
+  delete softmax_out_tensor;
+}
+
 
 int main() {
-  test_fc_bp_cpu2();
+  // test_fc_bp_cpu2();
+  test_fc_bp_gpu();
 }
 

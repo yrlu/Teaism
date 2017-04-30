@@ -156,6 +156,20 @@ namespace FCGPUKernels {
     }
     b_diff_->at(0,0,0,o) = sum_b;
   }
+
+  template<class Dtype>
+  __global__ void UpdateWb(Tensor<Dtype> * W_, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_, Tensor<Dtype> * b_diff_) {
+    size_t in_channels = W_->GetDims()[3];
+    size_t out_channels = W_->GetDims()[2];
+    for(int o = 0; o < out_channels; o++) {
+      for(int i = 0; i < in_channels; i++) {
+        W_->at(0, 0, o, i) += W_diff_->at(0, 0, o, i)*lr; 
+        W_diff_->at(0,0,o,i) = 0;
+      }
+      b_->at(0, 0, 0, o) += b_diff_->at(0, 0, 0, o)*lr;
+      b_diff_->at(0,0,0,o) = 0;
+    }
+  }
 }
 
 
@@ -301,7 +315,7 @@ void FC<Dtype>::InitDiffs() {
 template<class Dtype>
 void FC<Dtype>::UpdateWb(Dtype lr) {
   if(Session::GetSession()->gpu) {
-
+    FCGPUKernels::UpdateWb(W_, W_diff_, b_, b_diff_);
   } else {
     for(int o = 0; o < out_channels; o++) {
       for(int i = 0; i < in_channels; i++) {
