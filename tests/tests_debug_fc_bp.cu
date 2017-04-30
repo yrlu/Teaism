@@ -392,7 +392,7 @@ void test_fc_bp_gpu() {
 
   prepare_training_data<<<1,1>>>(in_tensor, y_out);
 
-  for(int iter = 0; iter < 2000; iter++) {
+  for(int iter = 0; iter < 5000; iter++) {
     
     printf("\n-----iteration %d-------\n", iter);
     // printf("input: %f %f \n", x_train[iter%x_train.size()][0], x_train[iter%x_train.size()][1]);
