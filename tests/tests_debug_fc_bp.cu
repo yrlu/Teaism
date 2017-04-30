@@ -100,7 +100,6 @@ void test_fc_bp_cpu() {
   size_t out_dims[4];
   out.GetTopsDims({h1_dims}, {out_dims});
 
-
   Tensor<float>* in_tensor = Tensor<float>::CreateTensorCPU(in_dims);
   Tensor<float>* in_tensor_diff = Tensor<float>::CreateTensorCPU(in_dims);
 
@@ -382,7 +381,9 @@ void test_fc_bp_gpu() {
 
   Tensor<float>* out_tensor = Tensor<float>::CreateTensorGPU(out_dims);
   Tensor<float>* out_tensor_diff = Tensor<float>::CreateTensorGPU(out_dims);
+  
   Tensor<float>* softmax_out_tensor = Tensor<float>::CreateTensorGPU(softmax_out_dims);
+  Tensor<float>* softmax_out_tensor_diff = Tensor<float>::CreateTensorGPU(softmax_out_dims);
 
   Tensor<float>* y_out = Tensor<float>::CreateTensorGPU(out_dims);
 
@@ -403,7 +404,12 @@ void test_fc_bp_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    calc_out_diff<<<1,1>>>(out_tensor_diff, out_tensor, y_out);
+    // calc_out_diff<<<1,1>>>(out_tensor_diff, out_tensor, y_out);
+    calc_out_diff<<<1,1>>>(softmax_out_tensor_diff, softmax_out_tensor, y_out);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
+    softmax_layer.Backward({softmax_out_tensor}, {softmax_out_tensor_diff}, {out_tensor}, {out_tensor_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
@@ -462,6 +468,7 @@ void test_fc_bp_gpu() {
   cudaFree(out_tensor);
   cudaFree(out_tensor_diff);
   cudaFree(softmax_out_tensor);
+  cudaFree(softmax_out_tensor_diff);
 }
 
 
