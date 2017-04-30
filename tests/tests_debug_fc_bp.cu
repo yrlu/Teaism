@@ -298,6 +298,8 @@ void test_fc_bp_cpu2() {
 }
 
 __global__ void calc_out_diff(Tensor<float> * out_tensor_diff, Tensor<float> * out_tensor, Tensor<float> * y_out) {
+  size_t batch_size = y_out->GetDims()[0];
+  size_t out_nodes = y_out->GetDims()[3];
   for(int b = 0; b < batch_size; b++) {
     for(int i = 0; i < out_nodes; i++) {
       out_tensor_diff->at(b,0,0,i) = y_out->at(b,0,0,i) - out_tensor->at(b,0,0,i);
@@ -308,8 +310,6 @@ __global__ void calc_out_diff(Tensor<float> * out_tensor_diff, Tensor<float> * o
 
 __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * y_out) {
 
-  std::vector<std::vector<float>> x_train = {{0,1},{0,0},{1,0},{1,1}};
-  std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
 
   in_tensor->at(0, 0, 0, 0) = 0;
   in_tensor->at(0, 0, 0, 1) = 1;
@@ -349,6 +349,9 @@ void test_fc_bp_gpu() {
   // {0,1} -> {0,1,0}
   // {1,0} -> {0,1,0}
   // {1,1} -> {1,0,0}
+
+  cudaError_t cudaStatus = cudaSetDevice(0);
+  checkCudaErrors(cudaStatus);
   
   Session * session = Session::GetNewSession();
   session->gpu = true;
@@ -397,14 +400,28 @@ void test_fc_bp_gpu() {
     out.Forward({h1_tensor}, {out_tensor});
     softmax_layer.Forward({out_tensor}, {softmax_out_tensor});
 
-    calc_out_diff(out_tensor_diff, out_tensor, y_out);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
+    calc_out_diff<<<1,1>>>(out_tensor_diff, out_tensor, y_out);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
 
     out.Backward({out_tensor}, {out_tensor_diff}, {h1_tensor}, {h1_tensor_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
     h1.Backward({h1_tensor}, {h1_tensor_diff}, {in_tensor}, {in_tensor_diff});
 
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+ 
     printf("out activations\n");
-    show_fc_tensor_gpu(softmax_out_tensor);
-
+    show_fc_tensor_gpu<<<1,1>>>(softmax_out_tensor);
+  
+    cudaStatus = cudaDeviceSynchronize();
+    checkCudaErrors(cudaStatus);
+   
     /*  
     printf("h1 activations\n");
     show_fc_tensor_gpu<<<1,1>>>(h1_tensor);
@@ -438,13 +455,13 @@ void test_fc_bp_gpu() {
   }
 
 
-  delete in_tensor;
-  delete in_tensor_diff;
-  delete h1_tensor;
-  delete h1_tensor_diff;
-  delete out_tensor;
-  delete out_tensor_diff;
-  delete softmax_out_tensor;
+  cudaFree(in_tensor);
+  cudaFree(in_tensor_diff);
+  cudaFree(h1_tensor);
+  cudaFree(h1_tensor_diff);
+  cudaFree(out_tensor);
+  cudaFree(out_tensor_diff);
+  cudaFree(softmax_out_tensor);
 }
 
 

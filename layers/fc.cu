@@ -158,7 +158,7 @@ namespace FCGPUKernels {
   }
 
   template<class Dtype>
-  __global__ void UpdateWb(Tensor<Dtype> * W_, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_, Tensor<Dtype> * b_diff_) {
+  __global__ void UpdateWb(Tensor<Dtype> * W_, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_, Tensor<Dtype> * b_diff_, Dtype lr) {
     size_t in_channels = W_->GetDims()[3];
     size_t out_channels = W_->GetDims()[2];
     for(int o = 0; o < out_channels; o++) {
@@ -315,7 +315,7 @@ void FC<Dtype>::InitDiffs() {
 template<class Dtype>
 void FC<Dtype>::UpdateWb(Dtype lr) {
   if(Session::GetSession()->gpu) {
-    FCGPUKernels::UpdateWb(W_, W_diff_, b_, b_diff_);
+    FCGPUKernels::UpdateWb<Dtype><<<1,1>>>(W_, W_diff_, b_, b_diff_, lr);
   } else {
     for(int o = 0; o < out_channels; o++) {
       for(int i = 0; i < in_channels; i++) {
@@ -351,7 +351,7 @@ void FC<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
     FCGPUKernels::ComputeBottomDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(top_diff, bottom_diff, W_);
     blocksInGrid = dim3(in_channels/BLOCKDIM+1, out_channels/BLOCKDIM+1);
     FCGPUKernels::ComputeWDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top_diff, W_diff_);
-    FCGPUKernels::ComputeBDiffs<Dtype><<<out_channels/BLOCKDIM/BLOCKDIM, BLOCKDIM*BLOCKDIM>>>(top_diff, b_diff_);
+    FCGPUKernels::ComputeBDiffs<Dtype><<<out_channels/BLOCKDIM/BLOCKDIM+1, BLOCKDIM*BLOCKDIM>>>(top_diff, b_diff_);
   } else { 
     // compute bottom diffs
     for(int i = 0; i < in_channels; i++) {
