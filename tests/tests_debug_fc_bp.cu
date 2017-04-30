@@ -170,13 +170,15 @@ void test_fc_bp_cpu2() {
   ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> h1(in_nodes, h1_nodes, &const_init);
   FC<float> out(h1_nodes, out_nodes, &const_init);
+  Softmax<float> softmax_layer;
 
   size_t in_dims[4] = {batch_size, 1, 1, in_nodes};
   size_t h1_dims[4];
   h1.GetTopsDims({in_dims}, {h1_dims});
   size_t out_dims[4];
   out.GetTopsDims({h1_dims}, {out_dims});
-
+  size_t softmax_out_dims[4];
+  softmax_layer.GetTopsDims({out_dims}, {softmax_out_dims});
 
   Tensor<float>* in_tensor = Tensor<float>::CreateTensorCPU(in_dims);
   Tensor<float>* in_tensor_diff = Tensor<float>::CreateTensorCPU(in_dims);
@@ -186,6 +188,7 @@ void test_fc_bp_cpu2() {
 
   Tensor<float>* out_tensor = Tensor<float>::CreateTensorCPU(out_dims);
   Tensor<float>* out_tensor_diff = Tensor<float>::CreateTensorCPU(out_dims);
+  Tensor<float>* softmax_out_tensor = Tensor<float>::CreateTensorCPU(softmax_out_dims);
 
   Tensor<float>* y_out = Tensor<float>::CreateTensorCPU(out_dims);
 
@@ -210,6 +213,7 @@ void test_fc_bp_cpu2() {
 
     h1.Forward({in_tensor}, {h1_tensor});
     out.Forward({h1_tensor}, {out_tensor});
+    softmax_layer.Forward({out_tensor}, {softmax_out_tensor});
 
     for(int b = 0; b < batch_size; b++) {
       for(int i = 0; i < out_nodes; i++) {
@@ -221,7 +225,7 @@ void test_fc_bp_cpu2() {
     h1.Backward({h1_tensor}, {h1_tensor_diff}, {in_tensor}, {in_tensor_diff});
 
     printf("out activations\n");
-    show_fc_tensor_cpu(out_tensor);
+    show_fc_tensor_cpu(softmax_out_tensor);
 
     /*  
     printf("h1 activations\n");
@@ -247,12 +251,12 @@ void test_fc_bp_cpu2() {
 
     float mse = 0;
     for(int b = 0; b < batch_size; b++) {
-      mse += (out_tensor_diff->at(b,0,0,0)*out_tensor_diff->at(b,0,0,0) + out_tensor_diff->at(b,0,0,1)*out_tensor_diff->at(b,0,0,1) + out_tensor_diff->at(b,0,0,2)*out_tensor_diff->at(b,0,0,2))/3
+      mse += (out_tensor_diff->at(b,0,0,0)*out_tensor_diff->at(b,0,0,0) + out_tensor_diff->at(b,0,0,1)*out_tensor_diff->at(b,0,0,1) + out_tensor_diff->at(b,0,0,2)*out_tensor_diff->at(b,0,0,2))/3;
     }
     mse /= batch_size;
     printf("mse: %f \n", mse);
-    out.UpdateWb(0.02);
-    h1.UpdateWb(0.02);
+    out.UpdateWb(0.01);
+    h1.UpdateWb(0.01);
   }
 
 
