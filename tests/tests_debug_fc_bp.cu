@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <vector>
 #include "basics/tensor.cu"
 #include "basics/session.hpp"
 #include "layers/data.cu"
@@ -19,8 +20,8 @@
 
 
 void show_fc_tensor_cpu(Tensor<float> * fc_tensor_cpu) {
-  for(int b = 0; b < fc_tensor_cpu->GetDims()[0]) {
-    for(int i = 0; i < fc_tensor_cpu->GetDims()[3]) {
+  for(int b = 0; b < fc_tensor_cpu->GetDims()[0]; b++) {
+    for(int i = 0; i < fc_tensor_cpu->GetDims()[3]; i++) {
       printf("%f ", fc_tensor_cpu->at(b, 0, 0, i));
     }
     printf("\n");
@@ -30,8 +31,8 @@ void show_fc_tensor_cpu(Tensor<float> * fc_tensor_cpu) {
 
 
 void show_fc_w_cpu(Tensor<float> * fc_w_cpu) {
-  for(int i = 0; i < fc_w_cpu->GetDims()[3]) {
-    for(int o = 0; o < fc_w_cpu->GetDims()[2]) {
+  for(int i = 0; i < fc_w_cpu->GetDims()[3]; i++) {
+    for(int o = 0; o < fc_w_cpu->GetDims()[2]; o++) {
       printf("%f ", fc_w_cpu->at(0,0,o,i));
     }
     printf("\n");
@@ -40,7 +41,7 @@ void show_fc_w_cpu(Tensor<float> * fc_w_cpu) {
 }
 
 void show_fc_b_cpu(Tensor<float> * fc_b_cpu) {
-  for(int o = 0; o < fc_b_cpu->GetDims()[3]) {
+  for(int o = 0; o < fc_b_cpu->GetDims()[3]; o++) {
     printf("%f ", fc_b_cpu->at(0,0,0,o));
   }
   printf("\n");
@@ -53,9 +54,9 @@ void test_fc_bp_cpu() {
   session->gpu = false;
   size_t batch_size = 1;
   session->batch_size = batch_size;
-  in_nodes = 2;
-  h1_nodes = 3;
-  out_nodes = 3;
+  size_t in_nodes = 2;
+  size_t h1_nodes = 3;
+  size_t out_nodes = 3;
 
   ConstInitializer<float> const_init(2.0, 1.0);
   FC<float> h1(in_nodes, h1_nodes, &const_init);
@@ -63,9 +64,9 @@ void test_fc_bp_cpu() {
 
   size_t in_dims[4] = {batch_size, 1, 1, in_nodes};
   size_t h1_dims[4];
-  in.GetTopsDims({in_dims}, {h1_dims});
+  h1.GetTopsDims({in_dims}, {h1_dims});
   size_t out_dims[4];
-  h1.GetTopsDims({h1_dims}, {out_dims});
+  out.GetTopsDims({h1_dims}, {out_dims});
 
 
   Tensor<float>* in_tensor = Tensor<float>::CreateTensorCPU(in_dims);
@@ -79,18 +80,30 @@ void test_fc_bp_cpu() {
 
   Tensor<float>* y_out = Tensor<float>::CreateTensorCPU(out_dims);
 
+  std::vector<std::vector<float>> x_train = {{0,1},{0,0},{1,0},{1,1}};
+  std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
+
+  for(int iter = 0; iter < 2000; iter++) {
+  
+  
   // init in tensor
-  in_tensor->at(0, 0, 0, 0) = 0;
-  in_tensor->at(0, 0, 0, 0) = 1;
+  in_tensor->at(0, 0, 0, 0) = x_train[iter%x_train.size()][0];
+  in_tensor->at(0, 0, 0, 1) = x_train[iter%x_train.size()][1];
 
   // init out tensor
-  y_out->at(0,0,0,0) = 0;
-  y_out->at(0,0,0,1) = 1;
-  y_out->at(0,0,0,2) = 0;
+  y_out->at(0,0,0,0) = y_train[iter%y_train.size()][0];
+  y_out->at(0,0,0,1) = y_train[iter%y_train.size()][1];
+  y_out->at(0,0,0,2) = y_train[iter%y_train.size()][2];
 
 
-  h1.Forward({in_tensor}, {h1_tensor});
-  out.Forward({h1_tensor}, {out_tensor});
+    printf("\n-----iteration %d-------\n", iter);
+    printf("input: %f %f \n", x_train[iter%x_train.size()][0], x_train[iter%x_train.size()][1]);
+
+
+
+
+    h1.Forward({in_tensor}, {h1_tensor});
+    out.Forward({h1_tensor}, {out_tensor});
 
   for(int i = 0; i < out_nodes; i++) {
     out_tensor_diff->at(0,0,0,i) = y_out->at(0,0,0,i) - out_tensor->at(0,0,0,i);
@@ -99,24 +112,33 @@ void test_fc_bp_cpu() {
   out.Backward({out_tensor}, {out_tensor_diff}, {h1_tensor}, {h1_tensor_diff});
   h1.Backward({h1_tensor}, {h1_tensor_diff}, {in_tensor}, {in_tensor_diff});
 
-  printf("show layer activations\n");
-  show_fc_tensor_cpu(h1_tensor);
+//  printf("h1 activations\n");
+//  show_fc_tensor_cpu(h1_tensor);
+  printf("out activations\n");
   show_fc_tensor_cpu(out_tensor);
-
-  printf("show activation diffs\n");
+/*
+  printf("out activation diffs\n");
   show_fc_tensor_cpu(out_tensor_diff);
+  printf("h1 activations diffs\n");
   show_fc_tensor_cpu(h1_tensor_diff);
+  printf("in activations diffs\n");
   show_fc_tensor_cpu(in_tensor_diff);
 
-  printf("show parameters diffs\n");
+  printf("out W diffs\n");
   show_fc_w_cpu(out.W_diff_);
+  printf("out b diffs\n");
   show_fc_b_cpu(out.b_diff_);
 
+  printf("h1 W diffs\n");
   show_fc_w_cpu(h1.W_diff_);
+  printf("h1 b diffs\n");
   show_fc_b_cpu(h1.b_diff_);
+  */ 
+  printf("mse: %f \n", (out_tensor_diff->at(0,0,0,0)*out_tensor_diff->at(0,0,0,0) + out_tensor_diff->at(0,0,0,1)*out_tensor_diff->at(0,0,0,1) + out_tensor_diff->at(0,0,0,2)*out_tensor_diff->at(0,0,0,2))/3);
+  out.UpdateWb(0.02);
+  h1.UpdateWb(0.02);
+  }
 
-  show_fc_w_cpu(in.W_diff_);
-  show_fc_b_cpu(in.b_diff_);  
 
   delete in_tensor;
   delete in_tensor_diff;

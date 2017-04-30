@@ -27,6 +27,8 @@ public:
   void GetTopsDims(const std::vector<size_t*> &bottoms_dims, 
                    const std::vector<size_t*> &tops_dims);
 
+  void UpdateWb(Dtype lr);
+
   const size_t in_channels;
   const size_t out_channels;
 
@@ -296,7 +298,21 @@ void FC<Dtype>::InitDiffs() {
 
 
 
+template<class Dtype>
+void FC<Dtype>::UpdateWb(Dtype lr) {
+  if(Session::GetSession()->gpu) {
 
+  } else {
+    for(int o = 0; o < out_channels; o++) {
+      for(int i = 0; i < in_channels; i++) {
+        W_->at(0, 0, o, i) += W_diff_->at(0, 0, o, i)*lr; 
+        W_diff_->at(0,0,o,i) = 0;
+      }
+      b_->at(0, 0, 0, o) += b_diff_->at(0, 0, 0, o)*lr;
+      b_diff_->at(0,0,0,o) = 0;
+    }
+  }
+}
 
 
 template<class Dtype>
