@@ -60,6 +60,8 @@ private:
 
 
 namespace ConvGPUKernels {
+
+  template<class Dtype>
   __global__ void UpdateWb(Tensor<Dtype> * W_, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_, Tensor<Dtype> * b_diff_, Dtype lr) {
     size_t kernel_height = W_->GetDims()[0];
     size_t kernel_width = W_->GetDims()[1];
