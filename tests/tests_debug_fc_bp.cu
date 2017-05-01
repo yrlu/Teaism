@@ -307,7 +307,7 @@ __global__ void calc_out_diff(Tensor<float> * out_tensor_diff, Tensor<float> * o
 }
 
 
-__global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * y_out) {
+__global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * y_out, Tensor<float> * y_label) {
 
 
   in_tensor->at(0, 0, 0, 0) = 0;
@@ -316,7 +316,7 @@ __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * 
   y_out->at(0,0,0,0) = 0;
   y_out->at(0,0,0,1) = 1;
   y_out->at(0,0,0,2) = 0;
-
+  y_label->at(0,0,0,0) = 1;
 
   in_tensor->at(1, 0, 0, 0) = 0;
   in_tensor->at(1, 0, 0, 1) = 0;
@@ -324,6 +324,7 @@ __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * 
   y_out->at(1,0,0,0) = 0;
   y_out->at(1,0,0,1) = 0;
   y_out->at(1,0,0,2) = 1;
+  y_label->at(1,0,0,0) = 0;
 
 
   in_tensor->at(2, 0, 0, 0) = 1;
@@ -332,6 +333,7 @@ __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * 
   y_out->at(2,0,0,0) = 0;
   y_out->at(2,0,0,1) = 1;
   y_out->at(2,0,0,2) = 0;
+  y_label->at(2,0,0,0) = 1;
 
 
   in_tensor->at(3, 0, 0, 0) = 1;
@@ -340,6 +342,7 @@ __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * 
   y_out->at(3,0,0,0) = 1;
   y_out->at(3,0,0,1) = 0;
   y_out->at(3,0,0,2) = 0;
+  y_label->at(3,0,0,0) = 2;
 }
 
 void test_fc_bp_gpu() {
@@ -371,6 +374,8 @@ void test_fc_bp_gpu() {
   h1.GetTopsDims({in_dims}, {h1_dims});
   size_t out_dims[4];
   out.GetTopsDims({h1_dims}, {out_dims});
+  size_t label_dims[4];
+  label_dims[0] = out_dims[0]; label_dims[1] = out_dims[1]; label_dims[2] = out_dims[2]; label_dims[3] = 1; 
   size_t softmax_out_dims[4];
   softmax_layer.GetTopsDims({out_dims}, {softmax_out_dims});
   size_t ce_out_dims[4];
@@ -395,11 +400,12 @@ void test_fc_bp_gpu() {
   Tensor<float>* cel_loss_diff = Tensor<float>::CreateTensorGPU(ce_loss_dims);
 
   Tensor<float>* y_out = Tensor<float>::CreateTensorGPU(out_dims);
+  Tensor<float>* y_labels = Tensor<float>::CreateTensorGPU(label_dims);
 
   std::vector<std::vector<float>> x_train = {{0,1},{0,0},{1,0},{1,1}};
   std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
 
-  prepare_training_data<<<1,1>>>(in_tensor, y_out);
+  prepare_training_data<<<1,1>>>(in_tensor, y_out, y_labels);
 
   for(int iter = 0; iter < 5000; iter++) {
 
@@ -409,7 +415,7 @@ void test_fc_bp_gpu() {
     h1.Forward({in_tensor}, {h1_tensor});
     out.Forward({h1_tensor}, {out_tensor});
     softmax_layer.Forward({out_tensor}, {softmax_out_tensor});
-    cel_layer.Forward({softmax_out_tensor, y_out}, {cel_out_tensor});
+    cel_layer.Forward({softmax_out_tensor, y_labels}, {cel_out_tensor});
 
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
@@ -417,11 +423,11 @@ void test_fc_bp_gpu() {
     // calc_out_diff<<<1,1>>>(out_tensor_diff, out_tensor, y_out);
     // calc_out_diff<<<1,1>>>(softmax_out_tensor_diff, softmax_out_tensor, y_out);
     // calc_out_diff<<<1,1>>>(cel_out_tensor_diff, cel_out_tensor, y_out);
-    cel_layer.Backward({cel_out_tensor}, {cel_out_tensor}, {soft_max_out_tensor, y_out}, {softmax_out_tensor_diff, cel_loss_diff});
+    cel_layer.Backward({cel_out_tensor}, {cel_out_tensor}, {softmax_out_tensor, y_labels}, {softmax_out_tensor_diff, cel_loss_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    softmax_layer.Backward({softmaxout_tensor}, {softmax_out_tensor_diff}, {out_tensor}, {out_tensor_diff});
+    softmax_layer.Backward({softmax_out_tensor}, {softmax_out_tensor_diff}, {out_tensor}, {out_tensor_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
