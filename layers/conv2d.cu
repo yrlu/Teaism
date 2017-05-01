@@ -48,12 +48,58 @@ public:
   Tensor<Dtype>* W_flipped_;
   Tensor<Dtype>* W_diff_;
   Tensor<Dtype>* b_diff_;
+
+  void UpdateWb(Dtype lr);
+
 private:
   const Initializer<Dtype>* initializer_;
   void InitParams();
   void InitDiffs();
   void FlipWeights();
 };
+
+
+namespace ConvGPUKernels {
+  __global__ void UpdateWb(Tensor<Dtype> * W_, Tensor<Dtype> * W_diff_, Tensor<Dtype> * b_, Tensor<Dtype> * b_diff_, Dtype lr) {
+    size_t kernel_height = W_->GetDims()[0];
+    size_t kernel_width = W_->GetDims()[1];
+    size_t out_channels = W_->GetDims()[2];
+    size_t in_channels = W_->GetDims()[3];
+
+    for(int o = 0; o < out_channels; o++) {
+      for(int i = 0; i < in_channels; i++) {
+        for(int h = 0; h < kernel_height; h++) {
+          for(int w = 0; w < kernel_width; w++) {
+            W_->at(h, w, o, i) += W_diff_->at(h, w, o, i)*lr; 
+            W_diff_->at(h, w, o, i) = 0;
+          }
+        }
+      }
+      b_->at(0, 0, 0, o) += b_diff_->at(0, 0, 0, o)*lr;
+      b_diff_->at(0, 0, 0, o) = 0;
+    }
+  }
+}
+
+template<class Dtype>
+void Conv2D<Dtype>::UpdateWb(Dtype lr) {
+  if(Session::GetSession()->gpu) {
+    ConvGPUKernels::UpdateWb<Dtype><<<1,1>>>(W_, W_diff_, b_, b_diff_, lr);
+  } else {
+    for(int o = 0; o < out_channels; o++) {
+      for(int i = 0; i < in_channels; i++) {
+        for(int h = 0; h < kernel_height; h++) {
+          for(int w = 0; w < kernel_width; w++) {
+            W_->at(h, w, o, i) += W_diff_->at(h, w, o, i)*lr; 
+            W_diff_->at(h, w, o, i) = 0;
+          }
+        }
+      }
+      b_->at(0, 0, 0, o) += b_diff_->at(0, 0, 0, o)*lr;
+      b_diff_->at(0, 0, 0, o) = 0;
+    }
+  }
+}
 
 
 
