@@ -27,7 +27,7 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_alexnet.cu -o tests_alexnet.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) models/load_model.cu -o load_model.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cifar10.cu -o tests_cifar10.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu_back.cu -o tests_relu_back.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling_back.cu -o tests_pooling_back.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
