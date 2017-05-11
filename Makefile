@@ -8,11 +8,6 @@ GCC_OPTS=-std=c++11 -w
 
 all: make_tests
 
-s:
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_debug_fc_bp.cu -o tests_debug_fc_bp.o -I.
-
 make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.
@@ -35,6 +30,9 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu_back.cu -o tests_relu_back.o -I.
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling_back.cu -o tests_pooling_back.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_debug_fc_bp.cu -o tests_debug_fc_bp.o -I.
+
 
 clean:
 	rm *.o
