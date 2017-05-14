@@ -407,9 +407,16 @@ void test_fc_bp_gpu() {
 
   prepare_training_data<<<1,1>>>(in_tensor, y_out, y_labels);
 
+  printf("The example shows counting how many ones in the input: \n{0,0} -> {0,0,1} \n{0,1} -> {0,1,0} \n{1,0} -> {0,1,0} \n{1,1} -> {1,0,0}\n");
+  printf("Network: input(2) - fc(3) - fc(3) - softmax - cross_entropy_loss\n");
+  printf("input: \n0,0\n0,1\n1,0\n1,1\n");
+  printf("\nground truth: \n0 1 0\n1 0 0\n0 1 0\n0 0 1\n");
+  printf("\n");
+  printf("Training (learning rate = 0.1) .. \n");
+
   for(int iter = 0; iter < 5000; iter++) {
 
-    printf("\n-----iteration %d-------\n", iter);
+    // printf("\n-----iteration %d-------\n", iter);
     // printf("input: %f %f \n", x_train[iter%x_train.size()][0], x_train[iter%x_train.size()][1]);
 
     h1.Forward({in_tensor}, {h1_tensor});
@@ -440,8 +447,8 @@ void test_fc_bp_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
  
-    printf("out activations\n");
-    show_fc_tensor_gpu<<<1,1>>>(softmax_out_tensor);
+    // printf("out activations\n");
+    // show_fc_tensor_gpu<<<1,1>>>(softmax_out_tensor);
   
     cudaStatus = cudaDeviceSynchronize();
     checkCudaErrors(cudaStatus);
@@ -478,6 +485,9 @@ void test_fc_bp_gpu() {
     h1.UpdateWb(0.01);
   }
 
+  printf("\n-----iteration %d-------\n", 5000);
+  printf("out activations:\n");
+  show_fc_tensor_gpu<<<1,1>>>(softmax_out_tensor);
 
   cudaFree(in_tensor);
   cudaFree(in_tensor_diff);

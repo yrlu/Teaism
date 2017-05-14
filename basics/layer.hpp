@@ -9,10 +9,10 @@ class Layer {
 public:
   virtual void Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::vector<Tensor<Dtype>*> &tops) = 0;
   
-  virtual void Backward(const std::vector<Tensor<Dtype>*> &tops,
-                const std::vector<Tensor<Dtype>*> &tops_diff,
-                const std::vector<Tensor<Dtype>*> &bottoms,
-                const std::vector<Tensor<Dtype>*> &bottoms_diff) = 0;
+  // virtual void Backward(const std::vector<Tensor<Dtype>*> &tops,
+  //               const std::vector<Tensor<Dtype>*> &tops_diff,
+  //               const std::vector<Tensor<Dtype>*> &bottoms,
+  //               const std::vector<Tensor<Dtype>*> &bottoms_diff) = 0;
 
   /*virtual void Backward(const std::vector<Tensor<Dtype>*> &tops,
                         const std::vector<Tensor<Dtype>*> &tops_diff,

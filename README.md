@@ -5,71 +5,111 @@
 
 A minimalistic CUDA-based convolutional neural network library.
 
-## Dependencies
+## Motivation
 
-- C++0x
-- CUDA >= 7.5
+- Convolutional neural networks (CNNs) are the core in computer vision applications
+- Mobile/embedded platforms, e.g. quadrotors, demand fast and light-weighted CNN libraries
+- Modern deep learning libraries heavily depends on third-party libraries and hence are hard to be configured on mobile/embedded platforms (like Nvidia TX1). Teaism, however, depends only on C++0x and CUDA 8.0 
 
-## Files
-```
-.
-├── Makefile
-├── README.md
-├── basics
-│   ├── initializer.hpp
-│   ├── layer.hpp
-│   ├── session.hpp
-│   └── tensor.cu
-├── initializers
-│   ├── const_initializer.cu
-│   └── gaussian_kernel_initializer.cu
-├── layers
-│   ├── conv2d.cu
-│   ├── conv2d_old.cu
-│   ├── conv2dopt.cu
-│   ├── cross_entropy_loss.cu
-│   ├── data.cu
-│   ├── dropout.cu
-│   ├── fc.cu
-│   ├── lrn.cu
-│   ├── pooling.cu
-│   ├── relu.cu
-│   └── softmax.cu
-├── perf
-│   └── tf_lenet.py
-├── tests
-│   ├── demo_cifar10.cu
-│   ├── tests_alexnet.cu
-│   ├── tests_cifar10.cu
-│   ├── tests_const_initializer.cu
-│   ├── tests_conv2d.cu
-│   ├── tests_conv2dopt.cu
-│   ├── tests_cross_entropy_loss.cu
-│   ├── tests_data.cu
-│   ├── tests_dropout.cu
-│   ├── tests_fc.cu
-│   ├── tests_gaussian_initializer.cu
-│   ├── tests_get_tops_dims.cu
-│   ├── tests_lenet.cu
-│   ├── tests_lenet_fc.cu
-│   ├── tests_lrn.cu
-│   ├── tests_pooling.cu
-│   ├── tests_relu.cu
-│   ├── tests_rng.cu
-│   ├── tests_softmax.cu
-│   └── tests_tensor.cu
-└── utils
-    ├── bitmap_image.hpp
-    ├── helper_cuda.h
-    ├── helper_string.h
-    ├── load_model.hpp
-    └── utils.cu
-```
+| Library  | Dependencies |
+| ------------- | ------------- |
+| *Teaism*  | C/C++, CUDA  |
+| Caffe | C/C++, CUDA, cuDNN, BLAS, Boost, Opencv, etc. |
+| Tensorflow | C/C++, CUDA, cuDNN, Python, Bazel, Numpy, etc. |
+| Torch | C/C++, CUDA, BLAS, LuaJIT, LuaRocks, OpenBLAS, etc. |
+
+
+- For our own educational purposes
+
+## Features
+
+- 9 Layers implemented so as to reproduce LeNet, AlexNet, VGG, etc.
+	- data, conv, fc, pooling, Relu, LRN, dropout, softmax, cross-entropy loss
+- Model importer for importing trained Caffe models' parameters
+- Forward inference / backpropagation
 
 ## Directory Description
-- basics/:  Major header files, e.g., session.hpp, layer.hpp, tensor.cu, etc.
-- layers/:  All the layer implementation.
-- tests/:  All test cases. It is recommended to browse demo_cifar10.cu, tests_alexnet.cu, and tests_cifar10.cu to learn how to use this library.
+- basics/:  Major header files / base classes, e.g., session.hpp, layer.hpp, tensor.cu, etc.
+- layers/:  All the layer implementations.
+- tests/:  All test cases. It is recommended to browse demo_cifar10.cu, tests_alexnet.cu, tests_debug_fc_bp.cu and tests_cifar10.cu to learn how to use this library.
 - initializers/:  Parameter initialization for convolutional and fully connected layers.
 - utils/:  Some utility functions.
 - models/:  Scripts for training models in Caffe and importing trained models.
+
+## Demos (working in progress ..)
+
+- Loading network parameters and inference on Cifar10
+
+```
+$ make demo_cifar10 && ./demo_cifar10.o
+Start demo cifar10 on GPU
+
+datasets/cifar10/bmp_imgs/00006.bmp
+network finished setup: 617.3 ms 
+GPU memory usage: used = 346.250000, free = 7765.375000 MB, total = 8111.625000 MB
+Loading weights ...
+Loading conv: (5, 5, 3, 32): 
+Loading bias: (1, 1, 1, 32): Loading conv: (5, 5, 32, 32): 
+Loading bias: (1, 1, 1, 32): Loading conv: (5, 5, 32, 64): 
+Loading bias: (1, 1, 1, 64): Loading fc: (1, 1, 64, 1024): 
+Loading bias: (1, 1, 1, 64): Loading fc: (1, 1, 10, 64): 
+Loading bias: (1, 1, 1, 10): data forward: 0.3 ms 
+conv1 forward: 0.3 ms 
+pool1 forward: 0.3 ms 
+relu1 forward: 0.0 ms 
+conv2 forward: 1.3 ms 
+pool2 forward: 0.2 ms 
+relu2 forward: 0.0 ms 
+conv3 forward: 2.3 ms 
+pool3 forward: 0.4 ms 
+relu3 forward: 0.0 ms 
+fc4 forward: 1.7 ms 
+fc5 forward: 0.0 ms 
+softmax forward: 0.1 ms 
+
+Total forward time: 6.8 ms
+
+Prediction: 
+Airplane probability: 0.0000 
+Automobile probability: 0.9993 
+Bird probability: 0.0000 
+Cat probability: 0.0000 
+Deer probability: 0.0000 
+Dog probability: 0.0000 
+Frog probability: 0.0000 
+Horse probability: 0.0005 
+Ship probability: 0.0000 
+Truck probability: 0.0001
+```
+
+- Learn to count with multilayer perceptron
+
+```
+$ make demo_mlp && ./tests_debug_fc_bp.o 
+The example shows counting how many ones in the input: 
+{0,0} -> {0,0,1} 
+{0,1} -> {0,1,0} 
+{1,0} -> {0,1,0} 
+{1,1} -> {1,0,0}
+Network: input(2) - fc(3) - fc(3) - softmax - cross_entropy_loss
+input: 
+0,0
+0,1
+1,0
+1,1
+
+ground truth: 
+0 1 0
+1 0 0
+0 1 0
+0 0 1
+
+Training (learning rate = 0.1) .. 
+
+-----iteration 5000-------
+out activations:
+0.009701 0.878031 0.112268 
+0.978389 0.021571 0.000040 
+0.009701 0.878031 0.112268 
+0.000000 0.101620 0.898380
+```
