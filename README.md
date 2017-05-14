@@ -7,9 +7,8 @@ A minimalistic CUDA-based convolutional neural network library.
 
 ## Motivation
 
-- Convolutional neural networks (CNNs) are the core in computer vision applications
-- Mobile/embedded platforms, e.g. quadrotors, demand fast and light-weighted CNN libraries
-- Modern deep learning libraries heavily depends on third-party libraries and hence are hard to be configured on mobile/embedded platforms (like Nvidia TX1). Teaism, however, depends only on C++0x and CUDA 8.0 
+- Convolutional neural networks (CNNs) are at the core of computer vision applications recently
+- Mobile/embedded platforms, e.g. quadrotors, demand fast and light-weighted CNN libraries. Modern deep learning libraries heavily depends on third-party libraries and hence are hard to be configured on mobile/embedded platforms (like Nvidia TX1). This effort aims at developing a full-fledged yet minimalistic CNN library that depends only on C++0x and CUDA 8.0.
 
 | Library  | Dependencies |
 | ------------- | ------------- |
@@ -18,8 +17,7 @@ A minimalistic CUDA-based convolutional neural network library.
 | Tensorflow | C/C++, CUDA, cuDNN, Python, Bazel, Numpy, etc. |
 | Torch | C/C++, CUDA, BLAS, LuaJIT, LuaRocks, OpenBLAS, etc. |
 
-
-- For our own educational purposes
+- And most importantly, for our own educational purposes
 
 ## Features
 
