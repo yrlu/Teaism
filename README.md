@@ -29,7 +29,7 @@ A minimalistic CUDA-based convolutional neural network library.
 - Forward inference / backpropagation
 - Switching between CPU and GPU
 
-## Directory Description
+## Directories
 - basics/:  Major header files / base classes, e.g., session.hpp, layer.hpp, tensor.cu, etc.
 - layers/:  All the layer implementations.
 - tests/:  All test cases. It is recommended to browse demo_cifar10.cu, demo_mlp.cu, tests_alexnet.cu and tests_cifar10.cu to learn how to use this library.
