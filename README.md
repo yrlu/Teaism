@@ -17,7 +17,7 @@ A minimalistic CUDA-based convolutional neural network library.
 | Tensorflow | C/C++, CUDA, cuDNN, Python, Bazel, Numpy, etc. |
 | Torch | C/C++, CUDA, BLAS, LuaJIT, LuaRocks, OpenBLAS, etc. |
 
-- And most importantly, for our own educational purposes
+- And most importantly, it's for our own educational purposes :)
 
 ## Features
 
