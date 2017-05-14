@@ -27,7 +27,7 @@ A minimalistic CUDA-based convolutional neural network library.
 	- data, conv, fc, pooling, Relu, LRN, dropout, softmax, cross-entropy loss
 - Model importer for importing trained Caffe models' parameters
 - Forward inference / backpropagation
-- CPU/GPU switch
+- Switching between CPU and GPU
 
 ## Directory Description
 - basics/:  Major header files / base classes, e.g., session.hpp, layer.hpp, tensor.cu, etc.
