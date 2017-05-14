@@ -25,21 +25,21 @@ A minimalistic CUDA-based convolutional neural network library.
 
 - 9 Layers implemented so as to reproduce LeNet, AlexNet, VGG, etc.
 	- data, conv, fc, pooling, Relu, LRN, dropout, softmax, cross-entropy loss
-- Model importer for importing trained Caffe models' parameters
+- Model importer for importing trained Caffe models
 - Forward inference / backpropagation
 - Switching between CPU and GPU
 
 ## Directory Description
 - basics/:  Major header files / base classes, e.g., session.hpp, layer.hpp, tensor.cu, etc.
 - layers/:  All the layer implementations.
-- tests/:  All test cases. It is recommended to browse demo_cifar10.cu, tests_alexnet.cu, tests_debug_fc_bp.cu and tests_cifar10.cu to learn how to use this library.
+- tests/:  All test cases. It is recommended to browse demo_cifar10.cu, demo_mlp.cu, tests_alexnet.cu and tests_cifar10.cu to learn how to use this library.
 - initializers/:  Parameter initialization for convolutional and fully connected layers.
 - utils/:  Some utility functions.
 - models/:  Scripts for training models in Caffe and importing trained models.
 
 ## Demos
 
-- Loading network parameters and inference on Cifar10
+- Import model and make inferences on Cifar10
 
 ```
 $ make demo_cifar10 && ./demo_cifar10.o
@@ -83,10 +83,10 @@ Ship probability: 0.0000
 Truck probability: 0.0001
 ```
 
-- Learn to count with multilayer perceptron
+- Multilayer perceptron
 
 ```
-$ make demo_mlp&& ./tests_fc_bp.o
+$ make demo_mlp && ./demo_mlp.cu
 The example shows counting how many ones in the input: 
 {0,0} -> {0,0,1} 
 {0,1} -> {0,1,0} 

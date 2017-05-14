@@ -12,7 +12,7 @@ demo_cifar10:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 
 demo_mlp:
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc_bp.cu -o tests_fc_bp.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_mlp.cu -o demo_mlp.o -I.
 
 demo_bp_cifar10:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_bp_cifar10.cu -o tests_bp_cifar10.o -I.
