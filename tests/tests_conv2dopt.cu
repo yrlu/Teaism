@@ -10,7 +10,7 @@
 #include "utils/bitmap_image.hpp"
 
 
-__global__ void init_as_ones(Tensor<float> * tensor_gpu) {
+__global__ void init_tensor(Tensor<float> * tensor_gpu) {
   for(int b = 0; b < tensor_gpu->GetDims()[0]; b++) { 
     for(int c = 0; c < tensor_gpu->GetDims()[1]; c++) { 
       for(int i = 0; i < tensor_gpu->GetDims()[2]; i++) { 
@@ -153,19 +153,22 @@ void test_conv2d_gpu() {
 
   show_top<<<1,1>>>(top);
 
-
   printf("testing backward\n");
   Tensor<float> * top_diff = Tensor<float>::CreateTensorGPU(t_dims);
   Tensor<float> * bottom_diff = Tensor<float>::CreateTensorGPU(b_dims);
   checkCudaErrors(cudaGetLastError());
 
-  init_as_ones<<<1, 1>>>(top_diff);
+  init_tensor<<<1, 1>>>(top_diff);
   checkCudaErrors(cudaGetLastError());
+
+  show_top<<<1,1>>>(top_diff);
+  checkCudaErrors(cudaGetLastError());
+  
   conv_layer.Backward({top}, {top_diff}, {bottom}, {bottom_diff});
   checkCudaErrors(cudaGetLastError());
   show_top<<<1,1>>>(bottom_diff);
   checkCudaErrors(cudaGetLastError());
-   
+  
 
   cudaFree(top_diff);
   cudaFree(bottom_diff);
@@ -173,8 +176,11 @@ void test_conv2d_gpu() {
   cudaFree(bottom);
   
   checkCudaErrors(cudaGetLastError());
+
+  // cudaStatus = cudaDeviceSynchronize();
+  // checkCudaErrors(cudaStatus);
 }
 int main() {
-  test_conv2d_cpu();
+  // test_conv2d_cpu();
   test_conv2d_gpu();
 }

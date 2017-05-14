@@ -27,6 +27,7 @@ A minimalistic CUDA-based convolutional neural network library.
 	- data, conv, fc, pooling, Relu, LRN, dropout, softmax, cross-entropy loss
 - Model importer for importing trained Caffe models' parameters
 - Forward inference / backpropagation
+- CPU/GPU switch
 
 ## Directory Description
 - basics/:  Major header files / base classes, e.g., session.hpp, layer.hpp, tensor.cu, etc.
@@ -36,7 +37,7 @@ A minimalistic CUDA-based convolutional neural network library.
 - utils/:  Some utility functions.
 - models/:  Scripts for training models in Caffe and importing trained models.
 
-## Demos (working in progress ..)
+## Demos
 
 - Loading network parameters and inference on Cifar10
 
@@ -85,7 +86,7 @@ Truck probability: 0.0001
 - Learn to count with multilayer perceptron
 
 ```
-$ make demo_mlp && ./tests_debug_fc_bp.o 
+$ make demo_mlp&& ./tests_fc_bp.o
 The example shows counting how many ones in the input: 
 {0,0} -> {0,0,1} 
 {0,1} -> {0,1,0} 
@@ -93,8 +94,8 @@ The example shows counting how many ones in the input:
 {1,1} -> {1,0,0}
 Network: input(2) - fc(3) - fc(3) - softmax - cross_entropy_loss
 input: 
-0,0
 0,1
+0,0
 1,0
 1,1
 
@@ -107,9 +108,16 @@ ground truth:
 Training (learning rate = 0.1) .. 
 
 -----iteration 5000-------
+test input: 
+0,0
+1,0
+1,1
+0,1
 out activations:
-0.009701 0.878031 0.112268 
-0.978389 0.021571 0.000040 
-0.009701 0.878031 0.112268 
-0.000000 0.101620 0.898380
+0.978394 0.021566 0.000040 
+0.009701 0.878047 0.112252 
+0.000000 0.101604 0.898396 
+0.009701 0.878047 0.112252
 ```
+
+working in progress .. 

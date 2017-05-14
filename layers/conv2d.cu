@@ -337,7 +337,7 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
   if(Session::GetSession()->gpu) {
     ComputationsGPU::ConvolutionGPU(tops_diff[0], bottoms_diff[0], W_flipped_, (Tensor<Dtype>*)NULL, stride, padding);
     // assumes stride = 1
-        
+
     size_t batch_size = Session::GetSession()->batch_size;
     dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/8+1, out_channels/4+1);
     dim3 threadsPerBlock(BLOCKDIM, 8, 4);

@@ -12,7 +12,11 @@ demo_cifar10:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10.cu -o demo_cifar10.o -I.
 
 demo_mlp:
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_debug_fc_bp.cu -o tests_debug_fc_bp.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc_bp.cu -o tests_fc_bp.o -I.
+
+demo_bp_cifar10:
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_bp_cifar10.cu -o tests_bp_cifar10.o -I.
+
 
 make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
@@ -22,7 +26,7 @@ make_tests:
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cross_entropy_loss.cu -o tests_cross_entropy_loss.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_get_tops_dims.cu -o tests_get_tops_dims.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling.cu -o tests_pooling.o -I.
-#	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_conv2dopt.cu -o tests_conv2dopt.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu.cu -o tests_relu.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_lenet_fc.cu -o tests_lenet_fc.o -I.
 #	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_rng.cu -o tests_rng.o -I.

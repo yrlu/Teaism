@@ -306,6 +306,19 @@ __global__ void calc_out_diff(Tensor<float> * out_tensor_diff, Tensor<float> * o
   }
 }
 
+__global__ void prepare_test_data(Tensor<float> * in_tensor_test) {
+  in_tensor_test->at(0, 0, 0, 0) = 0;
+  in_tensor_test->at(0, 0, 0, 1) = 0;
+
+  in_tensor_test->at(1, 0, 0, 0) = 1;
+  in_tensor_test->at(1, 0, 0, 1) = 0;
+
+  in_tensor_test->at(2, 0, 0, 0) = 1;
+  in_tensor_test->at(2, 0, 0, 1) = 1;
+
+  in_tensor_test->at(3, 0, 0, 0) = 0;
+  in_tensor_test->at(3, 0, 0, 1) = 1;
+}
 
 __global__ void prepare_training_data(Tensor<float> *in_tensor, Tensor<float> * y_out, Tensor<float> * y_label) {
 
@@ -383,7 +396,8 @@ void test_fc_bp_gpu() {
   size_t ce_loss_dims[4] = {batch_size, 1, 1, 1};
 
 
-  Tensor<float>* in_tensor = Tensor<float>::CreateTensorGPU(in_dims);
+  Tensor<float>* in_tensor = Tensor<float>::CreateTensorGPU(in_dims); 
+  Tensor<float>* in_tensor_test = Tensor<float>::CreateTensorGPU(in_dims);
   Tensor<float>* in_tensor_diff = Tensor<float>::CreateTensorGPU(in_dims);
 
   Tensor<float>* h1_tensor = Tensor<float>::CreateTensorGPU(h1_dims);
@@ -406,10 +420,10 @@ void test_fc_bp_gpu() {
   std::vector<std::vector<float>> y_train = {{0,1,0}, {0,0,1}, {0,1,0}, {1,0,0}};
 
   prepare_training_data<<<1,1>>>(in_tensor, y_out, y_labels);
-
+  prepare_test_data<<<1,1>>>(in_tensor_test);
   printf("The example shows counting how many ones in the input: \n{0,0} -> {0,0,1} \n{0,1} -> {0,1,0} \n{1,0} -> {0,1,0} \n{1,1} -> {1,0,0}\n");
   printf("Network: input(2) - fc(3) - fc(3) - softmax - cross_entropy_loss\n");
-  printf("input: \n0,0\n0,1\n1,0\n1,1\n");
+  printf("input: \n0,1\n0,0\n1,0\n1,1\n");
   printf("\nground truth: \n0 1 0\n1 0 0\n0 1 0\n0 0 1\n");
   printf("\n");
   printf("Training (learning rate = 0.1) .. \n");
@@ -486,6 +500,13 @@ void test_fc_bp_gpu() {
   }
 
   printf("\n-----iteration %d-------\n", 5000);
+
+  printf("test input: \n0,0\n1,0\n1,1\n0,1\n");
+
+  h1.Forward({in_tensor_test}, {h1_tensor});
+  out.Forward({h1_tensor}, {out_tensor});
+  softmax_layer.Forward({out_tensor}, {softmax_out_tensor});
+
   printf("out activations:\n");
   show_fc_tensor_gpu<<<1,1>>>(softmax_out_tensor);
 
