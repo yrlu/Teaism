@@ -17,6 +17,29 @@
 #include "utils/utils.cu"
 #include "utils/load_model.hpp"
 
+
+
+__global__ void show_tensor(Tensor<float> * tensor) {
+  size_t d1 = tensor->GetDims()[0];
+  size_t d2 = tensor->GetDims()[1];
+  size_t d3 = tensor->GetDims()[2];
+  size_t d4 = tensor->GetDims()[3];
+
+  for(int i = 0; i < d1; i++) {
+    for(int l = 0; l < d4; l++) {
+      for(int j = 0; j < d2; j++) {
+        for(int k = 0; k < d3; k++) {
+          printf("%f ", tensor->at(i, j, k, l));
+        }
+        printf("\n");
+      }
+      printf("\n");
+    }
+    printf("\n");
+  }
+}
+
+
 void demo_bp_cifar10_gpu() {
   printf("Start training convolutional networks on cifar10\n\n");
 
@@ -200,8 +223,24 @@ void demo_bp_cifar10_gpu() {
   pool3.Forward({conv3_top}, {pool3_top});
   relu3.Forward({pool3_top}, {relu3_top});
   // flatten the tensor
-  Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
-  fc4.Forward({relu3_top}, {fc4_top});
+  size_t relu3_top_dims_reshaped[4] = {relu3_top_dims[0], relu3_top_dims[3], relu3_top_dims[1], relu3_top_dims[2]};
+  Tensor<float> * reshaped_relu3_top_cpu = Tensor<float>::CreateTensorCPU(relu3_top_dims_reshaped);
+  Tensor<float> * relu3_top_cpu = Tensor<float>::TensorGPUtoCPU(relu3_top);
+  for(int b = 0; b < relu3_top_dims_reshaped[0]; b++) {
+    for(int c = 0; c < relu3_top_dims_reshaped[1]; c++) {
+      for(int h = 0; h < relu3_top_dims_reshaped[2]; h++) {
+        for(int w = 0; w < relu3_top_dims_reshaped[3]; w++) {
+          reshaped_relu3_top_cpu->at(b, c, h, w) = relu3_top_cpu->at(b, h, w, c);
+        }
+      }
+    }
+  }
+  Tensor<float> * reshaped_relu3_top = Tensor<float>::TensorCPUtoGPU(reshaped_relu3_top_cpu);
+  // flatten the tensor
+  // Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
+  Tensor<float>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
+  fc4.Forward({reshaped_relu3_top}, {fc4_top});
+  // fc4.Forward({relu3_top}, {fc4_top});
   fc5.Forward({fc4_top}, {fc5_top});
   softmax.Forward({fc5_top}, {sm_top});
   cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
