@@ -1,9 +1,16 @@
+force_backward: true
 name: "LeNet"
 layer {
   name: "data"
   type: "Input"
   top: "data"
   input_param { shape: { dim: 1 dim: 3 dim: 32 dim: 32 } }
+}
+layer {
+  name: "label"
+  type: "Input"
+  top: "label"
+  input_param { shape: { dim: 1 dim: 1 dim: 1 dim: 1 } }
 }
 layer {
   name: "conv1"
@@ -178,3 +185,10 @@ layer {
   bottom: "fc5"
   top: "prob"
 }
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "fc5"
+  bottom: "label"
+  top: "loss"
+} 
