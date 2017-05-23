@@ -49,7 +49,7 @@ void demo_bp_cifar10_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 10;
+  session->batch_size = 1;
   size_t batch_size = session->batch_size;
 
 
@@ -155,60 +155,60 @@ void demo_bp_cifar10_gpu() {
   checkCudaErrors(cudaStatus);
 
 
-  // printf("Loading weights ...\n");
+  printf("Loading weights ...\n");
 
-  // std::string model_path = "models/cifar10/model.txt";
-  // std::ifstream file(model_path);
+  std::string model_path = "models/cifar10/model.txt";
+  std::ifstream file(model_path);
 
-  // size_t conv1_w_dims[4] = {5,5,3,32};
-  // Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
-  // load_to_conv<float>(conv1_w, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv1_w, conv1.W_);
+  size_t conv1_w_dims[4] = {5,5,3,32};
+  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  load_to_conv<float>(conv1_w, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv1_w, conv1.W_);
 
-  // size_t conv1_b_dims[4] = {1,1,1,32};
-  // Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
-  // load_to_bias<float>(conv1_b, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv1_b, conv1.b_);
+  size_t conv1_b_dims[4] = {1,1,1,32};
+  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  load_to_bias<float>(conv1_b, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv1_b, conv1.b_);
 
-  // size_t conv2_w_dims[4] = {5,5,32,32};
-  // Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
-  // load_to_conv<float>(conv2_w, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv2_w, conv2.W_);
+  size_t conv2_w_dims[4] = {5,5,32,32};
+  Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
+  load_to_conv<float>(conv2_w, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv2_w, conv2.W_);
 
-  // size_t conv2_b_dims[4] = {1,1,1,32};
-  // Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
-  // load_to_bias<float>(conv2_b, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv2_b, conv2.b_);
+  size_t conv2_b_dims[4] = {1,1,1,32};
+  Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
+  load_to_bias<float>(conv2_b, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv2_b, conv2.b_);
 
-  //  size_t conv3_w_dims[4] = {5,5,32,64};
-  // Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
-  // load_to_conv<float>(conv3_w, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv3_w, conv3.W_);
+   size_t conv3_w_dims[4] = {5,5,32,64};
+  Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
+  load_to_conv<float>(conv3_w, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv3_w, conv3.W_);
 
-  // size_t conv3_b_dims[4] = {1,1,1,64};
-  // Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
-  // load_to_bias<float>(conv3_b, file);
-  // Tensor<float>::DataArrayCPUtoGPU(conv3_b, conv3.b_);
+  size_t conv3_b_dims[4] = {1,1,1,64};
+  Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
+  load_to_bias<float>(conv3_b, file);
+  Tensor<float>::DataArrayCPUtoGPU(conv3_b, conv3.b_);
 
-  // size_t fc4_w_dims[4] = {1,1,64,1024};
-  // Tensor<float>* fc4_w = Tensor<float>::CreateTensorCPU(fc4_w_dims);
-  // load_to_fc<float>(fc4_w, file);
-  // Tensor<float>::DataArrayCPUtoGPU(fc4_w, fc4.W_);
+  size_t fc4_w_dims[4] = {1,1,64,1024};
+  Tensor<float>* fc4_w = Tensor<float>::CreateTensorCPU(fc4_w_dims);
+  load_to_fc<float>(fc4_w, file);
+  Tensor<float>::DataArrayCPUtoGPU(fc4_w, fc4.W_);
 
-  // size_t fc4_b_dims[4] = {1,1,1,64};
-  // Tensor<float>* fc4_b = Tensor<float>::CreateTensorCPU(fc4_b_dims);
-  // load_to_bias<float>(fc4_b, file);
-  // Tensor<float>::DataArrayCPUtoGPU(fc4_b, fc4.b_);
+  size_t fc4_b_dims[4] = {1,1,1,64};
+  Tensor<float>* fc4_b = Tensor<float>::CreateTensorCPU(fc4_b_dims);
+  load_to_bias<float>(fc4_b, file);
+  Tensor<float>::DataArrayCPUtoGPU(fc4_b, fc4.b_);
 
-  // size_t fc5_w_dims[4] = {1,1,10,64};
-  // Tensor<float>* fc5_w = Tensor<float>::CreateTensorCPU(fc5_w_dims);
-  // load_to_fc<float>(fc5_w, file);
-  // Tensor<float>::DataArrayCPUtoGPU(fc5_w, fc5.W_);
+  size_t fc5_w_dims[4] = {1,1,10,64};
+  Tensor<float>* fc5_w = Tensor<float>::CreateTensorCPU(fc5_w_dims);
+  load_to_fc<float>(fc5_w, file);
+  Tensor<float>::DataArrayCPUtoGPU(fc5_w, fc5.W_);
 
-  // size_t fc5_b_dims[4] = {1,1,1,10};
-  // Tensor<float>* fc5_b = Tensor<float>::CreateTensorCPU(fc5_b_dims);
-  // load_to_bias<float>(fc5_b, file);
-  // Tensor<float>::DataArrayCPUtoGPU(fc5_b, fc5.b_);
+  size_t fc5_b_dims[4] = {1,1,1,10};
+  Tensor<float>* fc5_b = Tensor<float>::CreateTensorCPU(fc5_b_dims);
+  load_to_bias<float>(fc5_b, file);
+  Tensor<float>::DataArrayCPUtoGPU(fc5_b, fc5.b_);
 
 
   printf("Forward inference .. \n");
