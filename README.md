@@ -119,3 +119,9 @@ out activations:
 ```
 
 working in progress .. 
+
+## References 
+
+<img src="imgs/bp.png" width="700">
+
+- [Convolution layer backprop slides](https://www.slideshare.net/kuwajima/cnnbp)
