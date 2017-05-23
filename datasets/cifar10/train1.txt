@@ -1,4 +1,4 @@
-datasets/cifar10/bmp_imgs/00001.bmp 0
+datasets/cifar10/bmp_imgs/00001.bmp 6
 datasets/cifar10/bmp_imgs/00002.bmp 1
 datasets/cifar10/bmp_imgs/00003.bmp 2
 datasets/cifar10/bmp_imgs/00004.bmp 3

@@ -29,7 +29,7 @@ __global__ void show_tensor(Tensor<float> * tensor) {
     for(int l = 0; l < d4; l++) {
       for(int j = 0; j < d2; j++) {
         for(int k = 0; k < d3; k++) {
-          printf("%f ", tensor->at(i, j, k, l));
+          printf("%e ", tensor->at(i, j, k, l));
         }
         printf("\n");
       }

@@ -49,7 +49,7 @@ namespace CrossEntropyGPUKernels {
     }
     Dtype label = bottom_1->at(batch_idx,0,0,0);
     Dtype p = bottom_0->at(batch_idx,0,0,label);
-    bottom_diff_0->at(batch_idx,0,0,label) = top_diff->at(0,0,0,0)/(p+0.0001);
+    bottom_diff_0->at(batch_idx,0,0,label) = top_diff->at(0,0,0,0)/(p+0.000001);
   }
 
 }
@@ -131,7 +131,7 @@ void CrossEntropyLoss<Dtype>::Backward (const std::vector<Tensor<Dtype>*>& tops,
       }
       Dtype label = bottom_1->at(i,0,0,0);
       Dtype p = bottom_0->at(i,0,0,label);
-      bottom_diff_0->at(i,0,0,label) = top_diff->at(0,0,0,0)/(p+0.0001);
+      bottom_diff_0->at(i,0,0,label) = top_diff->at(0,0,0,0)/(p+0.000001);
     }
   }
 }

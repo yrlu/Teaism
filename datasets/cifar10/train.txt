@@ -1,1 +1,1 @@
-datasets/cifar10/bmp_imgs/00006.bmp 1
+datasets/cifar10/bmp_imgs/00001.bmp 6
