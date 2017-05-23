@@ -252,8 +252,8 @@ void demo_bp_cifar10_gpu() {
     cel_layer.Backward({cel_top}, {cel_top}, {sm_top, data_tops[1]}, {sm_top_diff, cel_loss_diff});
     softmax.Backward({sm_top}, {sm_top_diff}, {fc5_top}, {fc5_top_diff});
     fc5.Backward({fc5_top}, {fc5_top_diff}, {fc4_top}, {fc4_top_diff});
-    show_tensor<<<1, 1>>>(fc4_top_diff);
     fc4.Backward({fc4_top}, {fc4_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
+    
     // fc4.Backward({fc4_top}, {fc4_top_diff}, {relu3_top}, {relu3_top_diff});
     // Tensor<float>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
     // Tensor<float>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
@@ -281,38 +281,46 @@ void demo_bp_cifar10_gpu() {
 
     Tensor<float> * relu3_top_diff = Tensor<float>::TensorCPUtoGPU(relu3_top_diff_cpu);
 
+    
+
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
     // relu3.Backward({pool3_top}, {pool3_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
-    relu3.Backward({pool3_top}, {pool3_top_diff}, {relu3_top}, {relu3_top_diff});
+    relu3.Backward({relu3_top}, {relu3_top_diff}, {pool3_top}, {pool3_top_diff});
+
+    
+
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
-    pool3.Backward({conv3_top}, {conv3_top_diff}, {pool3_top}, {pool3_top_diff});
+    pool3.Backward({pool3_top}, {pool3_top_diff}, {conv3_top}, {conv3_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
+
     // conv3.Backward({relu2_top}, {relu2_top_diff}, {conv3_top}, {conv3_top_diff});
     conv3.Backward({conv3_top}, {conv3_top_diff}, {relu2_top}, {relu2_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
-    // relu2.Backward({pool2_top}, {pool2_top_diff}, {relu2_top}, {relu2_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
-    // pool2.Backward({conv2_top}, {conv2_top_diff}, {pool2_top}, {pool2_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
-    // conv2.Backward({relu1_top}, {relu1_top_diff}, {conv2_top}, {conv2_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
-    // relu1.Backward({pool1_top}, {pool1_top_diff}, {relu1_top}, {relu1_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
-    // pool1.Backward({conv1_top}, {conv1_top_diff}, {pool1_top}, {pool1_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
-    // conv1.Backward({data_tops[0]}, {data_top_diff0}, {conv1_top}, {conv1_top_diff});
-    // cudaStatus = cudaGetLastError();
-    // checkCudaErrors(cudaStatus);
 
+    relu2.Backward({relu2_top}, {relu2_top_diff}, {pool2_top}, {pool2_top_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+    pool2.Backward({pool2_top}, {pool2_top_diff}, {conv2_top}, {conv2_top_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+    conv2.Backward({conv2_top}, {conv2_top_diff}, {relu1_top}, {relu1_top_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+    relu1.Backward({relu1_top}, {relu1_top_diff}, {pool1_top}, {pool1_top_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+    pool1.Backward({pool1_top}, {pool1_top_diff}, {conv1_top}, {conv1_top_diff});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+    conv1.Backward({conv1_top}, {conv1_top_diff}, {data_tops[0]}, {data_top_diff0});
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
+    show_tensor<<<1, 1>>>(conv1_top_diff);
 
     cudaStatus = cudaDeviceSynchronize();
     checkCudaErrors(cudaStatus);
