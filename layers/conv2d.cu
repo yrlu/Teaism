@@ -301,13 +301,15 @@ __global__ void ComputeWDiffKernel(Tensor<Dtype> * bottom, Tensor<Dtype> * top_d
   if(b<0||b>=batch_size||i < 0||i >= in_ch || o < 0 || o >= out_ch) return;
   
   size_t kernel_height = W_diff_->GetDims()[0];
-  size_t kernel_width = W_diff_->GetDims()[1]; 
+  size_t kernel_width = W_diff_->GetDims()[1];
+
   for(int h = 0; h < kernel_height; h++) {
     for(int w = 0; w < kernel_width; w++) {
       Dtype sum = 0;
       if(padding == SAME) {
         for(int thi = 0; thi < th; thi++) {
           for(int twi = 0; twi < tw; twi++) {
+            // top_diff->at(b, thi, twi, o);
             sum += bottom->atPadding(b, h-kernel_height/2 + thi, w - kernel_width/2 + twi, i) * top_diff->at(b, thi, twi, o);
           }
         }
@@ -335,10 +337,29 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
   InitDiffs();
   FlipWeights();
   if(Session::GetSession()->gpu) {
+    size_t top_diff_dims[4];
+    size_t bottoms_diff_dims[4];
+    size_t bottoms_dims[4];
+    size_t W_flipped_dims[4];
+    size_t W_diff_dims[4];
+
+    // Tensor<Dtype>::GetTensorGPUDims(tops_diff[0], top_diff_dims);
+    // Tensor<Dtype>::GetTensorGPUDims(bottoms_diff[0], bottoms_diff_dims);
+    // Tensor<Dtype>::GetTensorGPUDims(bottoms[0], bottoms_dims);
+    // Tensor<Dtype>::GetTensorGPUDims(W_flipped_, W_flipped_dims);
+    // Tensor<Dtype>::GetTensorGPUDims(W_diff_, W_diff_dims);
+
+    // printf("%d %d %d %d \n", top_diff_dims[0], top_diff_dims[1], top_diff_dims[2], top_diff_dims[3]);
+    // printf("%d %d %d %d \n", bottoms_diff_dims[0], bottoms_diff_dims[1], bottoms_diff_dims[2], bottoms_diff_dims[3]);
+    // printf("%d %d %d %d \n", bottoms_dims[0], bottoms_dims[1], bottoms_dims[2], bottoms_dims[3]);
+    // printf("%d %d %d %d \n", W_flipped_dims[0], W_flipped_dims[1], W_flipped_dims[2], W_flipped_dims[3]);
+    // printf("%d %d %d %d \n", W_diff_dims[0], W_diff_dims[1], W_diff_dims[2], W_diff_dims[3]);
+
     ComputationsGPU::ConvolutionGPU(tops_diff[0], bottoms_diff[0], W_flipped_, (Tensor<Dtype>*)NULL, stride, padding);
     // assumes stride = 1
 
     size_t batch_size = Session::GetSession()->batch_size;
+    // dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/8+1, out_channels/4+1);
     dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/8+1, out_channels/4+1);
     dim3 threadsPerBlock(BLOCKDIM, 8, 4);
     ComputeWDiffKernel<<<blocksInGrid, threadsPerBlock>>>(bottoms[0], tops_diff[0], W_diff_, b_diff_, stride, padding);

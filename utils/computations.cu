@@ -8,7 +8,7 @@
 
 namespace ConvGPUKernels {
 
-    template <class Dtype>
+  template <class Dtype>
   __global__ void ForwardGPUKernel2(Tensor<Dtype> * bottom, Tensor<Dtype> * top, Tensor<Dtype> * W_, Tensor<Dtype> * b_, int hs, int ws, int stride, PADDING padding) {
     int bi = blockIdx.y/hs;
     int o = blockIdx.x/ws;
@@ -44,8 +44,8 @@ namespace ConvGPUKernels {
       for(int j = 0; j < kernel_width; j++) {
         for(int c = 0; c < in_channels; c++) {
           // (n, hei, wid, out_channelsnnel),   // (hei, wid, input, output)
-          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W_->at(i, j, c, o);
-          sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
+          sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * W_->at(i, j, c, o);
+          // sum += bottom->atPadding(bi, y+i-int(kernel_height/2), x+j-int(kernel_width/2), c) * k[GetIdx(w_dims, i, j, c)];
         }
       }
     }

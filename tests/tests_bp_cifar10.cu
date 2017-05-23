@@ -223,7 +223,8 @@ void demo_bp_cifar10_gpu() {
     pool3.Backward({conv3_top}, {conv3_top_diff}, {pool3_top}, {pool3_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
-    conv3.Backward({relu2_top}, {relu2_top_diff}, {conv3_top}, {conv3_top_diff});
+    // conv3.Backward({relu2_top}, {relu2_top_diff}, {conv3_top}, {conv3_top_diff});
+    conv3.Backward({conv3_top}, {conv3_top_diff}, {relu2_top}, {relu2_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
     // relu2.Backward({pool2_top}, {pool2_top_diff}, {relu2_top}, {relu2_top_diff});
@@ -244,6 +245,10 @@ void demo_bp_cifar10_gpu() {
     // conv1.Backward({data_tops[0]}, {data_top_diff0}, {conv1_top}, {conv1_top_diff});
     // cudaStatus = cudaGetLastError();
     // checkCudaErrors(cudaStatus);
+
+
+    cudaStatus = cudaDeviceSynchronize();
+    checkCudaErrors(cudaStatus);
 
   }
 
@@ -271,9 +276,6 @@ void demo_bp_cifar10_gpu() {
       }
     }
   }
-
-  cudaStatus = cudaDeviceSynchronize();
-  checkCudaErrors(cudaStatus);
 
 }
 
