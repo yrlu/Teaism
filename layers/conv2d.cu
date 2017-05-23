@@ -218,7 +218,7 @@ __global__ void FlipKernel(Tensor<Dtype> * W_, Tensor<Dtype> * W_flipped_) {
     for(int w = 0; w < kernel_width; w++) {
       for(int i = 0; i < in_channels; i++) {
         for(int o = 0; o < out_channels; o++) {
-          W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
+          W_flipped_->at(kernel_height-1-h, kernel_width-1-w, o, i) = W_->at(h, w, i, o);
         }
       }
     }
@@ -243,7 +243,7 @@ void Conv2D<Dtype>::FlipWeights() {
       for(int w = 0; w < kernel_width; w++) {
         for(int i = 0; i < in_channels; i++) {
           for(int o = 0; o < out_channels; o++) {
-            W_flipped_->at(kernel_height-1-h, kernel_width-1-h, o, i) = W_->at(h, w, i, o);
+            W_flipped_->at(kernel_height-1-h, kernel_width-1-w, o, i) = W_->at(h, w, i, o);
           }
         }
       }
