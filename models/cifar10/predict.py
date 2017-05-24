@@ -26,8 +26,8 @@ for i in range(1):
 #  print net.blobs['prob'].data.shape
 #  print net.params['conv1'][0].data
 #  print net.params['conv1'][0].data.shape
-  print net.blobs['fc4'].diff[...].tolist()
-  print net.blobs['fc4'].diff.shape
-#  print net.params['fc5'][0].diff
-#  print net.params['fc5'][0].diff.shape
+#  print net.blobs['conv2'].diff[...].tolist()[0][0]
+#  print net.blobs['conv2'].diff.shape
+  print net.params['conv2'][0].diff
+  print net.params['conv2'][0].diff.shape
 
