@@ -49,11 +49,11 @@ void demo_bp_cifar10_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 1;
+  session->batch_size = 64;
   size_t batch_size = session->batch_size;
 
-
-  Data<float> data_layer(batch_size, "datasets/cifar10/train1.txt");
+  
+  Data<float> data_layer(batch_size, "datasets/cifar10/train.txt");
   // vector<size_t*> data_tops_dims;
   size_t data_tops_dims0[4];
   size_t data_tops_dims1[4];
@@ -63,7 +63,7 @@ void demo_bp_cifar10_gpu() {
   data_tops.push_back(Tensor<float>::CreateTensorGPU(data_tops_dims1));
   Tensor<float> * data_top_diff0 = Tensor<float>::CreateTensorGPU(data_tops_dims0);
 
-  Conv2D<float> conv1(5,5,3,32,1, new GaussianKernelInitializer<float>(0.1), SAME);
+  Conv2D<float> conv1(5,5,3,32,1, new GaussianKernelInitializer<float>(0.0001), SAME);
   size_t conv1_top_dims[4];
   conv1.GetTopsDims({data_tops_dims0}, {conv1_top_dims});
   Tensor<float> * conv1_top = Tensor<float>::CreateTensorGPU(conv1_top_dims);
@@ -81,7 +81,7 @@ void demo_bp_cifar10_gpu() {
   Tensor<float> * relu1_top = Tensor<float>::CreateTensorGPU(relu1_top_dims);
   Tensor<float> * relu1_top_diff = Tensor<float>::CreateTensorGPU(relu1_top_dims);
 
-  Conv2D<float> conv2(5,5,32,32,1, new GaussianKernelInitializer<float>(0.1), SAME);
+  Conv2D<float> conv2(5,5,32,32,1, new GaussianKernelInitializer<float>(0.01), SAME);
   size_t conv2_top_dims[4];
   conv2.GetTopsDims({relu1_top_dims}, {conv2_top_dims});
   Tensor<float> * conv2_top = Tensor<float>::CreateTensorGPU(conv2_top_dims);
@@ -99,7 +99,7 @@ void demo_bp_cifar10_gpu() {
   Tensor<float> * relu2_top = Tensor<float>::CreateTensorGPU(relu2_top_dims);
   Tensor<float> * relu2_top_diff = Tensor<float>::CreateTensorGPU(relu2_top_dims);
 
-  Conv2D<float> conv3(5,5,32,64,1, new GaussianKernelInitializer<float>(0.1), SAME);
+  Conv2D<float> conv3(5,5,32,64,1, new GaussianKernelInitializer<float>(0.01), SAME);
   size_t conv3_top_dims[4];
   conv3.GetTopsDims({relu2_top_dims}, {conv3_top_dims});
   Tensor<float> * conv3_top = Tensor<float>::CreateTensorGPU(conv3_top_dims);
@@ -123,13 +123,13 @@ void demo_bp_cifar10_gpu() {
   to_fc4_dims[1] = 1;
   to_fc4_dims[2] = 1;
   to_fc4_dims[3] = relu3_top_dims[1]*relu3_top_dims[2]*relu3_top_dims[3];
-  FC<float> fc4(to_fc4_dims[3],64);
+  FC<float> fc4(to_fc4_dims[3],64, new GaussianKernelInitializer<float>(0.1));
   size_t fc4_top_dims[4];
   fc4.GetTopsDims({to_fc4_dims}, {fc4_top_dims});
   Tensor<float> * fc4_top = Tensor<float>::CreateTensorGPU(fc4_top_dims);
   Tensor<float> * fc4_top_diff = Tensor<float>::CreateTensorGPU(fc4_top_dims);
 
-  FC<float> fc5(64, 10);
+  FC<float> fc5(64, 10, new GaussianKernelInitializer<float>(0.1));
   size_t fc5_top_dims[4];
   fc5.GetTopsDims({fc4_top_dims}, {fc5_top_dims});
   Tensor<float> * fc5_top = Tensor<float>::CreateTensorGPU(fc5_top_dims);
@@ -147,7 +147,7 @@ void demo_bp_cifar10_gpu() {
   size_t ce_loss_dims[4] = {batch_size, 1, 1, 1};
   Tensor<float> * cel_top = Tensor<float>::CreateTensorGPU(ce_top_dims);
   Tensor<float> * cel_top_diff = Tensor<float>::CreateTensorCPU(ce_top_dims);
-  Tensor<float>* cel_loss_diff = Tensor<float>::CreateTensorGPU(ce_loss_dims);
+  Tensor<float> * cel_loss_diff = Tensor<float>::CreateTensorGPU(ce_loss_dims);
 
 
   printf("network finished setup: %3.1f ms \n", stopTimer());
@@ -156,104 +156,114 @@ void demo_bp_cifar10_gpu() {
   checkCudaErrors(cudaStatus);
 
 
-  printf("Loading weights ...\n");
+  // printf("Loading weights ...\n");
 
-  std::string model_path = "models/cifar10/model.txt";
-  std::ifstream file(model_path);
+  // std::string model_path = "models/cifar10/model.txt";
+  // std::ifstream file(model_path);
 
-  size_t conv1_w_dims[4] = {5,5,3,32};
-  Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
-  load_to_conv<float>(conv1_w, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv1_w, conv1.W_);
+  // size_t conv1_w_dims[4] = {5,5,3,32};
+  // Tensor<float>* conv1_w = Tensor<float>::CreateTensorCPU(conv1_w_dims);
+  // load_to_conv<float>(conv1_w, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv1_w, conv1.W_);
 
-  size_t conv1_b_dims[4] = {1,1,1,32};
-  Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
-  load_to_bias<float>(conv1_b, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv1_b, conv1.b_);
+  // size_t conv1_b_dims[4] = {1,1,1,32};
+  // Tensor<float>* conv1_b = Tensor<float>::CreateTensorCPU(conv1_b_dims);
+  // load_to_bias<float>(conv1_b, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv1_b, conv1.b_);
 
-  size_t conv2_w_dims[4] = {5,5,32,32};
-  Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
-  load_to_conv<float>(conv2_w, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv2_w, conv2.W_);
+  // size_t conv2_w_dims[4] = {5,5,32,32};
+  // Tensor<float>* conv2_w = Tensor<float>::CreateTensorCPU(conv2_w_dims);
+  // load_to_conv<float>(conv2_w, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv2_w, conv2.W_);
 
-  size_t conv2_b_dims[4] = {1,1,1,32};
-  Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
-  load_to_bias<float>(conv2_b, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv2_b, conv2.b_);
+  // size_t conv2_b_dims[4] = {1,1,1,32};
+  // Tensor<float>* conv2_b = Tensor<float>::CreateTensorCPU(conv2_b_dims);
+  // load_to_bias<float>(conv2_b, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv2_b, conv2.b_);
 
-   size_t conv3_w_dims[4] = {5,5,32,64};
-  Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
-  load_to_conv<float>(conv3_w, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv3_w, conv3.W_);
+  //  size_t conv3_w_dims[4] = {5,5,32,64};
+  // Tensor<float>* conv3_w = Tensor<float>::CreateTensorCPU(conv3_w_dims);
+  // load_to_conv<float>(conv3_w, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv3_w, conv3.W_);
 
-  size_t conv3_b_dims[4] = {1,1,1,64};
-  Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
-  load_to_bias<float>(conv3_b, file);
-  Tensor<float>::DataArrayCPUtoGPU(conv3_b, conv3.b_);
+  // size_t conv3_b_dims[4] = {1,1,1,64};
+  // Tensor<float>* conv3_b = Tensor<float>::CreateTensorCPU(conv3_b_dims);
+  // load_to_bias<float>(conv3_b, file);
+  // Tensor<float>::DataArrayCPUtoGPU(conv3_b, conv3.b_);
 
-  size_t fc4_w_dims[4] = {1,1,64,1024};
-  Tensor<float>* fc4_w = Tensor<float>::CreateTensorCPU(fc4_w_dims);
-  load_to_fc<float>(fc4_w, file);
-  Tensor<float>::DataArrayCPUtoGPU(fc4_w, fc4.W_);
+  // size_t fc4_w_dims[4] = {1,1,64,1024};
+  // Tensor<float>* fc4_w = Tensor<float>::CreateTensorCPU(fc4_w_dims);
+  // load_to_fc<float>(fc4_w, file);
+  // Tensor<float>::DataArrayCPUtoGPU(fc4_w, fc4.W_);
 
-  size_t fc4_b_dims[4] = {1,1,1,64};
-  Tensor<float>* fc4_b = Tensor<float>::CreateTensorCPU(fc4_b_dims);
-  load_to_bias<float>(fc4_b, file);
-  Tensor<float>::DataArrayCPUtoGPU(fc4_b, fc4.b_);
+  // size_t fc4_b_dims[4] = {1,1,1,64};
+  // Tensor<float>* fc4_b = Tensor<float>::CreateTensorCPU(fc4_b_dims);
+  // load_to_bias<float>(fc4_b, file);
+  // Tensor<float>::DataArrayCPUtoGPU(fc4_b, fc4.b_);
 
-  size_t fc5_w_dims[4] = {1,1,10,64};
-  Tensor<float>* fc5_w = Tensor<float>::CreateTensorCPU(fc5_w_dims);
-  load_to_fc<float>(fc5_w, file);
-  Tensor<float>::DataArrayCPUtoGPU(fc5_w, fc5.W_);
+  // size_t fc5_w_dims[4] = {1,1,10,64};
+  // Tensor<float>* fc5_w = Tensor<float>::CreateTensorCPU(fc5_w_dims);
+  // load_to_fc<float>(fc5_w, file);
+  // Tensor<float>::DataArrayCPUtoGPU(fc5_w, fc5.W_);
 
-  size_t fc5_b_dims[4] = {1,1,1,10};
-  Tensor<float>* fc5_b = Tensor<float>::CreateTensorCPU(fc5_b_dims);
-  load_to_bias<float>(fc5_b, file);
-  Tensor<float>::DataArrayCPUtoGPU(fc5_b, fc5.b_);
+  // size_t fc5_b_dims[4] = {1,1,1,10};
+  // Tensor<float>* fc5_b = Tensor<float>::CreateTensorCPU(fc5_b_dims);
+  // load_to_bias<float>(fc5_b, file);
+  // Tensor<float>::DataArrayCPUtoGPU(fc5_b, fc5.b_);
 
-
+  
   printf("Forward inference .. \n");
-  data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
-  conv1.Forward({data_tops[0]}, {conv1_top});
-  pool1.Forward({conv1_top}, {pool1_top});
-  relu1.Forward({pool1_top}, {relu1_top});
-  conv2.Forward({relu1_top}, {conv2_top});
-  pool2.Forward({conv2_top}, {pool2_top});
-  relu2.Forward({pool2_top}, {relu2_top});
-  conv3.Forward({relu2_top}, {conv3_top});
-  pool3.Forward({conv3_top}, {pool3_top});
-  relu3.Forward({pool3_top}, {relu3_top});
-  // flatten the tensor
-  size_t relu3_top_dims_reshaped[4] = {relu3_top_dims[0], relu3_top_dims[3], relu3_top_dims[1], relu3_top_dims[2]};
-  Tensor<float> * reshaped_relu3_top_cpu = Tensor<float>::CreateTensorCPU(relu3_top_dims_reshaped);
-  Tensor<float> * relu3_top_cpu = Tensor<float>::TensorGPUtoCPU(relu3_top);
-  for(int b = 0; b < relu3_top_dims_reshaped[0]; b++) {
-    for(int c = 0; c < relu3_top_dims_reshaped[1]; c++) {
-      for(int h = 0; h < relu3_top_dims_reshaped[2]; h++) {
-        for(int w = 0; w < relu3_top_dims_reshaped[3]; w++) {
-          reshaped_relu3_top_cpu->at(b, c, h, w) = relu3_top_cpu->at(b, h, w, c);
+
+  const float lr = 0.01;
+
+  for(int i = 0; i < 20000; i++) {
+
+    data_layer.Forward(std::vector<Tensor<float>*> (), data_tops);
+    conv1.Forward({data_tops[0]}, {conv1_top});
+    pool1.Forward({conv1_top}, {pool1_top});
+    relu1.Forward({pool1_top}, {relu1_top});
+    conv2.Forward({relu1_top}, {conv2_top});
+    pool2.Forward({conv2_top}, {pool2_top});
+    relu2.Forward({pool2_top}, {relu2_top});
+    conv3.Forward({relu2_top}, {conv3_top});
+    pool3.Forward({conv3_top}, {pool3_top});
+    relu3.Forward({pool3_top}, {relu3_top});
+    // flatten the tensor
+    size_t relu3_top_dims_reshaped[4] = {relu3_top_dims[0], relu3_top_dims[3], relu3_top_dims[1], relu3_top_dims[2]};
+    Tensor<float> * reshaped_relu3_top_cpu = Tensor<float>::CreateTensorCPU(relu3_top_dims_reshaped);
+    Tensor<float> * relu3_top_cpu = Tensor<float>::TensorGPUtoCPU(relu3_top);
+    for(int b = 0; b < relu3_top_dims_reshaped[0]; b++) {
+      for(int c = 0; c < relu3_top_dims_reshaped[1]; c++) {
+        for(int h = 0; h < relu3_top_dims_reshaped[2]; h++) {
+          for(int w = 0; w < relu3_top_dims_reshaped[3]; w++) {
+            reshaped_relu3_top_cpu->at(b, c, h, w) = relu3_top_cpu->at(b, h, w, c);
+          }
         }
       }
     }
-  }
-  Tensor<float> * reshaped_relu3_top = Tensor<float>::TensorCPUtoGPU(reshaped_relu3_top_cpu);
-  Tensor<float> * reshaped_relu3_top_diff = Tensor<float>::CreateTensorGPU(to_fc4_dims);
-  // flatten the tensor
-  // Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
-  Tensor<float>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
-  fc4.Forward({reshaped_relu3_top}, {fc4_top});
-  // fc4.Forward({relu3_top}, {fc4_top});
-  fc5.Forward({fc4_top}, {fc5_top});
-  softmax.Forward({fc5_top}, {sm_top});
-  cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
+    Tensor<float> * reshaped_relu3_top = Tensor<float>::TensorCPUtoGPU(reshaped_relu3_top_cpu);
+    Tensor<float> * reshaped_relu3_top_diff = Tensor<float>::CreateTensorGPU(to_fc4_dims);
+    // flatten the tensor
+    // Tensor<float>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
+    Tensor<float>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
+    fc4.Forward({reshaped_relu3_top}, {fc4_top});
+    // fc4.Forward({relu3_top}, {fc4_top});
+    fc5.Forward({fc4_top}, {fc5_top});
+    softmax.Forward({fc5_top}, {sm_top});
+    cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
+
+    if (i % 10 == 0) {
+      show_tensor<<<1,1>>>(cel_top);
+    }
 
 
-  for(int i = 0; i < 1; i++) {
+
     cel_layer.Backward({cel_top}, {cel_top}, {sm_top, data_tops[1]}, {sm_top_diff, cel_loss_diff});
     softmax.Backward({sm_top}, {sm_top_diff}, {fc5_top}, {fc5_top_diff});
     fc5.Backward({fc5_top}, {fc5_top_diff}, {fc4_top}, {fc4_top_diff});
+    fc5.UpdateWb(lr);
     fc4.Backward({fc4_top}, {fc4_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
-    
+    fc4.UpdateWb(lr);
     // fc4.Backward({fc4_top}, {fc4_top_diff}, {relu3_top}, {relu3_top_diff});
     // Tensor<float>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
     // Tensor<float>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
@@ -279,16 +289,12 @@ void demo_bp_cifar10_gpu() {
       }
     }
 
-    Tensor<float> * relu3_top_diff = Tensor<float>::TensorCPUtoGPU(relu3_top_diff_cpu);
-
-    
+    Tensor<float> * relu3_top_diff = Tensor<float>::TensorCPUtoGPU(relu3_top_diff_cpu);    
 
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
     // relu3.Backward({pool3_top}, {pool3_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
     relu3.Backward({relu3_top}, {relu3_top_diff}, {pool3_top}, {pool3_top_diff});
-
-    
 
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
@@ -301,6 +307,11 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
+    conv3.UpdateWb(lr);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
+
     relu2.Backward({relu2_top}, {relu2_top_diff}, {pool2_top}, {pool2_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
@@ -308,9 +319,13 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
     conv2.Backward({conv2_top}, {conv2_top_diff}, {relu1_top}, {relu1_top_diff});
-    show_tensor<<<1,1>>>(conv2.W_diff_);
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
+
+    conv2.UpdateWb(lr);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
+
     relu1.Backward({relu1_top}, {relu1_top_diff}, {pool1_top}, {pool1_top_diff});
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
@@ -321,15 +336,15 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    // show_tensor<<<1, 1>>>(conv1_top_diff);
+    conv1.UpdateWb(lr);
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
 
     cudaStatus = cudaDeviceSynchronize();
     checkCudaErrors(cudaStatus);
 
+    
   }
-
-
-
 
   printf("Prediction: \n");
   Tensor<float>* out = Tensor<float>::TensorGPUtoCPU(sm_top);
