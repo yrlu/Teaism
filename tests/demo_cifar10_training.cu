@@ -52,7 +52,7 @@ void demo_bp_cifar10_gpu() {
   session->batch_size = 64;
   size_t batch_size = session->batch_size;
 
-  
+
   Data<float> data_layer(batch_size, "datasets/cifar10/train.txt");
   // vector<size_t*> data_tops_dims;
   size_t data_tops_dims0[4];
@@ -214,7 +214,7 @@ void demo_bp_cifar10_gpu() {
   
   printf("Forward inference .. \n");
 
-  const float lr = 0.01;
+  const float lr = 0.00000001;
 
   for(int i = 0; i < 20000; i++) {
 
@@ -252,10 +252,9 @@ void demo_bp_cifar10_gpu() {
     softmax.Forward({fc5_top}, {sm_top});
     cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
 
-    if (i % 10 == 0) {
+    if (i % 1 == 0) {
       show_tensor<<<1,1>>>(cel_top);
     }
-
 
 
     cel_layer.Backward({cel_top}, {cel_top}, {sm_top, data_tops[1]}, {sm_top_diff, cel_loss_diff});

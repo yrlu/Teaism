@@ -20,6 +20,7 @@
 #define BLOCKDIM 32
 
 
+
 template <class Dtype>
 class Conv2D: public Layer<Dtype> {
 public:
