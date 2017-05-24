@@ -23,7 +23,7 @@ namespace SoftmaxGPUKernels {
     Dtype max_value = 0;
     for (int j = 0; j < nchannels; ++j) {
       if (bottom->at(batch_idx,0,0,j) > max_value) {
-        max_value = 0;//bottom->at(batch_idx,0,0,j);
+        max_value = bottom->at(batch_idx,0,0,j);
       }
     }
 
@@ -112,7 +112,7 @@ void Softmax<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const s
       max_value = 0;
       for (int j = 0; j < nchannels; ++j) {
         if (bottoms[0]->at(i,0,0,j) > max_value) {
-          max_value = 0;//bottoms[0]->at(i,0,0,j);
+          max_value = bottoms[0]->at(i,0,0,j);
         }
       }
 
