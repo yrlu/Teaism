@@ -5,6 +5,7 @@
 #include "utils/helper_cuda.h"
 #include <cmath>
 #include <vector>
+#include <random>
 
 #define PI (3.1415926535)
 
@@ -18,7 +19,7 @@ public:
   GaussianKernelInitializer(double sigma): sigma_(sigma) {}
   void Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b, bool gpu = true) const;
 
-  __host__ __device__ static void InitGaussian(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma_) {
+  __host__ static void InitGaussian(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma_) {
     Dtype* w_data_array = W->GetDataPtr();
     const size_t *w_dims = W->GetDims();
     
@@ -33,26 +34,30 @@ public:
         double y_mu_ = (w_dims[0]-1)/2;
         for (int x = 0; x < w_dims[1]; ++x) {
           for (int y = 0; y < w_dims[0]; ++y) {
-            double g = exp(-0.5 * (pow((x - x_mu_) / sigma_, 2.0) + pow((y - y_mu_) / sigma_, 2.0))) / (2 * PI * sigma_ * sigma_);
-            int idx[4] = {y, x, i, j};
-            W->at(idx) = (Dtype)g;
+            // double g = exp(-0.5 * (pow((x - x_mu_) / sigma_, 2.0) + pow((y - y_mu_) / sigma_, 2.0))) / (2 * PI * sigma_ * sigma_);
+            // int idx[4] = {y, x, i, j};
+
+            std::default_random_engine generator;
+            std::normal_distribution<double> distribution(0.0, sigma_);
+            double g = distribution(generator);
+            W->at(y, x, i, j) = (Dtype)g;
           }
         }
 
-        // normalize the filter
-        Dtype sum = 0.0;
-        for (int x = 0; x < w_dims[1]; ++x) {
-          for (int y = 0; y < w_dims[0]; ++y) {
-            int idx[4] = {y, x, i, j};
-            sum = sum + W->at(idx);
-          }
-        }
-        for (int x = 0; x < w_dims[1]; ++x) {
-          for (int y = 0; y < w_dims[0]; ++y) {
-            int idx[4] = {y, x, i, j};
-            W->at(idx) /= sum;
-          }
-        }
+        // // normalize the filter
+        // Dtype sum = 0.0;
+        // for (int x = 0; x < w_dims[1]; ++x) {
+        //   for (int y = 0; y < w_dims[0]; ++y) {
+        //     int idx[4] = {y, x, i, j};
+        //     sum = sum + W->at(idx);
+        //   }
+        // }
+        // for (int x = 0; x < w_dims[1]; ++x) {
+        //   for (int y = 0; y < w_dims[0]; ++y) {
+        //     int idx[4] = {y, x, i, j};
+        //     W->at(idx) /= sum;
+        //   }
+        // }
       }
     }
 
@@ -72,7 +77,14 @@ __global__ void InitializeGPU(Tensor<Dtype> * W, Tensor<Dtype> *b, const double 
 template <class Dtype>
 void GaussianKernelInitializer<Dtype>::Initialize(Tensor<Dtype>* W, Tensor<Dtype>* b, bool gpu) const {
   if (gpu) {
-    InitializeGPU<<<1, 1>>>(W, b, sigma_);
+    // InitializeGPU<<<1, 1>>>(W, b, sigma_);
+    Tensor<Dtype> * W_tmp = Tensor<Dtype>::TensorGPUtoCPU(W);
+    Tensor<Dtype> * b_tmp = Tensor<Dtype>::TensorGPUtoCPU(b);
+    GaussianKernelInitializer<Dtype>::InitGaussian(W_tmp, b_tmp, sigma_);
+    Tensor<Dtype>::DataArrayCPUtoGPU(W_tmp, W);
+    Tensor<Dtype>::DataArrayCPUtoGPU(b_tmp, b);
+    delete W_tmp;
+    delete b_tmp;
   } else {
     GaussianKernelInitializer<Dtype>::InitGaussian(W, b, sigma_);
   }
