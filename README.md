@@ -8,7 +8,7 @@ A minimalistic CUDA-based convolutional neural network library.
 ## Motivation
 
 - Convolutional neural networks (CNNs) are at the core of computer vision applications recently
-- Mobile/embedded platforms, e.g. quadrotors, demand fast and light-weighted CNN libraries. Modern deep learning libraries heavily depends on third-party libraries and hence are hard to be configured on mobile/embedded platforms (like Nvidia TX1). This effort aims at developing a full-fledged yet minimalistic CNN library that depends only on C++0x and CUDA 8.0.
+- Mobile/embedded platforms, e.g. quadrotors, demand fast and light-weighted CNN libraries. Modern deep learning libraries heavily depends on third-party libraries and hence are hard to be configured on mobile/embedded platforms (like Nvidia TX1). This effort aims at developing a full-fledged yet minimalistic CNN library that depends only on C++0x and CUDA 8.0 from scratch.
 
 | Library  | Dependencies |
 | ------------- | ------------- |
@@ -119,3 +119,9 @@ out activations:
 ```
 
 working in progress .. 
+
+## References 
+
+<img src="imgs/bp.jpg" width="700">
+
+- [Convolution layer backprop slides](https://www.slideshare.net/kuwajima/cnnbp)
