@@ -100,6 +100,7 @@ void Data<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std:
   } else {
     FetchBatchData(tops[0], tops[1]);
   }
+  begin_ = end_
 }
 
 template <class Dtype>
