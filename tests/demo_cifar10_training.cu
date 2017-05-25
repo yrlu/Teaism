@@ -27,8 +27,8 @@ __global__ void show_tensor(Tensor<double> * tensor) {
 
         for(int k = 0; k < d3; k++) {
     for(int l = 0; l < d4; l++) {
-  for(int i = 0; i < d1; i++) {
       for(int j = 0; j < d2; j++) {
+  for(int i = 0; i < d1; i++) {
           printf("%e ", tensor->at(i, j, k, l));
         }
         printf("\n");
@@ -53,21 +53,21 @@ void print_acc(int iter, int batch_size, Tensor<double>* sm_top_gpu, Tensor<doub
     double max_val = sm_top_cpu->at(i, 0, 0, 0);
     int label = 0;
     for(int j = 0; j < 10; j++) {
-      printf("%f ", sm_top_cpu->at(i, 0, 0, j));
+      // printf("%f ", sm_top_cpu->at(i, 0, 0, j));
       if(sm_top_cpu->at(i, 0, 0, j) > max_val) {
         max_val = sm_top_cpu->at(i, 0, 0, j);
         label = j;
       }
     }
 
-    printf("predicted label: %d, ground truth label: %d \n", label, (int)label_cpu->at(i, 0, 0, 0));
+    // printf("predicted label: %d, ground truth label: %d \n", label, (int)label_cpu->at(i, 0, 0, 0));
     if(label == (int)label_cpu->at(i, 0, 0, 0)) {
       cnt += 1;
     }
   }
 
   double acc = cnt / (double) batch_size;
-  printf("iteration %d accuracy: %f \n", iter, acc);
+  printf("iteration %d accuracy: %d/%d %f \n", iter, (int)cnt, batch_size, acc);
 
   delete sm_top_cpu;
   delete label_cpu;
@@ -84,7 +84,7 @@ void demo_bp_cifar10_gpu() {
 
   Session* session = Session::GetNewSession();
   session->gpu = true;
-  session->batch_size = 64;
+  session->batch_size = 100;
   size_t batch_size = session->batch_size;
 
 
@@ -199,7 +199,7 @@ void demo_bp_cifar10_gpu() {
   // size_t conv1_w_dims[4] = {5,5,3,32};
   // Tensor<double>* conv1_w = Tensor<double>::CreateTensorCPU(conv1_w_dims);
   // load_to_conv<double>(conv1_w, file);
-  // Tensor<double>::DataArrayCPUtoGPU(conv1_w, conv1.W_);
+  // Tensor<double>::DataArrayCPUtoGPU(conv1_w, conv31.W_);
 
   // size_t conv1_b_dims[4] = {1,1,1,32};
   // Tensor<double>* conv1_b = Tensor<double>::CreateTensorCPU(conv1_b_dims);
@@ -249,10 +249,11 @@ void demo_bp_cifar10_gpu() {
   
   // printf("Forward inference .. \n");
 
-  const double lr = 0.01;
+  const double lr = 0.0002;
 
   for(int iter = 0; iter < 20000; iter++) {
 
+    startTimer();
     data_layer.Forward(std::vector<Tensor<double>*> (), data_tops);
     conv1.Forward({data_tops[0]}, {conv1_top});
     pool1.Forward({conv1_top}, {pool1_top});
@@ -287,12 +288,8 @@ void demo_bp_cifar10_gpu() {
     softmax.Forward({fc5_top}, {sm_top});
     cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
 
-    if (iter % 1 == 0) {
-      show_tensor<<<1,1>>>(cel_top);
-    }
 
-    print_acc(iter, batch_size, sm_top, data_tops[1]);
-
+    // show_tensor<<<1, 1>>>(conv1.W_);
 
     cel_layer.Backward({cel_top}, {cel_top}, {sm_top, data_tops[1]}, {sm_top_diff, cel_loss_diff});
     softmax.Backward({sm_top}, {sm_top_diff}, {fc5_top}, {fc5_top_diff});
@@ -300,6 +297,8 @@ void demo_bp_cifar10_gpu() {
     fc5.UpdateWb(lr);
     fc4.Backward({fc4_top}, {fc4_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
     fc4.UpdateWb(lr);
+
+
     // fc4.Backward({fc4_top}, {fc4_top_diff}, {relu3_top}, {relu3_top_diff});
     // Tensor<double>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
     // Tensor<double>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
@@ -379,7 +378,13 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaDeviceSynchronize();
     checkCudaErrors(cudaStatus);
 
-    
+
+    if (iter % 1 == 0) {
+      show_tensor<<<1,1>>>(cel_top);
+    }
+
+    print_acc(iter, batch_size, sm_top, data_tops[1]);
+    printf("iteration time: %3.1f ms \n", stopTimer());
   }
 
   printf("Prediction: \n");

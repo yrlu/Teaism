@@ -37,6 +37,46 @@ A minimalistic CUDA-based convolutional neural network library.
 
 ## Demos
 
+- Training on cifar10
+
+Batchsize = 100, testing accuracy ~45% after training for 2400+ iterations with learning rate = 0.0002. 
+
+```
+$ make demo_cifar10_training && ./demo_cifar10_training.o
+iteration 2440 accuracy: 46/100 0.460000 
+iteration time: 3801.9 ms 
+1.620593e+00 
+
+
+iteration 2441 accuracy: 42/100 0.420000 
+iteration time: 3798.6 ms 
+1.648575e+00 
+
+
+iteration 2442 accuracy: 40/100 0.400000 
+iteration time: 3813.1 ms 
+1.725998e+00 
+
+
+iteration 2443 accuracy: 38/100 0.380000 
+iteration time: 3801.5 ms 
+1.663968e+00 
+
+
+iteration 2444 accuracy: 47/100 0.470000 
+iteration time: 3794.4 ms 
+1.611726e+00 
+
+
+iteration 2445 accuracy: 44/100 0.440000 
+iteration time: 3824.2 ms 
+1.578671e+00 
+
+
+iteration 2446 accuracy: 47/100 0.470000 
+iteration time: 3808.8 ms
+```
+
 - Import model and make inferences on Cifar10
 
 ```

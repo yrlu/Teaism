@@ -146,12 +146,12 @@ __host__ void ConvolutionGPU(Tensor<Dtype> * in, Tensor<Dtype> * out, Tensor<Dty
   
 
   // 2D Parallelization
-  /*
-  size_t bs = Session::GetSession()->batch_size;
-  dim3 blocksInGrid(bs / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
-  dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
-  ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top, W_, b_, stride, padding);
-  */
+  
+  // size_t bs = Session::GetSession()->batch_size;
+  // dim3 blocksInGrid(bs / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
+  // dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
+  // ConvGPUKernels::ForwardGPUKernel<Dtype><<<blocksInGrid, threadsPerBlock>>>(in, out, W_, b_, stride, padding);
+  
 }
 
 }
