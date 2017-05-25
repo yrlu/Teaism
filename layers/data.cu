@@ -97,6 +97,9 @@ void Data<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std:
 
     Tensor<Dtype>::DataArrayCPUtoGPU(top_i, tops[0]);
     Tensor<Dtype>::DataArrayCPUtoGPU(top_l, tops[1]);
+
+    delete top_i;
+    delete top_l;
   } else {
     FetchBatchData(tops[0], tops[1]);
   }
