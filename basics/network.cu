@@ -112,6 +112,8 @@ void Network<Dtype>::InitNetwork() {
     Layer<Dtype> * cur_layer = layers[i];
     size_t top_dims[4];
     cur_layer->GetTopsDims({bottom_dims}, {top_dims});
+    for(int j = 0; j < 4; j++)
+      bottom_dims[j] = top_dims[j];
     Tensor<Dtype> * top;
     Tensor<Dtype> * top_diff;
     if (session->gpu == true) {
@@ -127,7 +129,9 @@ void Network<Dtype>::InitNetwork() {
     ld->tops_diff = {top_diff};
     layer_data_pairs_.push_back(std::make_pair(cur_layer, ld));
   }
+
 }
+
 
 
 #endif // NRTWORK_CUH_

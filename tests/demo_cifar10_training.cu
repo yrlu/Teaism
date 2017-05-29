@@ -193,11 +193,10 @@ void demo_bp_cifar10_gpu() {
 
   const double lr = 0.0002;
 
-  
+  data_layer.Forward(std::vector<Tensor<double>*> (), data_tops);
 
   for(int iter = 0; iter < 20000; iter++) {
 
-    data_layer.Forward(std::vector<Tensor<double>*> (), data_tops);
 
     startTimer();
     conv1.Forward({data_tops[0]}, {conv1_top});

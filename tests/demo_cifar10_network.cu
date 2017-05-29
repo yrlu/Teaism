@@ -46,7 +46,7 @@ __global__ void show_tensor(Tensor<double> * tensor) {
 void print_acc(int iter, int batch_size, Tensor<double>* sm_top_gpu, Tensor<double> * labels_gpu) {
   Tensor<double>* sm_top_cpu = Tensor<double>::TensorGPUtoCPU(sm_top_gpu);
   Tensor<double>* label_cpu = Tensor<double>::TensorGPUtoCPU(labels_gpu);
-  
+
   // batch, 1, 1, 1
   // batch, 1, 1, 1
   double cnt = 0;
@@ -120,11 +120,11 @@ void demo_bp_cifar10_gpu() {
   checkCudaErrors(cudaStatus);
 
 
-  for(int iter = 0; iter < 20000; iter++) {
+  for(int iter = 0; iter < 10000; iter++) {
     startTimer();
     network.Forward();
     network.Backward();
-
+    printf("iteration: %d\n", iter);
     Tensor<double>* cel_top = network.GetLayerData(13)->tops[0];
     if (iter % 1 == 0) {
       show_tensor<<<1,1>>>(cel_top);
