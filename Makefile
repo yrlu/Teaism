@@ -44,8 +44,8 @@ make_tests:
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_relu_back.cu -o tests_relu_back.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_pooling_back.cu -o tests_pooling_back.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_fc.cu -o tests_fc.o -I.
-	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cnn_bp.cu -o tests_cnn_bp.o -I.
-	
+	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_cnn_bp.cu -o tests_cnn_bp.o -I.
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_network.cu -o tests_network.o -I.
 
 clean:
 	rm *.o
