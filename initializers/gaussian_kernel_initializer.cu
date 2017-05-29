@@ -22,6 +22,9 @@ public:
   __host__ static void InitGaussian(Tensor<Dtype> * W, Tensor<Dtype> *b, const double sigma_) {
     Dtype* w_data_array = W->GetDataPtr();
     const size_t *w_dims = W->GetDims();
+
+    std::default_random_engine generator;
+    std::normal_distribution<double> distribution(0.0, sigma_);
     
     // W
     for(int i = 0; i < w_dims[2]; i++) {
@@ -37,9 +40,8 @@ public:
             // double g = exp(-0.5 * (pow((x - x_mu_) / sigma_, 2.0) + pow((y - y_mu_) / sigma_, 2.0))) / (2 * PI * sigma_ * sigma_);
             // int idx[4] = {y, x, i, j};
 
-            std::default_random_engine generator;
-            std::normal_distribution<double> distribution(0.0, sigma_);
             double g = distribution(generator);
+            // printf("%f \n", g);
             W->at(y, x, i, j) = (Dtype)g;
           }
         }
