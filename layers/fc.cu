@@ -182,6 +182,14 @@ void FC<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::v
   Tensor<Dtype> * top = tops[0];
 
   if (Session::GetSession()->gpu) {
+    size_t to_fc_dims[4];
+    size_t b_dims[4];
+    Tensor<Dtype>::GetTensorGPUDims(bottom, b_dims);
+    to_fc_dims[0] = b_dims[0];
+    to_fc_dims[1] = 1;
+    to_fc_dims[2] = 1;
+    to_fc_dims[3] = b_dims[1]*b_dims[2]*b_dims[3];
+    Tensor<Dtype>::ReshapeTensorGPU(bottom, to_fc_dims);
     size_t batch_size = Session::GetSession()->batch_size;
     dim3 blocksInGrid(batch_size / BLOCKDIM + 1, out_channels / BLOCKDIM + 1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
@@ -192,6 +200,14 @@ void FC<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::v
       FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock>>>(bottom, top, W_, b_);
     }
   } else {
+    size_t to_fc_dims[4];
+    to_fc_dims[0] = bottom->GetDims()[0];
+    to_fc_dims[1] = 1;
+    to_fc_dims[2] = 1;
+    to_fc_dims[3] = bottom->GetDims()[1]*bottom->GetDims()[2]*bottom->GetDims()[3];
+
+    bottom->SetDims(to_fc_dims);
+
     for(int b = 0; b < bottom->GetDims()[0]; b++) {
       for(int o = 0; o < out_channels; o++) {
         Dtype sum = 0;
@@ -212,8 +228,6 @@ void FC<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims,
   assert(bottoms_dims.size());
   assert(tops_dims.size());
   size_t * b_dims = bottoms_dims[0];
-  assert(b_dims[1] == 1);
-  assert(b_dims[2] == 1);
   size_t * t_dims = tops_dims[0];
   t_dims[0] = b_dims[0];
   t_dims[1] = 1;
