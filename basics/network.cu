@@ -4,11 +4,7 @@
 #include <assert.h>
 #include <cstdlib>
 #include "basics/layer.hpp"
-#include "basics/session.hpp"
-#include "basics/tensor.hpp"
-#include "cuda_runtime.h"
-#include "utils/helper_cuda.h"
-#include "stdio.h"
+#include "basics/tensor.cu"
 
 template<class Dtype>
 struct LayerData { 
@@ -27,32 +23,54 @@ public:
   void Forward();
 
   void Backward();
-
-  void Update();
   
   LayerData<Dtype>* GetLayerData(int idx) {
-    return layer_data_pairs[idx].second; }
+    return layer_data_pairs_[idx].second; }
 
-  std::vector<Layer*> layers;
+  std::vector<Layer<Dtype>*> layers;
 
 private:
-  std::vector<std::pair<Layer*, LayerData<Dtype>*>> layer_data_pairs_;
-  unsigned num_layers_;
+  std::vector<std::pair<Layer<Dtype>*, LayerData<Dtype>*>> layer_data_pairs_;
 };
 
 template<class Dtype>
-void Network::Forward() {
-  for(unsigned i = 0; i < num_layers; ++i) {
-    layer_data_pairs[i].first->Forward
+void Network<Dtype>::Forward() {
+  for (unsigned i = 0; i < layers.size(); ++i) {
+    if (i == 0) {  // Data Layer
+      layer_data_pairs_[i].first->Forward(
+        std::vector<Tensor<Dtype>*> (), layer_data_pairs_[i].second->tops);
+    } else if (i == 1) {  // Conv1 Layer
+      layer_data_pairs_[i].first->Forward(
+        {layer_data_pairs_[i-1].second->tops[0]}, layer_data_pairs_[i].second->tops);
+    } else if (i == layers.size() - 1) {  // Loss Layer
+      layer_data_pairs_[i].first->Forward(
+        {layer_data_pairs_[i-1].second->tops[0], layer_data_pairs_[0].second->tops[1]}, 
+        layer_data_pairs_[i].second->tops);        
+    } else {
+      layer_data_pairs_[i].first->Forward(
+        layer_data_pairs_[i-1].second->tops, layer_data_pairs_[i].second->tops);
+    }
+  }
 }
 
 template<class Dtype>
-void Network::Backward() {
-
+void Network<Dtype>::Backward() {
+  for (unsigned i = layers.size() - 1; i > 0; --i) {
+    if (i == layers.size() - 1) {  // Loss Layer
+      layer_data_pairs_[i].first->Backward(
+        layer_data_pairs_[i].second->tops, layer_data_pairs_[i].second->tops,
+        {layer_data_pairs_[i-1].second->tops[0], layer_data_pairs_[0].second->tops[1]},
+        {layer_data_pairs_[i-1].second->tops_diff[0], layer_data_pairs_[0].second->tops_diff[1]});
+    } else if (i == 1) {  // Conv1 Layer
+      layer_data_pairs_[i].first->Backward(
+        layer_data_pairs_[i].second->tops, layer_data_pairs_[i].second->tops_diff,
+        {layer_data_pairs_[i-1].second->tops[0]}, {layer_data_pairs_[i-1].second->tops_diff[0]});
+    } else {
+      layer_data_pairs_[i].first->Backward(
+        layer_data_pairs_[i].second->tops, layer_data_pairs_[i].second->tops_diff,
+        layer_data_pairs_[i-1].second->tops_diff, layer_data_pairs_[i-1].second->tops_diff);
+    }
+  }
 }
 
-template<class Dtype>
-void Network::Update() {
-
-}
 #endif // NRTWORK_CUH_

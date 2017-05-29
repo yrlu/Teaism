@@ -22,6 +22,9 @@ demo_bp_cifar10:
 demo_cifar10_training:
 	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10_training.cu -o demo_cifar10_training.o -I.
 
+demo_cifar10_network:
+	$(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/demo_cifar10_network.cu -o demo_cifar10_network.o -I.
+
 make_tests:
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_tensor.cu -o tests_tensor.o -I.
 	# $(NVCC) $(NVCC_OPTS) $(GCC_OPTS) tests/tests_gaussian_initializer.cu -o tests_gaussian_initializer.o -I.

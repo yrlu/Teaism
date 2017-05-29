@@ -28,6 +28,11 @@ public:
 
   void Forward(const std::vector<Tensor<Dtype>*> &, const std::vector<Tensor<Dtype>*> &);
 
+  void Backward(const std::vector<Tensor<Dtype>*> &tops, 
+                const std::vector<Tensor<Dtype>*> &tops_diff,
+                const std::vector<Tensor<Dtype>*> &bottoms,
+                const std::vector<Tensor<Dtype>*> &bottoms_diff) {}
+
   void GetTopsDims(const std::vector<size_t*> &, const std::vector<size_t*> &);
 
   __host__ void FetchBatchData(Tensor<Dtype>*, Tensor<Dtype>*);
