@@ -32,6 +32,8 @@ public:
   const size_t in_channels;
   const size_t out_channels;
 
+  double lr;
+
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
   Tensor<Dtype>* W_diff_;
@@ -219,6 +221,7 @@ void FC<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::v
       }
     }
   }
+
 }
 
 
@@ -258,6 +261,7 @@ FC<Dtype>::FC(size_t in_channels, size_t out_channels, Initializer<Dtype>* initi
     b_ = Tensor<Dtype>::CreateTensorCPU(b_dims);
   }
   InitParams();
+  lr = Session::GetSession()->lr;
 }
 
 
@@ -396,6 +400,8 @@ void FC<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
       b_diff_->at(0,0,0,o) = sum_b; 
     }
   }
+
+  UpdateWb((Dtype)lr);
 }
 
 #endif  // FC_LAYER_CUH_

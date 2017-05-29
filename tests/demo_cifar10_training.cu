@@ -181,7 +181,6 @@ void demo_bp_cifar10_gpu() {
   cel_layer.GetTopsDims({sm_top_dims, sm_top_dims}, {ce_top_dims});
   size_t ce_loss_dims[4] = {batch_size, 1, 1, 1};
   Tensor<double> * cel_top = Tensor<double>::CreateTensorGPU(ce_top_dims);
-  Tensor<double> * cel_top_diff = Tensor<double>::CreateTensorCPU(ce_top_dims);
   Tensor<double> * cel_loss_diff = Tensor<double>::CreateTensorGPU(ce_loss_dims);
 
 
@@ -216,18 +215,27 @@ void demo_bp_cifar10_gpu() {
     // Tensor<double>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
     // fc4.Forward({reshaped_relu3_top}, {fc4_top});
     fc4.Forward({relu3_top}, {fc4_top});
+    checkCudaErrors(cudaGetLastError());
     fc5.Forward({fc4_top}, {fc5_top});
+    checkCudaErrors(cudaGetLastError());
     softmax.Forward({fc5_top}, {sm_top});
+    checkCudaErrors(cudaGetLastError());
     cel_layer.Forward({sm_top, data_tops[1]}, {cel_top});
-
+    checkCudaErrors(cudaGetLastError());
 
     cel_layer.Backward({cel_top}, {cel_top}, {sm_top, data_tops[1]}, {sm_top_diff, cel_loss_diff});
+    checkCudaErrors(cudaGetLastError());
     softmax.Backward({sm_top}, {sm_top_diff}, {fc5_top}, {fc5_top_diff});
+    checkCudaErrors(cudaGetLastError());
     fc5.Backward({fc5_top}, {fc5_top_diff}, {fc4_top}, {fc4_top_diff});
-    fc5.UpdateWb(lr);
+    checkCudaErrors(cudaGetLastError());
+
     // fc4.Backward({fc4_top}, {fc4_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
     fc4.Backward({fc4_top}, {fc4_top_diff}, {relu3_top}, {relu3_top_diff});
-    fc4.UpdateWb(lr);
+    checkCudaErrors(cudaGetLastError());
+
+    cudaStatus = cudaGetLastError();
+    checkCudaErrors(cudaStatus);
 
     Tensor<double>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
     Tensor<double>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
@@ -248,9 +256,6 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    conv3.UpdateWb(lr);
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
 
 
     relu2.Backward({relu2_top}, {relu2_top_diff}, {pool2_top}, {pool2_top_diff});
@@ -263,9 +268,6 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    conv2.UpdateWb(lr);
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
 
     relu1.Backward({relu1_top}, {relu1_top_diff}, {pool1_top}, {pool1_top_diff});
     cudaStatus = cudaGetLastError();
@@ -277,9 +279,6 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    conv1.UpdateWb(lr);
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
 
     cudaStatus = cudaDeviceSynchronize();
     checkCudaErrors(cudaStatus);

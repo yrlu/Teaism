@@ -31,7 +31,7 @@ public:
   size_t batch_size;
   double lr;
 private:
-  Session():test(true), gpu(false), device(0), batch_size(1) {}
+  Session():test(true), gpu(false), device(0), batch_size(1), lr(0.0002) {}
   static Session* session;
 };
 

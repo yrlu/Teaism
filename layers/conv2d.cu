@@ -44,6 +44,9 @@ public:
   const size_t out_channels;
   const size_t stride;
   const PADDING padding;
+
+  double lr;
+
   Tensor<Dtype>* W_;
   Tensor<Dtype>* b_;
   Tensor<Dtype>* W_flipped_;
@@ -123,6 +126,7 @@ Conv2D<Dtype>::Conv2D(size_t kernel_height, size_t kernel_width, size_t in_chann
     b_ = Tensor<Dtype>::CreateTensorCPU(b_dims);
   }
   InitParams();
+  lr = Session::GetSession()->lr;
 }
 
 
@@ -344,18 +348,6 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
     size_t W_flipped_dims[4];
     size_t W_diff_dims[4];
 
-    // Tensor<Dtype>::GetTensorGPUDims(tops_diff[0], top_diff_dims);
-    // Tensor<Dtype>::GetTensorGPUDims(bottoms_diff[0], bottoms_diff_dims);
-    // Tensor<Dtype>::GetTensorGPUDims(bottoms[0], bottoms_dims);
-    // Tensor<Dtype>::GetTensorGPUDims(W_flipped_, W_flipped_dims);
-    // Tensor<Dtype>::GetTensorGPUDims(W_diff_, W_diff_dims);
-
-    // printf("%d %d %d %d \n", top_diff_dims[0], top_diff_dims[1], top_diff_dims[2], top_diff_dims[3]);
-    // printf("%d %d %d %d \n", bottoms_diff_dims[0], bottoms_diff_dims[1], bottoms_diff_dims[2], bottoms_diff_dims[3]);
-    // printf("%d %d %d %d \n", bottoms_dims[0], bottoms_dims[1], bottoms_dims[2], bottoms_dims[3]);
-    // printf("%d %d %d %d \n", W_flipped_dims[0], W_flipped_dims[1], W_flipped_dims[2], W_flipped_dims[3]);
-    // printf("%d %d %d %d \n", W_diff_dims[0], W_diff_dims[1], W_diff_dims[2], W_diff_dims[3]);
-
     ComputationsGPU::ConvolutionGPU(tops_diff[0], bottoms_diff[0], W_flipped_, (Tensor<Dtype>*)NULL, stride, padding);
     // assumes stride = 1
 
@@ -399,6 +391,7 @@ void Conv2D<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
       }
     }
   }
+  UpdateWb((Dtype)lr);
 }
 
 #endif  // CONV2D_LAYER_CUH_
