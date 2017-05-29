@@ -211,7 +211,9 @@ void demo_bp_cifar10_gpu() {
     relu3.Forward({pool3_top}, {relu3_top});
     
     // flatten the tensor
-    Tensor<double>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
+    // Tensor<double>::ReshapeTensorGPU(relu3_top, to_fc4_dims);
+
+
     // Tensor<double>::ReshapeTensorGPU(reshaped_relu3_top, to_fc4_dims);
     // fc4.Forward({reshaped_relu3_top}, {fc4_top});
     fc4.Forward({relu3_top}, {fc4_top});
@@ -237,19 +239,16 @@ void demo_bp_cifar10_gpu() {
     cudaStatus = cudaGetLastError();
     checkCudaErrors(cudaStatus);
 
-    Tensor<double>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
-    Tensor<double>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
+    // Tensor<double>::ReshapeTensorGPU(relu3_top, relu3_top_dims);
+    // Tensor<double>::ReshapeTensorGPU(relu3_top_diff, relu3_top_dims);
 
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
+    // cudaStatus = cudaGetLastError();
+    // checkCudaErrors(cudaStatus);
     // relu3.Backward({pool3_top}, {pool3_top_diff}, {reshaped_relu3_top}, {reshaped_relu3_top_diff});
     relu3.Backward({relu3_top}, {relu3_top_diff}, {pool3_top}, {pool3_top_diff});
-
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
+    checkCudaErrors(cudaGetLastError());
     pool3.Backward({pool3_top}, {pool3_top_diff}, {conv3_top}, {conv3_top_diff});
-    cudaStatus = cudaGetLastError();
-    checkCudaErrors(cudaStatus);
+    checkCudaErrors(cudaGetLastError());
 
     // conv3.Backward({relu2_top}, {relu2_top_diff}, {conv3_top}, {conv3_top_diff});
     conv3.Backward({conv3_top}, {conv3_top_diff}, {relu2_top}, {relu2_top_diff});

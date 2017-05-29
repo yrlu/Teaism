@@ -9,6 +9,7 @@
 #include "cuda_runtime.h"
 #include "utils/helper_cuda.h"
 #include "stdio.h"
+#include <cstring>
 
 /* 
 4D Tensor
@@ -100,6 +101,7 @@ public:
   __host__ static void ReshapeTensorGPU(Tensor<Dtype> * tensor_gpu, size_t * dims);
   __host__ static void ReshapeTensorCPU(Tensor<Dtype> * tensor_cpu, size_t * dims);
   __host__ static void GetTensorGPUDims(Tensor<Dtype> * tensor_gpu, size_t * dims);
+  __host__ static void GetTensorCPUDims(Tensor<Dtype> * tensor_cpu, size_t * dims);
 
   __host__ __device__ ~Tensor() {
     if(data_array_ != NULL) {
@@ -126,6 +128,11 @@ private:
 template<class Dtype>
 __host__ void Tensor<Dtype>::GetTensorGPUDims(Tensor<Dtype> * tensor_gpu, size_t * dims) {
   cudaMemcpy(dims, tensor_gpu->dims_, sizeof(size_t)*4, cudaMemcpyDeviceToHost);
+}
+
+template<class Dtype>
+__host__ void Tensor<Dtype>::GetTensorCPUDims(Tensor<Dtype> * tensor_cpu, size_t * dims) {
+  std::memcpy(dims, tensor_cpu->GetDims(), sizeof(size_t)*4);
 }
 
 template<class Dtype>

@@ -201,8 +201,12 @@ void FC<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::v
     } else {
       FCGPUKernels::ForwardGPU<<<blocksInGrid,threadsPerBlock>>>(bottom, top, W_, b_);
     }
+
+    Tensor<Dtype>::ReshapeTensorGPU(bottom, b_dims);
   } else {
     size_t to_fc_dims[4];
+    size_t b_dims[4];
+    Tensor<Dtype>::GetTensorCPUDims(bottom, b_dims);
     to_fc_dims[0] = bottom->GetDims()[0];
     to_fc_dims[1] = 1;
     to_fc_dims[2] = 1;
@@ -220,6 +224,8 @@ void FC<Dtype>::Forward(const std::vector<Tensor<Dtype>*> &bottoms, const std::v
         top->at(b,0,0,o) = sum;
       }
     }
+
+    bottom->SetDims(b_dims);
   }
 
 }
@@ -362,15 +368,42 @@ void FC<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
   Tensor<Dtype>* top_diff = tops_diff[0];
   Tensor<Dtype>* bottom = bottoms[0];
   Tensor<Dtype>* bottom_diff = bottoms_diff[0];
-  
+
   if(Session::GetSession()->gpu) {
+
+    size_t b_dims[4];
+    Tensor<Dtype>::GetTensorGPUDims(bottom, b_dims);
+    size_t to_fc_dims[4];
+    to_fc_dims[0] = b_dims[0];
+    to_fc_dims[1] = 1;
+    to_fc_dims[2] = 1;
+    to_fc_dims[3] = b_dims[1]*b_dims[2]*b_dims[3];
+    Tensor<Dtype>::ReshapeTensorGPU(bottom, to_fc_dims);
+    Tensor<Dtype>::ReshapeTensorGPU(bottom_diff, to_fc_dims);
+
     dim3 blocksInGrid(batch_size/BLOCKDIM+1, in_channels/BLOCKDIM+1);
     dim3 threadsPerBlock(BLOCKDIM, BLOCKDIM);
     FCGPUKernels::ComputeBottomDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(top_diff, bottom_diff, W_);
     blocksInGrid = dim3(in_channels/BLOCKDIM+1, out_channels/BLOCKDIM+1);
     FCGPUKernels::ComputeWDiffs<Dtype><<<blocksInGrid, threadsPerBlock>>>(bottom, top_diff, W_diff_);
     FCGPUKernels::ComputeBDiffs<Dtype><<<out_channels/BLOCKDIM/BLOCKDIM+1, BLOCKDIM*BLOCKDIM>>>(top_diff, b_diff_);
-  } else { 
+
+    // convert the shape back
+    Tensor<Dtype>::ReshapeTensorGPU(bottom, b_dims);
+    Tensor<Dtype>::ReshapeTensorGPU(bottom_diff, b_dims);
+  } else {
+
+    size_t b_dims[4];
+    Tensor<Dtype>::GetTensorCPUDims(bottom, b_dims);
+    size_t to_fc_dims[4];
+    to_fc_dims[0] = b_dims[0];
+    to_fc_dims[1] = 1;
+    to_fc_dims[2] = 1;
+    to_fc_dims[3] = b_dims[1]*b_dims[2]*b_dims[3];
+    Tensor<Dtype>::ReshapeTensorCPU(bottom, to_fc_dims);
+    Tensor<Dtype>::ReshapeTensorCPU(bottom_diff, to_fc_dims);
+
+
     // compute bottom diffs
     for(int i = 0; i < in_channels; i++) {
       for(int b = 0; b < batch_size; b++) {
@@ -399,6 +432,9 @@ void FC<Dtype>::Backward(const std::vector<Tensor<Dtype>*> &tops,
       }
       b_diff_->at(0,0,0,o) = sum_b; 
     }
+
+    Tensor<Dtype>::ReshapeTensorCPU(bottom, b_dims);
+    Tensor<Dtype>::ReshapeTensorCPU(bottom_diff, b_dims);
   }
 
   UpdateWb((Dtype)lr);
