@@ -88,54 +88,30 @@ void demo_bp_cifar10_gpu() {
   session->batch_size = 1;
   size_t batch_size = session->batch_size;
 
-  Network<double> network;
-
   Data<double>* data_layer = new Data<double>(batch_size, "datasets/cifar10/train.txt");
-  network.layers.push_back(data_layer);
-
   Conv2D<double>* conv1 = new Conv2D<double>
     (5,5,3,32,1, new GaussianKernelInitializer<double>(0.0001), SAME);
-  network.layers.push_back(conv1);
-
   Pooling<double>* pool1 = new Pooling<double>(2, MAX, 2);
-  network.layers.push_back(pool1);
-
   Relu<double>* relu1 = new Relu<double>;
-  network.layers.push_back(relu1);
-
   Conv2D<double>* conv2 = new Conv2D<double>
     (5,5,32,32,1, new GaussianKernelInitializer<double>(0.01), SAME);
-  network.layers.push_back(conv2);
-
   Pooling<double>* pool2 = new Pooling<double>(2, MAX, 2);
-  network.layers.push_back(pool2);
-
   Relu<double>* relu2 = new Relu<double>;
-  network.layers.push_back(relu2);
-
   Conv2D<double>* conv3 = new Conv2D<double>
     (5,5,32,64,1, new GaussianKernelInitializer<double>(0.01), SAME);
-  network.layers.push_back(conv3);
-
   Pooling<double>* pool3 = new Pooling<double>(2, MAX, 2);
-  network.layers.push_back(pool3);
-
   Relu<double>* relu3 = new Relu<double>;
-  network.layers.push_back(relu3);
-
   FC<double>* fc4 = new FC<double>
     (4*4*64,64, new GaussianKernelInitializer<double>(0.1));
-  network.layers.push_back(fc4);
-
   FC<double>* fc5 = new FC<double>
     (64, 10, new GaussianKernelInitializer<double>(0.1));
-  network.layers.push_back(fc5);
-
   Softmax<double>* softmax = new Softmax<double>;
-  network.layers.push_back(softmax);
-
   CrossEntropyLoss<double>* cel_layer = new CrossEntropyLoss<double>;
-  network.layers.push_back(cel_layer);
+
+  Network<double> network({data_layer, conv1, pool1, relu1, 
+                           conv2, pool2, relu2,
+                           conv3, pool3, relu3,
+                           fc4, fc5, softmax, cel_layer});
 
   printf("network finished setup: %3.1f ms \n", stopTimer());
   show_mem(cudaStatus);
