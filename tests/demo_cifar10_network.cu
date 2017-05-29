@@ -86,6 +86,7 @@ void demo_bp_cifar10_gpu() {
   Session* session = Session::GetNewSession();
   session->gpu = true;
   session->batch_size = 1;
+  session->lr = 0.0002;
   size_t batch_size = session->batch_size;
 
   Data<double>* data_layer = new Data<double>(batch_size, "datasets/cifar10/train.txt");
@@ -118,7 +119,6 @@ void demo_bp_cifar10_gpu() {
   cudaStatus = cudaGetLastError();
   checkCudaErrors(cudaStatus);
 
-  const double lr = 0.0002;
 
   for(int iter = 0; iter < 20000; iter++) {
     startTimer();

@@ -29,6 +29,7 @@ public:
   bool gpu;
   unsigned device;
   size_t batch_size;
+  double lr;
 private:
   Session():test(true), gpu(false), device(0), batch_size(1) {}
   static Session* session;
