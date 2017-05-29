@@ -140,7 +140,6 @@ void CrossEntropyLoss<Dtype>::Backward (const std::vector<Tensor<Dtype>*>& tops,
 
 template <class Dtype>
 void CrossEntropyLoss<Dtype>::GetTopsDims(const std::vector<size_t*> &bottoms_dims, const std::vector<size_t*> &tops_dims) {
-  assert(bottoms_dims.size() == 2);
   assert(tops_dims.size() == 1);
 
   tops_dims[0][0] = 1;
