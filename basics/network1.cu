@@ -24,7 +24,7 @@ template<class Dtype>
 class Network {
 
 public:
-  Network(std::vector<Layer<Dtype>*> layers):layers_(layers) {
+  Network(std::vector<Layer<Dtype>*> _layers):layers(_layers) {
     InitNetwork();
   }
 
@@ -42,7 +42,6 @@ public:
 
 private:
   std::vector<std::pair<Layer<Dtype>*, LayerData<Dtype>*>> layer_data_pairs_;
-  std::vector<Layer<Dtype>*> & layers_;
   unsigned num_layers_;
 };
 
@@ -89,8 +88,7 @@ void Network<Dtype>::InitNetwork() {
   LayerData<Dtype>* ld = new LayerData<Dtype>();
   ld->tops = {data_top0, data_top1};
   ld->tops_diff = {data_top_diff0};
-  // layer_data_pairs_.push_back(std::make_pair(layers[0], ld));
-  // std::vector<std::pair<Layer<Dtype>*, LayerData<Dtype>*>> layer_data_pairs_;
+
   layer_data_pairs_.push_back(std::make_pair(layers[0], ld));
   // common layers
   for(int i = 1; i < layers.size(); i++) {
