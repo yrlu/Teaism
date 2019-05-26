@@ -158,7 +158,6 @@ out activations:
 0.009701 0.878047 0.112252
 ```
 
-working in progress .. 
 
 ## References 
 
